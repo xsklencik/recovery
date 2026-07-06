@@ -400,4 +400,381 @@ function rawToStrain(raw){
 }
 
 function computeDailyStrain(activities, wellnessByDate){
-  
+    // grupuje aktivity podla datumu, spocita raw strain + kroky z wellness, vrati mapu date->strain
+  const rawByDate = new Map();
+  for(const act of activities){
+    const raw = zoneSecsToRawStrain(act);
+    rawByDate.set(act.date, (rawByDate.get(act.date)||0) + raw);
+  }
+  const strainByDate = new Map();
+  const allDates = new Set([...rawByDate.keys(), ...Object.keys(wellnessByDate)]);
+  for(const date of allDates){
+    let raw = rawByDate.get(date) || 0;
+    const w = wellnessByDate[date];
+    if(w && w.steps){
+      raw += stepsToRawStrain(w.steps);
+    }
+    strainByDate.set(date, Math.round(rawToStrain(raw)*10)/10);
+  }
+  return strainByDate;
+}
+
+function strainVerdict(strain){
+  if(strain===undefined || strain===null) return {label:'Bez dát', color:'#7a7f89', detail:'Žiadna aktivita ani kroky zaznamenané.'};
+  if(strain < 8) return {label:'Ľahký deň', color:'#3ddc97', detail:'Nízka záťaž. Priestor na ďalší tréning zajtra.'};
+  if(strain < 14) return {label:'Stredná záťaž', color:'#f0b429', detail:'Bežný tréningový deň.'};
+  if(strain < 18) return {label:'Vysoká záťaž', color:'#f0553f', detail:'Náročný deň — daj pozor na regeneráciu.'};
+  return {label:'Extrémna záťaž', color:'#f0553f', detail:'Veľmi náročný deň. Zajtra pravdepodobne nižšie recovery.'};
+}
+
+// ---------- Main ----------
+let ALL_RESULTS = [];
+let ALL_ACTIVITIES = [];
+let STRAIN_BY_DATE = new Map();
+
+async function main(){
+  const [history, daily, sync, actHistory, actDaily] = await Promise.all([
+    loadJson(HISTORY_URL), loadJson(DAILY_URL), loadJson(SYNC_URL),
+    loadJson(ACT_HISTORY_URL), loadJson(ACT_DAILY_URL)
+  ]);
+
+  if(!history && !daily){
+    document.getElementById('loading').style.display='none';
+    document.getElementById('err').textContent = 'Nepodarilo sa načítať dáta. Skontroluj či existujú súbory v data/.';
+    return;
+  }
+
+  let recs = mergeById(history, daily);
+  recs.sort((a,b)=> a.date < b.date ? -1 : 1);
+
+  let activities = mergeById(actHistory, actDaily);
+  activities.sort((a,b)=> (a.start_date_local||a.date) < (b.start_date_local||b.date) ? -1 : 1);
+  ALL_ACTIVITIES = activities;
+
+  if(sync && sync.lastSync){
+    const d = new Date(sync.lastSync);
+    document.getElementById('sync-info').textContent = 'Posledná synchronizácia: ' + d.toLocaleString('sk-SK');
+  } else {
+    document.getElementById('sync-info').textContent = 'Zatiaľ žiadny sync.';
+  }
+
+  document.getElementById('loading').style.display='none';
+  computeAndRender(recs, activities);
+}
+
+function computeAndRender(recs, activities){
+  const WINDOW = 60;
+  function rollingStats(field, methodBoundaryDate){
+    const stats = [];
+    for(let i=0;i<recs.length;i++){
+      const lo = Math.max(0, i-WINDOW);
+      let window = recs.slice(lo,i);
+      if(methodBoundaryDate && recs[i].date >= methodBoundaryDate){
+        window = window.filter(r => r.date >= methodBoundaryDate);
+      }
+      const vals = window.map(r=>r[field]).filter(v=>v!==null && v!==undefined && !isNaN(v));
+      if(vals.length >= 5) stats.push({mean: mean(vals), std: stdev(vals) || 1});
+      else stats.push(null);
+    }
+    return stats;
+  }
+  const hrvStats = rollingStats('hrv', NEW_METHOD_CUTOFF);
+  const rhrStats = rollingStats('restingHR', null);
+  const sleepHrStats = rollingStats('avgSleepingHR', NEW_METHOD_CUTOFF);
+  const sleepScoreStats = rollingStats('sleepScore', null);
+
+  const results = recs.map((r,i)=>{
+    const parts = [];
+    if(r.hrv!=null && hrvStats[i]){ const z=(r.hrv-hrvStats[i].mean)/hrvStats[i].std; parts.push({w:0.45,score:zToScore(z)}); }
+    if(r.restingHR!=null && rhrStats[i]){ const z=(r.restingHR-rhrStats[i].mean)/rhrStats[i].std; parts.push({w:0.20,score:zToScore(-z)}); }
+    if(r.avgSleepingHR!=null && sleepHrStats[i]){ const z=(r.avgSleepingHR-sleepHrStats[i].mean)/sleepHrStats[i].std; parts.push({w:0.15,score:zToScore(-z)}); }
+    if(r.sleepScore!=null && sleepScoreStats[i]){ const z=(r.sleepScore-sleepScoreStats[i].mean)/sleepScoreStats[i].std; parts.push({w:0.10,score:zToScore(z)}); }
+    if(r.ctl!=null && r.atl!=null){
+      const tsb=r.ctl-r.atl;
+      const atlPenalty=clamp((r.atl-25)/20,0,1);
+      const loadScore=clamp(50+tsb*2,0,100)*(1-0.6*atlPenalty);
+      parts.push({w:0.10, score:clamp(loadScore,0,100)});
+    }
+    if(parts.length===0) return {...r, recovery:null};
+    const totalW = parts.reduce((s,p)=>s+p.w,0);
+    const recovery = parts.reduce((s,p)=>s+p.score*(p.w/totalW),0);
+    return {...r, recovery: Math.round(recovery)};
+  });
+
+  const wellnessByDate = {};
+  recs.forEach(r=>{ wellnessByDate[r.date] = r; });
+  STRAIN_BY_DATE = computeDailyStrain(activities, wellnessByDate);
+
+  const resultsWithStrain = results.map(r => ({...r, strain: STRAIN_BY_DATE.has(r.date) ? STRAIN_BY_DATE.get(r.date) : null}));
+
+  render(resultsWithStrain, activities);
+}
+
+function verdictFor(rec){
+  if(rec.recovery===null) return {label:'Nedostatok dát', color:'#7a7f89', detail:'Chýbajú HRV/RHR/spánok dáta.'};
+  if(rec.recovery>=67) return {label:'Pripravený na intenzitu', color:'#3ddc97', detail:'Telo je zotavené. Priestor na kvalitný tréning.'};
+  if(rec.recovery>=40) return {label:'Udržiavaj Z1/Z2', color:'#f0b429', detail:'Čiastočné zotavenie. Žiadne tvrdé intervaly.'};
+  return {label:'Regeneruj', color:'#f0553f', detail:'Nízke zotavenie. Odporúčaný odpočinok.'};
+}
+
+function fmt(v, digits, suffix){
+  suffix = suffix || '';
+  if(v===null||v===undefined) return '—';
+  return v.toFixed(digits) + suffix;
+}
+
+function render(results, activities){
+  ALL_RESULTS = results;
+  document.getElementById('app').style.display='block';
+
+  const withScore = results.filter(r=>r.recovery!==null);
+  const today = withScore[withScore.length-1] || results[results.length-1];
+  const v = verdictFor(today);
+
+  document.getElementById('recovery-date').textContent = today.date;
+  document.getElementById('recovery-verdict').textContent = v.label;
+  document.getElementById('recovery-verdict').style.color = v.color;
+  document.getElementById('recovery-detail').textContent = v.detail;
+
+  const pct = today.recovery ?? 0;
+  document.getElementById('recovery-pct').textContent = today.recovery!==null ? pct : '—';
+  const fillR = document.getElementById('fill-recovery');
+  fillR.style.background = v.color;
+  fillR.style.width = (today.recovery!==null ? pct : 0) + '%';
+
+  // Strain today - vzdy pocitaj z dnesneho datumu skutocne, aj ked wellness sync este nema dnesny riadok
+  const todayDate = todayISO();
+  const todayStrain = STRAIN_BY_DATE.has(todayDate) ? STRAIN_BY_DATE.get(todayDate) : 0;
+  const sv = strainVerdict(todayStrain);
+  document.getElementById('strain-val').textContent = todayStrain.toFixed(1);
+  document.getElementById('strain-verdict').textContent = sv.label;
+  document.getElementById('strain-verdict').style.color = sv.color;
+  document.getElementById('strain-detail').textContent = sv.detail;
+  const fillS = document.getElementById('fill-strain');
+  fillS.style.background = sv.color;
+  fillS.style.width = (clamp(todayStrain,0,21)/21*100) + '%';
+
+  const metricsRow = document.getElementById('metrics-row');
+  metricsRow.innerHTML = '';
+  const metrics = [
+    {label:'HRV', val: fmt(today.hrv,1)},
+    {label:'Pokojová TF', val: fmt(today.restingHR,0,' bpm')},
+    {label:'Spánková TF', val: fmt(today.avgSleepingHR,0,' bpm')},
+    {label:'Kroky dnes', val: today.steps!=null ? today.steps.toLocaleString('sk-SK') : '—'},
+    {label:'CTL (Fitness)', val: fmt(today.ctl,1)},
+    {label:'ATL (Únava)', val: fmt(today.atl,1)},
+    {label:'TSB (Forma)', val: (today.ctl!=null&&today.atl!=null)? (today.ctl-today.atl).toFixed(1): '—'},
+  ];
+  metrics.forEach(m=>{
+    const div = document.createElement('div');
+    div.className='metric';
+    div.innerHTML = `<div class="metric-label">${m.label}</div><div class="metric-val">${m.val}</div>`;
+    metricsRow.appendChild(div);
+  });
+
+  renderActivityList(activities, todayDate);
+  drawLineChart('chart-recovery', results, 'recovery', '#ff6a3d', 30, 0, 100);
+  drawLineChart('chart-strain', results, 'strain', '#4a9eff', 30, 0, 21);
+  drawMetricChart('chart-hrv', results, 'hrv', '#3ddc97');
+  drawMetricChart('chart-rhr', results, 'restingHR', '#f0b429');
+  drawMetricChart('chart-sleephr', results, 'avgSleepingHR', '#a78bfa');
+  drawMetricChart('chart-steps', results, 'steps', '#4a9eff');
+  drawTable(results.slice().reverse().slice(0,90));
+
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const chartName = btn.dataset.chart;
+      document.querySelectorAll(`.tab-btn[data-chart="${chartName}"]`).forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const range = parseInt(btn.dataset.range);
+      if(chartName==='recovery') drawLineChart('chart-recovery', results, 'recovery', '#ff6a3d', range, 0, 100);
+      else drawLineChart('chart-strain', results, 'strain', '#4a9eff', range, 0, 21);
+    });
+  });
+}
+
+function renderActivityList(activities, todayDate){
+  const list = document.getElementById('activity-list');
+  const todays = activities.filter(a => a.date === todayDate);
+  if(todays.length===0){
+    list.innerHTML = `<div style="color:var(--dim);font-size:0.85rem;">Dnes zatiaľ žiadna aktivita. Klikni "Aktualizovať" po skončení jazdy.</div>`;
+    return;
+  }
+  list.innerHTML = '';
+  todays.forEach(a=>{
+    const raw = zoneSecsToRawStrain(a);
+    const contrib = rawToStrain(raw);
+    const div = document.createElement('div');
+    div.className = 'activity-row';
+    const mins = a.moving_time ? Math.round(a.moving_time/60) : null;
+    const timeStr = a.start_date_local ? a.start_date_local.slice(11,16) : '';
+    div.innerHTML = `
+      <div>
+        <div class="activity-name">${a.name || a.type}</div>
+        <div class="activity-meta">${timeStr}${mins!==null ? ' · '+mins+' min' : ''}${a.icu_training_load!=null ? ' · TL '+Math.round(a.icu_training_load) : ''}</div>
+      </div>
+      <div class="activity-strain">+${contrib.toFixed(1)}</div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function pillColor(rec){
+  if(rec===null||rec===undefined) return '#7a7f89';
+  if(rec>=67) return '#3ddc97';
+  if(rec>=40) return '#f0b429';
+  return '#f0553f';
+}
+
+function drawLineChart(svgId, data0, field, color, days, yMin, yMax){
+  const data = data0.slice(-days);
+  const svg = document.getElementById(svgId);
+  const W = svg.clientWidth || 800, H = 200;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML='';
+  const pad = {l:36,r:10,t:14,b:24};
+  const plotW = W-pad.l-pad.r, plotH = H-pad.t-pad.b;
+
+  const valid = data.map((d,i)=>({...d,i})).filter(d=>d[field]!==null && d[field]!==undefined);
+  if(valid.length<2){
+    svg.innerHTML = `<text x="${W/2}" y="${H/2}" fill="#7a7f89" font-size="13" text-anchor="middle">Nedostatok dát</text>`;
+    return;
+  }
+  const n = data.length;
+  const xFor = i => pad.l + (n>1 ? (i/(n-1))*plotW : plotW/2);
+  const yFor = val => pad.t + plotH - ((val-yMin)/(yMax-yMin))*plotH;
+
+  const steps = yMax===21 ? [0,7,14,21] : [0,25,50,75,100];
+  steps.forEach(val=>{
+    const y = yFor(val);
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',pad.l); line.setAttribute('x2',W-pad.r);
+    line.setAttribute('y1',y); line.setAttribute('y2',y);
+    line.setAttribute('stroke','#24282f'); line.setAttribute('stroke-width','1');
+    svg.appendChild(line);
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',6); t.setAttribute('y',y+3);
+    t.setAttribute('fill','#7a7f89'); t.setAttribute('font-size','10');
+    t.textContent = val;
+    svg.appendChild(t);
+  });
+
+  let path='';
+  valid.forEach((d,idx)=>{
+    const x=xFor(d.i), y=yFor(d[field]);
+    path += (idx===0?'M':'L')+x.toFixed(1)+','+y.toFixed(1)+' ';
+  });
+  const pathEl = document.createElementNS('http://www.w3.org/2000/svg','path');
+  pathEl.setAttribute('d',path); pathEl.setAttribute('fill','none');
+  pathEl.setAttribute('stroke',color); pathEl.setAttribute('stroke-width','2.5');
+  svg.appendChild(pathEl);
+
+  valid.forEach(d=>{
+    const x=xFor(d.i), y=yFor(d[field]);
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',x); c.setAttribute('cy',y); c.setAttribute('r', n<=10?4:3);
+    let dotColor = color;
+    if(yMax===100){ dotColor = pillColor(d[field]); }
+    c.setAttribute('fill',dotColor);
+    svg.appendChild(c);
+    if(n<=10){
+      const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+      label.setAttribute('x',x); label.setAttribute('y', y-10);
+      label.setAttribute('fill','#e7e8ea'); label.setAttribute('font-size','11');
+      label.setAttribute('text-anchor','middle');
+      label.textContent = yMax===21 ? d[field].toFixed(1) : d[field]+'%';
+      svg.appendChild(label);
+    }
+  });
+
+  const labelEvery = Math.max(1, Math.ceil(n/6));
+  data.forEach((d,i)=>{
+    if(i % labelEvery !== 0 && i !== n-1) return;
+    const x = xFor(i);
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',x); t.setAttribute('y', H-6);
+    t.setAttribute('fill','#7a7f89'); t.setAttribute('font-size','9');
+    t.setAttribute('text-anchor','middle');
+    t.textContent = d.date.slice(5);
+    svg.appendChild(t);
+  });
+}
+
+function drawMetricChart(svgId, results, field, color){
+  const data = results.filter(r => r.date >= NEW_METHOD_CUTOFF || field==='steps');
+  const svg = document.getElementById(svgId);
+  const W = svg.clientWidth || 400, H = 170;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML='';
+  const pad = {l:38,r:10,t:10,b:20};
+  const plotW = W-pad.l-pad.r, plotH = H-pad.t-pad.b;
+
+  const valid = data.map((d,i)=>({...d,i})).filter(d=> d[field]!==null && d[field]!==undefined && !isNaN(d[field]));
+  if(valid.length<2){
+    svg.innerHTML = `<text x="${W/2}" y="${H/2}" fill="#7a7f89" font-size="12" text-anchor="middle">Nedostatok dát</text>`;
+    return;
+  }
+  const vals = valid.map(d=>d[field]);
+  const vMin=Math.min(...vals), vMax=Math.max(...vals);
+  const margin=(vMax-vMin)*0.15 || (vMax*0.1) || 2;
+  const lo=Math.max(0,vMin-margin), hi=vMax+margin;
+
+  const n = data.length;
+  const xFor = i => pad.l + (n>1 ? (i/(n-1))*plotW : plotW/2);
+  const yFor = val => pad.t + plotH - ((val-lo)/(hi-lo))*plotH;
+
+  [lo, (lo+hi)/2, hi].forEach(val=>{
+    const y = yFor(val);
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',pad.l); line.setAttribute('x2',W-pad.r);
+    line.setAttribute('y1',y); line.setAttribute('y2',y);
+    line.setAttribute('stroke','#24282f'); line.setAttribute('stroke-width','1');
+    svg.appendChild(line);
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',4); t.setAttribute('y',y+3);
+    t.setAttribute('fill','#7a7f89'); t.setAttribute('font-size','9');
+    t.textContent = field==='steps' ? Math.round(val/1000)+'k' : val.toFixed(0);
+    svg.appendChild(t);
+  });
+
+  let path='';
+  valid.forEach((d,idx)=>{
+    const x=xFor(d.i), y=yFor(d[field]);
+    path += (idx===0?'M':'L')+x.toFixed(1)+','+y.toFixed(1)+' ';
+  });
+  const pathEl = document.createElementNS('http://www.w3.org/2000/svg','path');
+  pathEl.setAttribute('d',path); pathEl.setAttribute('fill','none');
+  pathEl.setAttribute('stroke',color); pathEl.setAttribute('stroke-width','2');
+  svg.appendChild(pathEl);
+
+  valid.forEach(d=>{
+    const x=xFor(d.i), y=yFor(d[field]);
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',x); c.setAttribute('cy',y); c.setAttribute('r','2.5');
+    c.setAttribute('fill',color);
+    svg.appendChild(c);
+  });
+}
+
+function drawTable(rows){
+  const table = document.getElementById('history-table');
+  let html = '<thead><tr><th>Dátum</th><th>Recovery</th><th>Strain</th><th>HRV</th><th>TF pokoj.</th><th>Kroky</th></tr></thead><tbody>';
+  rows.forEach(r=>{
+    const color = pillColor(r.recovery);
+    html += `<tr>
+      <td>${r.date}</td>
+      <td><span class="pill" style="background:${color}22;color:${color}">${r.recovery!==null? r.recovery+'%':'—'}</span></td>
+      <td>${r.strain!=null ? r.strain.toFixed(1) : '—'}</td>
+      <td>${fmt(r.hrv,1)}</td>
+      <td>${fmt(r.restingHR,0)}</td>
+      <td>${r.steps!=null ? r.steps.toLocaleString('sk-SK') : '—'}</td>
+    </tr>`;
+  });
+  html += '</tbody>';
+  table.innerHTML = html;
+}
+
+main();
+</script>
+</body>
+</html>
