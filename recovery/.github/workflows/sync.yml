@@ -1,0 +1,42 @@
+name: Sync Intervals.icu data
+
+on:
+  schedule:
+    # Beží každý deň o 5:00 UTC (7:00 SELČ v lete / 6:00 SEČ v zime)
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'Koľko dní dozadu synchronizovať'
+        required: false
+        default: '10'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run sync script
+        env:
+          ICU_API_KEY: ${{ secrets.ICU_API_KEY }}
+          ICU_ATHLETE_ID: ${{ secrets.ICU_ATHLETE_ID }}
+          SYNC_DAYS: ${{ github.event.inputs.days || '10' }}
+        run: node sync.js
+
+      - name: Commit and push updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/wellness_daily.json data/activities_daily.json data/last_sync.json
+          git diff --staged --quiet || git commit -m "Auto-sync Intervals.icu data $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push
