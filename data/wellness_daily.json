@@ -7165,7 +7165,7 @@
   "atl": 56.36886,
   "weight": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-06T11:09:58.789Z"
+  "syncedAt": "2026-07-06T14:15:18.469Z"
  },
  {
   "id": "2026-07-04",
@@ -7181,7 +7181,7 @@
   "atl": 66.03767,
   "weight": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-06T11:09:58.789Z"
+  "syncedAt": "2026-07-06T14:15:18.469Z"
  },
  {
   "id": "2026-07-05",
@@ -7197,22 +7197,22 @@
   "atl": 57.512836,
   "weight": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-06T11:09:58.789Z"
+  "syncedAt": "2026-07-06T14:15:18.469Z"
  },
  {
   "id": "2026-07-06",
   "date": "2026-07-06",
   "restingHR": 57,
-  "hrv": 60.324326,
+  "hrv": 58.930233,
   "hrvSDNN": null,
   "avgSleepingHR": 57,
   "sleepScore": 85,
   "sleepSecs": 28320,
-  "steps": 7849,
-  "ctl": 37.82836,
-  "atl": 49.856606,
+  "steps": 9908,
+  "ctl": 38.228344,
+  "atl": 52.119682,
   "weight": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-06T11:09:58.789Z"
+  "syncedAt": "2026-07-06T14:15:18.469Z"
  }
 ]
