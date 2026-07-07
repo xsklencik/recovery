@@ -4186,21 +4186,5 @@
   "hr_z5_secs": 0.0,
   "hr_z6_secs": null,
   "hr_z7_secs": null
- },
- {
-  "id": "19174531940.0",
-  "date": "2026-07-04",
-  "start_date_local": "2026-07-04T10:05:50",
-  "name": "Take me home",
-  "type": "Ride",
-  "moving_time": 9859.0,
-  "icu_training_load": 127.0,
-  "hr_z1_secs": 4709.0,
-  "hr_z2_secs": 4223.0,
-  "hr_z3_secs": 807.0,
-  "hr_z4_secs": 35.0,
-  "hr_z5_secs": 0.0,
-  "hr_z6_secs": null,
-  "hr_z7_secs": null
  }
 ]
