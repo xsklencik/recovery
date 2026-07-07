@@ -14,7 +14,7 @@ const path = require('path');
 
 const API_KEY = process.env.ICU_API_KEY;
 const ATHLETE_ID = process.env.ICU_ATHLETE_ID;
-const SYNC_DAYS = parseInt(process.env.SYNC_DAYS || '3', 3);
+const SYNC_DAYS = parseInt(process.env.SYNC_DAYS || '3', 10);
 
 if (!API_KEY || !ATHLETE_ID) {
   console.error('Chýba ICU_API_KEY alebo ICU_ATHLETE_ID v environment premenných.');
