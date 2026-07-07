@@ -1,1 +1,66 @@
-[]
+[
+ {
+  "id": "2026-07-04",
+  "date": "2026-07-04",
+  "restingHR": 55,
+  "hrv": 52.22222,
+  "hrvSDNN": null,
+  "avgSleepingHR": 64,
+  "sleepScore": 79,
+  "sleepSecs": 25020,
+  "steps": 13890,
+  "ctl": 40.925266,
+  "atl": 66.03767,
+  "weight": null,
+  "source": "intervals_api",
+  "syncedAt": "2026-07-07T10:37:23.652Z"
+ },
+ {
+  "id": "2026-07-05",
+  "date": "2026-07-05",
+  "restingHR": 53,
+  "hrv": 54.080647,
+  "hrvSDNN": null,
+  "avgSleepingHR": 61,
+  "sleepScore": 88,
+  "sleepSecs": 29400,
+  "steps": 7709,
+  "ctl": 39.962364,
+  "atl": 57.246593,
+  "weight": null,
+  "source": "intervals_api",
+  "syncedAt": "2026-07-07T10:37:23.652Z"
+ },
+ {
+  "id": "2026-07-06",
+  "date": "2026-07-06",
+  "restingHR": 57,
+  "hrv": 57.64407,
+  "hrvSDNN": null,
+  "avgSleepingHR": 57,
+  "sleepScore": 85,
+  "sleepSecs": 28320,
+  "steps": 14175,
+  "ctl": 39.375042,
+  "atl": 51.62264,
+  "weight": null,
+  "source": "intervals_api",
+  "syncedAt": "2026-07-07T10:37:23.652Z"
+ },
+ {
+  "id": "2026-07-07",
+  "date": "2026-07-07",
+  "restingHR": 50,
+  "hrv": 60.60606,
+  "hrvSDNN": null,
+  "avgSleepingHR": 57,
+  "sleepScore": 82,
+  "sleepSecs": 27180,
+  "steps": 5947,
+  "ctl": 38.5192,
+  "atl": 45.14989,
+  "weight": null,
+  "source": "intervals_api",
+  "syncedAt": "2026-07-07T10:37:23.652Z"
+ }
+]
