@@ -7,157 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-  :root{
-    /* Base — graphite/carbon, not the green-black every fitness app defaults to */
-    --bg:#0a0b0d;
-    --surface:#131519;
-    --surface-2:#1a1d22;
-    --surface-3:#22262d;
-    --line:#24282f;
-    --line-soft:#1b1e24;
-    --text:#e7e8ea;
-    --text-dim:#7a7f89;
-    --text-faint:#4a4f58;
-
-    /* Signal — a precise, single warm accent (power/heat) instead of a health-app green,
-       plus a cool data-blue for load/strain so the two axes read as distinct instruments. */
-    --accent:#ff6a3d;
-    --accent-dim:#ff6a3d33;
-    --data:#4a9eff;
-    --data-dim:#4a9eff33;
-
-    --good:#3ddc97;
-    --warn:#f0b429;
-    --bad:#f0553f;
-
-    --mono: 'IBM Plex Mono', ui-monospace, monospace;
-    --sans: 'Inter', system-ui, -apple-system, sans-serif;
-  }
-  *{box-sizing:border-box;}
-  ::selection{background:var(--accent-dim);color:var(--text);}
-  body{
-    margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
-    min-height:100vh; -webkit-font-smoothing:antialiased;
-  }
-  .wrap{max-width:1040px;margin:0 auto;padding:32px 22px 70px;}
-
-  /* ---------- Header ---------- */
-  .top-row{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:28px;}
-  .brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
-  h1{font-size:1.1rem;font-weight:700;margin:0;letter-spacing:-0.01em;}
-  .brand-tag{font-family:var(--mono);font-size:0.7rem;color:var(--text-faint);letter-spacing:.08em;text-transform:uppercase;}
-  .sub{color:var(--text-dim);font-size:0.85rem;margin-top:5px;}
-  .sync-info{color:var(--text-faint);font-size:0.72rem;margin-top:3px;font-family:var(--mono);}
-
-  .btn-group{display:flex;gap:8px;}
-  .btn{
-    background:var(--surface-2);color:var(--text);border:1px solid var(--line);border-radius:8px;
-    padding:9px 14px;font-weight:600;font-size:0.8rem;cursor:pointer;
-    white-space:nowrap; font-family:var(--sans); display:flex;align-items:center;gap:6px;
-    transition:border-color .12s, background .12s;
-  }
-  .btn:hover{border-color:var(--text-faint);}
-  .btn:disabled{opacity:0.45;cursor:default;}
-  .btn.primary{background:var(--accent);color:#150a06;border-color:var(--accent);}
-  .btn.primary:hover{background:#ff7d54;}
-  .btn-icon{font-size:0.9em;}
-
-  /* ---------- Hero gauges ---------- */
-  .gauge-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-  @media (max-width:680px){.gauge-row{grid-template-columns:1fr;}}
-
-  .gauge-card{
-    background:var(--surface); border:1px solid var(--line); border-radius:14px;
-    padding:22px 24px; position:relative; overflow:hidden;
-  }
-  .gauge-card::before{
-    content:'';position:absolute;top:0;left:0;right:0;height:2px;
-    background:var(--gauge-accent, var(--accent));
-  }
-  .gauge-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px;}
-  .gauge-label{font-family:var(--mono);font-size:0.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text-dim);}
-  .gauge-scale-label{font-family:var(--mono);font-size:0.68rem;color:var(--text-faint);}
-
-  .gauge-value-row{display:flex;align-items:flex-end;gap:14px;margin-bottom:14px;}
-  .gauge-value{font-family:var(--mono);font-size:2.6rem;font-weight:700;line-height:1;letter-spacing:-0.02em;}
-  .gauge-value-unit{font-family:var(--mono);font-size:1.1rem;color:var(--text-dim);margin-left:2px;}
-  .gauge-verdict{flex:1;text-align:right;}
-  .gauge-verdict-label{font-weight:700;font-size:0.92rem;margin-bottom:2px;}
-  .gauge-verdict-detail{color:var(--text-dim);font-size:0.76rem;line-height:1.4;max-width:220px;margin-left:auto;}
-
-  .gauge-track{position:relative;height:8px;background:var(--surface-3);border-radius:4px;overflow:hidden;margin-bottom:8px;}
-  .gauge-fill{position:absolute;top:0;left:0;bottom:0;border-radius:4px;transition:width .5s ease;}
-  .gauge-ticks{display:flex;justify-content:space-between;font-family:var(--mono);font-size:0.65rem;color:var(--text-faint);}
-
-  .gauge-date{font-family:var(--mono);font-size:0.7rem;color:var(--text-faint);margin-top:14px;padding-top:12px;border-top:1px solid var(--line-soft);}
-
-  /* ---------- Metrics strip ---------- */
-  .metrics-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;margin-top:14px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
-  .metric{background:var(--surface);padding:14px 16px;}
-  .metric-label{color:var(--text-faint);font-family:var(--mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
-  .metric-val{font-family:var(--mono);font-size:1.15rem;font-weight:600;}
-
-  /* ---------- Sections ---------- */
-  .section-head{display:flex;justify-content:space-between;align-items:baseline;margin:38px 0 14px;flex-wrap:wrap;gap:10px;}
-  .section-title{font-size:0.78rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.09em;font-family:var(--mono);}
-  .section-title::before{content:'// ';color:var(--text-faint);}
-
-  .chart-tabs{display:flex;gap:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:3px;}
-  .tab-btn{background:none;border:none;color:var(--text-dim);padding:5px 12px;border-radius:6px;font-size:0.76rem;cursor:pointer;font-family:var(--mono);}
-  .tab-btn.active{color:var(--bg);background:var(--text);font-weight:600;}
-
-  .chart-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;position:relative;}
-  .chart-card svg{width:100%;height:200px;display:block;cursor:crosshair;}
-  .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-  @media (max-width:680px){.chart-grid{grid-template-columns:1fr;}}
-  .chart-card-title{font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em;}
-
-  .chart-tooltip{
-    display:none; position:absolute; z-index:10; pointer-events:none;
-    background:var(--surface-3); border:1px solid var(--line); border-radius:8px;
-    padding:8px 10px; font-family:var(--mono); font-size:0.72rem; min-width:140px;
-    box-shadow:0 4px 16px rgba(0,0,0,0.4);
-  }
-  .chart-tooltip .tt-date{color:var(--text-dim);margin-bottom:5px;font-size:0.68rem;}
-  .chart-tooltip .tt-row{display:flex;align-items:center;gap:6px;margin-top:3px;color:var(--text);}
-  .chart-tooltip .tt-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;display:inline-block;}
-
-  table{width:100%;border-collapse:collapse;font-size:0.82rem;font-family:var(--mono);}
-  th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line-soft);}
-  th{color:var(--text-faint);font-weight:500;font-size:0.68rem;text-transform:uppercase;letter-spacing:.05em;font-family:var(--sans);}
-  tr:hover td{background:var(--surface-2);}
-  .pill{display:inline-block;padding:2px 9px;border-radius:4px;font-size:0.76rem;font-weight:600;font-family:var(--mono);}
-
-  .activity-list{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
-  .activity-row{background:var(--surface);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;font-size:0.85rem;}
-  .activity-name{font-weight:600;}
-  .activity-meta{color:var(--text-faint);font-size:0.74rem;font-family:var(--mono);margin-top:2px;}
-  .activity-strain{font-weight:700;color:var(--data);font-family:var(--mono);font-size:0.95rem;}
-  .activity-empty{background:var(--surface);padding:20px 16px;color:var(--text-dim);font-size:0.85rem;text-align:center;}
-
-  .methodology{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 22px;color:var(--text-dim);font-size:0.82rem;line-height:1.65;}
-  .methodology b{color:var(--text);font-weight:600;}
-  .methodology .m-block{margin-bottom:14px;}
-  .methodology .m-block:last-child{margin-bottom:0;}
-
-  .err{color:var(--bad);margin:16px 0;font-size:0.85rem;white-space:pre-wrap;font-family:var(--mono);}
-  .loading{color:var(--text-dim);padding:60px 0;text-align:center;font-family:var(--mono);font-size:0.85rem;}
-
-  .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(6,7,8,0.72);align-items:center;justify-content:center;z-index:50;padding:20px;}
-  .modal-backdrop.show{display:flex;}
-  .modal{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;max-width:420px;width:100%;}
-  .modal h3{margin:0 0 10px;font-size:1.0rem;}
-  .modal p{color:var(--text-dim);font-size:0.83rem;line-height:1.55;margin:0 0 14px;}
-  .modal input{
-    width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--line);
-    background:var(--surface-2);color:var(--text);font-size:0.88rem;margin-bottom:14px;font-family:var(--mono);
-  }
-  .modal-actions{display:flex;gap:8px;justify-content:flex-end;}
-  .modal-actions button{padding:9px 16px;border-radius:8px;border:none;font-size:0.83rem;cursor:pointer;font-weight:600;font-family:var(--sans);}
-  .modal-actions .save{background:var(--accent);color:#150a06;}
-  .modal-actions .cancel{background:none;color:var(--text-dim);border:1px solid var(--line);}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="wrap">
@@ -218,6 +68,7 @@
     </div>
 
     <div class="metrics-row" id="metrics-row"></div>
+    <div class="history-count" id="baseline-note">Farba hodnoty = odchýlka od tvojho 60-dňového priemeru (od {NEW_METHOD_CUTOFF} pre HRV a spánkovú TF, kvôli zmene metódy merania).</div>
 
     <div class="section-head">
       <div class="section-title">Dnešné aktivity</div>
@@ -245,6 +96,19 @@
     <div class="chart-card"><svg id="chart-strain"></svg></div>
 
     <div class="section-head">
+      <div class="section-title">Forma (TSB = CTL − ATL)</div>
+      <div class="chart-tabs">
+        <button class="tab-btn" data-chart="forma" data-range="30">30D</button>
+        <button class="tab-btn active" data-chart="forma" data-range="90">90D</button>
+        <button class="tab-btn" data-chart="forma" data-range="180">180D</button>
+      </div>
+    </div>
+    <div class="chart-with-legend">
+      <div class="chart-card"><svg id="chart-forma"></svg></div>
+      <div class="forma-legend" id="forma-legend"></div>
+    </div>
+
+    <div class="section-head">
       <div class="section-title">HRV · pokojová TF · spánková TF</div>
       <div class="chart-tabs">
         <button class="tab-btn" data-chart="physio" data-range="7">7D</button>
@@ -256,7 +120,7 @@
       <div class="chart-card"><div class="chart-card-title">HRV</div><svg id="chart-hrv"></svg></div>
       <div class="chart-card"><div class="chart-card-title">Pokojová TF</div><svg id="chart-rhr"></svg></div>
       <div class="chart-card"><div class="chart-card-title">Spánková TF</div><svg id="chart-sleephr"></svg></div>
-      <div class="chart-card"><div class="chart-card-title">Kroky</div><svg id="chart-steps"></svg></div>
+      <div class="chart-card"><div class="chart-card-title">Kroky (prerušovaná čiara = 60-dňový priemer)</div><svg id="chart-steps"></svg></div>
     </div>
 
     <div class="section-head">
@@ -273,12 +137,16 @@
     <div class="chart-card" style="padding:0; overflow-x:auto;">
       <table id="history-table"></table>
     </div>
-    <div id="history-note" style="color:var(--text-faint);font-size:0.72rem;font-family:var(--mono);margin-top:8px;">Klikni na riadok pre detail aktivity daného dňa</div>
+    <div id="history-note" style="color:var(--text-faint);font-size:0.72rem;font-family:var(--mono);margin-top:8px;">
+      Zobrazených posledných 30 dní · klikni na riadok pre detail dňa (vrátane komentára) · <a class="nav-link" href="history.html">zobraziť celú históriu →</a>
+    </div>
 
     <div class="section-head"><div class="section-title">Metodika</div></div>
     <div class="methodology">
       <div class="m-block"><b>Recovery %</b> — fixné cez celý deň, počíta sa z ranných dát: vážené z-skóre voči 60-dňovému kĺzavému priemeru, mapované na stupnicu s posunutým stredom (priemerný deň ≈ 63 %, horšie-než-zvyčajne dni klesajú rýchlejšie než lepšie-než-zvyčajne dni stúpajú — podobne ako referenčné hodnoty z Whoop dokumentácie). HRV 45 % · pokojová TF 20 % · spánková TF 15 % · spánok 10 % · záťaž/TSB 10 %.</div>
-      <div class="m-block"><b>Strain 0–21</b> — rastie počas dňa. Počíta sa priamo z Intervals.icu <b>Load</b> (spoľahlivá, kalibrovaná záťažová metrika pre každú aktivitu) namiesto prepočtu z HR zón — bulk API endpoint totiž niekedy vracia neúplné zónové dáta, zatiaľ čo Load je vždy presný. Kroky sa pripočítajú len v dňoch <b>bez</b> trackovanej aktivity, aby sa tá istá fyzická práca nepočítala dvakrát. Súčet sa škáluje logaritmicky, takže pridávanie záťaže pri už vysokom strain rastie čoraz pomalšie.</div>
+      <div class="m-block"><b>Strain 0–21</b> — rastie počas dňa. Počíta sa priamo z Intervals.icu <b>Load</b> (spoľahlivá, kalibrovaná záťažová metrika pre každú aktivitu) namiesto prepočtu z HR zón. Kroky sa pripočítajú len v dňoch <b>bez</b> trackovanej aktivity a majú vyššiu váhu, ak sú nad tvojím 60-dňovým priemerom (nadpriemerná chôdza/pohyb = viac záťaže, nie len viac krokov). Súčet sa škáluje logaritmicky, takže pridávanie záťaže pri už vysokom strain rastie čoraz pomalšie.</div>
+      <div class="m-block"><b>Forma (TSB)</b> — CTL mínus ATL, farebné pásma podľa štandardných zón: <b>Prechod</b> (nad 20, riziko odtrénovania), <b>Svieži</b> (5 až 20), <b>Sivá zóna</b> (-10 až 5, neutrál), <b>Optimálne</b> (-30 až -10, tréningové okno), <b>Vysoké riziko</b> (pod -30, preťaženie/únava).</div>
+      <div class="m-block"><b>Bannery hore</b> (HRV, pokojová/spánková TF, kroky, CTL/ATL/TSB) — rýchly denný prehľad. Farba hodnoty HRV/TF/krokov ukazuje odchýlku od tvojho vlastného 60-dňového priemeru (zelená = lepšie ako zvyčajne, žltá = mierne horšie, červená = výrazne horšie). TSB je farebne podľa zóny Forma grafu vyššie.</div>
       <div class="m-block" style="color:var(--text-faint);font-size:0.76rem;">Poznámka k HR zónam: čas v jednotlivých zónach (Z1–Z5) sa stále zobrazuje v detaile aktivity ako informačný údaj, no do výpočtu Strain už nevstupuje.</div>
       <div class="m-block"><b>↻ Aktualizovať</b> spustí GitHub Actions sync na pozadí (stiahne najnovšie aktivity a wellness z Intervals.icu) a po dokončení znovu načíta dáta — po skončení jazdy uvidíš Strain narásť do minúty.</div>
     </div>
@@ -307,48 +175,14 @@
   </div>
 </div>
 
+<script src="app-common.js"></script>
 <script>
 const REPO_OWNER = 'xsklencik';
 const REPO_NAME = 'recovery';
 const WORKFLOW_FILE = 'sync.yml';
-const NEW_METHOD_CUTOFF = '2026-06-07';
 
-const HISTORY_URL = 'data/wellness_history.json';
-const DAILY_URL = 'data/wellness_daily.json';
-const SYNC_URL = 'data/last_sync.json';
-const ACT_HISTORY_URL = 'data/activities_history.json';
-const ACT_DAILY_URL = 'data/activities_daily.json';
-
-function mean(arr){ return arr.reduce((a,b)=>a+b,0)/arr.length; }
-function stdev(arr){ const m = mean(arr); return Math.sqrt(mean(arr.map(x=>(x-m)**2))); }
-function clamp(x,lo,hi){return Math.max(lo,Math.min(hi,x));}
-// Whoop kalibruje recovery tak, že priemerný deň (z=0) vychádza cca 58-60%, nie 50%
-// (potvrdené z Whoop dokumentácie: "most people average somewhere in the 60s").
-// Preto namiesto symetrického z*25+50 (ktoré matematicky VŽDY spriemeruje na ~50,
-// bez ohľadu na skutočné zotavenie) používame posunutý stred + asymetrickú strmosť:
-// horšie-než-zvyčajne dni klesajú rýchlejšie (DOWN_SCALE), než lepšie-než-zvyčajne dni stúpajú (UP_SCALE).
-const SCORE_CENTER = 63;
-const SCORE_UP_SCALE = 18;
-const SCORE_DOWN_SCALE = 26;
-function zToScore(z){
-  const raw = z>=0 ? SCORE_CENTER + z*SCORE_UP_SCALE : SCORE_CENTER + z*SCORE_DOWN_SCALE;
-  return clamp(raw, 0, 100);
-}
-function todayISO(){ return new Date().toISOString().slice(0,10); }
-
-async function loadJson(url){
-  try{
-    const res = await fetch(url + '?t=' + Date.now());
-    if(!res.ok) return null;
-    return await res.json();
-  }catch(e){ return null; }
-}
-function mergeById(a, b){
-  const map = new Map();
-  for(const r of (a||[])) map.set(r.id, r);
-  for(const r of (b||[])) map.set(r.id, r);
-  return Array.from(map.values());
-}
+document.getElementById('baseline-note').textContent =
+  'Farba hodnoty = odchýlka od tvojho 60-dňového priemeru (od ' + NEW_METHOD_CUTOFF + ' pre HRV a spánkovú TF, kvôli zmene metódy merania).';
 
 // ---------- GitHub token modal ----------
 function getToken(){ return localStorage.getItem('gh_pat') || ''; }
@@ -366,7 +200,7 @@ document.getElementById('token-save').addEventListener('click', ()=>{
   document.getElementById('token-modal').classList.remove('show');
 });
 
-// ---------- Copy pre AI: zostaví kompletný kontext (7 dní + odchýlky od baseline + fitness) ----------
+// ---------- Copy pre AI: zostaví kompletný kontext (7 dní + komentáre + odchýlky od baseline + fitness) ----------
 function buildAiContext(){
   if(ALL_RESULTS.length===0) return 'Dáta ešte nie sú načítané.';
 
@@ -391,7 +225,9 @@ function buildAiContext(){
   lines.push(`- Recovery: ${today.recovery!=null?today.recovery+'%':'—'} (${today.recovery!=null?verdictFor(today).label:'bez dát'})`);
   const todayStrain = STRAIN_BY_DATE.get(today.date);
   lines.push(`- Strain dnes: ${todayStrain!=null?todayStrain.toFixed(1):'0.0'} / 21`);
-  lines.push(`- CTL (Fitness): ${fmt(today.ctl,1)} · ATL (Únava): ${fmt(today.atl,1)} · TSB (Forma): ${(today.ctl!=null&&today.atl!=null)?(today.ctl-today.atl).toFixed(1):'—'}`);
+  const todayTsbZone = today.tsb!=null ? formaZoneFor(today.tsb) : null;
+  lines.push(`- CTL (Fitness): ${fmt(today.ctl,1)} · ATL (Únava): ${fmt(today.atl,1)} · TSB (Forma): ${today.tsb!=null?today.tsb.toFixed(1):'—'}${todayTsbZone?' ('+todayTsbZone.label+')':''}`);
+  if(today.comments) lines.push(`- Komentár k dnešku: "${today.comments}"`);
   lines.push('');
 
   lines.push('## Odchýlky od 60-dňového baseline (dnes)');
@@ -404,10 +240,11 @@ function buildAiContext(){
   if(!hrvDev && !rhrDev && !sleepHrDev) lines.push('- Nedostatok dát na výpočet odchýlok.');
   lines.push('');
 
-  lines.push('## Posledných 7 dní — Recovery / Strain / HRV / RHR');
+  lines.push('## Posledných 7 dní — Recovery / Strain / HRV / RHR / komentár k dňu');
   last7.forEach(r=>{
     const s = STRAIN_BY_DATE.get(r.date);
-    lines.push(`- ${r.date}: recovery ${r.recovery!=null?r.recovery+'%':'—'}, strain ${s!=null?s.toFixed(1):'0.0'}, HRV ${fmt(r.hrv,1)}, RHR ${fmt(r.restingHR,0)}, kroky ${r.steps!=null?r.steps:'—'}`);
+    const commentPart = r.comments ? `, komentár: "${r.comments}"` : '';
+    lines.push(`- ${r.date}: recovery ${r.recovery!=null?r.recovery+'%':'—'}, strain ${s!=null?s.toFixed(1):'0.0'}, HRV ${fmt(r.hrv,1)}, RHR ${fmt(r.restingHR,0)}, kroky ${r.steps!=null?r.steps:'—'}${commentPart}`);
   });
   lines.push('');
 
@@ -426,7 +263,7 @@ function buildAiContext(){
   }
   lines.push('');
   lines.push('---');
-  lines.push('Na základe vyššie uvedených dát mi poraď, ako naplánovať najbližší tréning (zohľadni Husárik cieľ (15 minut) na september a 130km skupinovú jazdu Zone 2).');
+  lines.push('Na základe vyššie uvedených dát mi poraď, ako naplánovať najbližší tréning (zohľadni Husárik cieľ na september a 130km skupinovú jazdu Zone 2).');
 
   return lines.join('\n');
 }
@@ -440,7 +277,6 @@ document.getElementById('btn-copy-ai').addEventListener('click', async ()=>{
     btn.innerHTML = '<span class="btn-icon">✓</span> Skopírované';
     setTimeout(()=>{ btn.innerHTML = original; }, 2000);
   }catch(e){
-    // fallback pre prehliadace bez clipboard API / needovoleny prístup
     const textarea = document.createElement('textarea');
     textarea.value = text;
     textarea.style.position = 'fixed';
@@ -454,7 +290,6 @@ document.getElementById('btn-copy-ai').addEventListener('click', async ()=>{
     setTimeout(()=>{ btn.innerHTML = original; }, 2000);
   }
 });
-
 
 // ---------- Refresh button: trigger workflow_dispatch, poll, reload ----------
 document.getElementById('btn-refresh').addEventListener('click', async ()=>{
@@ -485,7 +320,6 @@ document.getElementById('btn-refresh').addEventListener('click', async ()=>{
       throw new Error(`GitHub API ${dispatchRes.status}: ${txt.slice(0,200)}`);
     }
     btn.textContent = '⏳ Čakám na dokončenie…';
-    // poll: sync zvycajne trva 20-40s. Skusame nacitat last_sync.json kazde 5s, max 12x (60s)
     const before = await loadJson(SYNC_URL);
     const beforeTs = before && before.lastSync ? before.lastSync : null;
     let done = false;
@@ -514,74 +348,12 @@ document.getElementById('btn-refresh').addEventListener('click', async ()=>{
   }
 });
 
-// ---------- Strain calculation ----------
-// HR zóny (z1-z5 secs) sa už NEPOUŽÍVAJÚ na výpočet Strain — slúžia len ako doplnkový detail
-// v modáli dňa. Dôvod: bulk API endpoint niekedy vracia neúplné/čiastočné zónové dáta
-// (súčet sekúnd nesedí s moving_time), zatiaľ čo icu_training_load je Intervals.icu vlastná,
-// spoľahlivo kalibrovaná záťažová metrika (podobná TSS) — používame priamo tú.
-function zoneSecsToRawStrain(act){
-  const zones = [act.hr_z1_secs, act.hr_z2_secs, act.hr_z3_secs, act.hr_z4_secs, act.hr_z5_secs];
-  let total = 0;
-  zones.forEach((secs, idx)=>{
-    if(secs===null || secs===undefined || secs==='') return;
-    const zone = idx+1;
-    const weight = Math.exp(0.55*zone);
-    total += (secs/60) * weight;
-  });
-  return total;
-}
-// Load->raw prevod: 1:1 (Intervals.icu Load je už na rozumnej škále), scale v rawToStrain robí kompresiu
-function loadToRawStrain(act){
-  if(act.icu_training_load!=null && act.icu_training_load>0) return act.icu_training_load;
-  // fallback ak load chýba: odhadni z HR zón (menej presné, ale lepšie než nič)
-  return zoneSecsToRawStrain(act) * 0.35;
-}
-function stepsToRawStrain(steps){
-  if(!steps) return 0;
-  return (steps/1000.0) * 6.0;
-}
-function rawToStrain(raw){
-  if(raw<=0) return 0;
-  return 21 * (1 - Math.exp(-raw/140.0));
-}
-
-function computeDailyStrain(activities, wellnessByDate){
-  // grupuje aktivity podla datumu a spocita raw strain z icu_training_load (spolahlivy zdroj)
-  const rawByDate = new Map();
-  const hasActivityOnDate = new Set();
-  for(const act of activities){
-    const raw = loadToRawStrain(act);
-    rawByDate.set(act.date, (rawByDate.get(act.date)||0) + raw);
-    hasActivityOnDate.add(act.date);
-  }
-  const strainByDate = new Map();
-  const allDates = new Set([...rawByDate.keys(), ...Object.keys(wellnessByDate)]);
-  for(const date of allDates){
-    let raw = rawByDate.get(date) || 0;
-    const w = wellnessByDate[date];
-    // Kroky sa pripočítajú LEN ak v ten deň nebola žiadna trackovaná aktivita —
-    // inak by sa tá istá fyzická práca počítala dvakrát (raz cez load, raz cez kroky).
-    if(!hasActivityOnDate.has(date) && w && w.steps){
-      raw += stepsToRawStrain(w.steps);
-    }
-    strainByDate.set(date, Math.round(rawToStrain(raw)*10)/10);
-  }
-  return strainByDate;
-}
-
-function strainVerdict(strain){
-  if(strain===undefined || strain===null) return {label:'Bez dát', color:'#7a7f89', detail:'Žiadna aktivita ani kroky zaznamenané.'};
-  if(strain < 8) return {label:'Ľahký deň', color:'#3ddc97', detail:'Nízka záťaž. Priestor na ďalší tréning zajtra.'};
-  if(strain < 14) return {label:'Stredná záťaž', color:'#f0b429', detail:'Bežný tréningový deň.'};
-  if(strain < 18) return {label:'Vysoká záťaž', color:'#f0553f', detail:'Náročný deň — daj pozor na regeneráciu.'};
-  return {label:'Extrémna záťaž', color:'#f0553f', detail:'Veľmi náročný deň. Zajtra pravdepodobne nižšie recovery.'};
-}
-
 // ---------- Main ----------
 let ALL_RESULTS = [];
 let ALL_ACTIVITIES = [];
 let STRAIN_BY_DATE = new Map();
-let LATEST_BASELINE = {}; // { hrv:{mean,std}, restingHR:{...}, avgSleepingHR:{...} } - najnovsie rolling baseline hodnoty
+let LATEST_BASELINE = {};
+let STEPS_BASELINE_BY_DATE = new Map();
 
 async function main(){
   const [history, daily, sync, actHistory, actDaily] = await Promise.all([
@@ -610,86 +382,12 @@ async function main(){
   }
 
   document.getElementById('loading').style.display='none';
-  computeAndRender(recs, activities);
-}
 
-function computeAndRender(recs, activities){
-  const WINDOW = 60;
-  function rollingStats(field, methodBoundaryDate){
-    const stats = [];
-    for(let i=0;i<recs.length;i++){
-      const lo = Math.max(0, i-WINDOW);
-      let window = recs.slice(lo,i);
-      if(methodBoundaryDate && recs[i].date >= methodBoundaryDate){
-        window = window.filter(r => r.date >= methodBoundaryDate);
-      }
-      const vals = window.map(r=>r[field]).filter(v=>v!==null && v!==undefined && !isNaN(v));
-      if(vals.length >= 5) stats.push({mean: mean(vals), std: stdev(vals) || 1});
-      else stats.push(null);
-    }
-    return stats;
-  }
-  const hrvStats = rollingStats('hrv', NEW_METHOD_CUTOFF);
-  const rhrStats = rollingStats('restingHR', null);
-  const sleepHrStats = rollingStats('avgSleepingHR', NEW_METHOD_CUTOFF);
-  const sleepScoreStats = rollingStats('sleepScore', null);
-
-  LATEST_BASELINE = {
-    hrv: hrvStats[hrvStats.length-1],
-    restingHR: rhrStats[rhrStats.length-1],
-    avgSleepingHR: sleepHrStats[sleepHrStats.length-1],
-    sleepScore: sleepScoreStats[sleepScoreStats.length-1],
-  };
-
-  const tsbSeries = recs.map(r => (r.ctl!=null && r.atl!=null) ? r.ctl-r.atl : null);
-  const tsbStats = (()=>{
-    const stats = [];
-    for(let i=0;i<recs.length;i++){
-      const lo = Math.max(0, i-WINDOW);
-      const vals = tsbSeries.slice(lo,i).filter(v=>v!==null);
-      if(vals.length >= 5) stats.push({mean: mean(vals), std: stdev(vals) || 1});
-      else stats.push(null);
-    }
-    return stats;
-  })();
-
-  const results = recs.map((r,i)=>{
-    const parts = [];
-    if(r.hrv!=null && hrvStats[i]){ const z=(r.hrv-hrvStats[i].mean)/hrvStats[i].std; parts.push({w:0.45,score:zToScore(z)}); }
-    if(r.restingHR!=null && rhrStats[i]){ const z=(r.restingHR-rhrStats[i].mean)/rhrStats[i].std; parts.push({w:0.20,score:zToScore(-z)}); }
-    if(r.avgSleepingHR!=null && sleepHrStats[i]){ const z=(r.avgSleepingHR-sleepHrStats[i].mean)/sleepHrStats[i].std; parts.push({w:0.15,score:zToScore(-z)}); }
-    if(r.sleepScore!=null && sleepScoreStats[i]){ const z=(r.sleepScore-sleepScoreStats[i].mean)/sleepScoreStats[i].std; parts.push({w:0.10,score:zToScore(z)}); }
-    if(r.ctl!=null && r.atl!=null && tsbStats[i]){
-      const tsb = r.ctl - r.atl;
-      const z = (tsb - tsbStats[i].mean) / tsbStats[i].std;
-      parts.push({w:0.10, score: zToScore(z)});
-    }
-    if(parts.length===0) return {...r, recovery:null};
-    const totalW = parts.reduce((s,p)=>s+p.w,0);
-    const recovery = parts.reduce((s,p)=>s+p.score*(p.w/totalW),0);
-    return {...r, recovery: Math.round(recovery)};
-  });
-
-  const wellnessByDate = {};
-  recs.forEach(r=>{ wellnessByDate[r.date] = r; });
-  STRAIN_BY_DATE = computeDailyStrain(activities, wellnessByDate);
-
-  const resultsWithStrain = results.map(r => ({...r, strain: STRAIN_BY_DATE.has(r.date) ? STRAIN_BY_DATE.get(r.date) : null}));
-
-  render(resultsWithStrain, activities);
-}
-
-function verdictFor(rec){
-  if(rec.recovery===null) return {label:'Nedostatok dát', color:'#7a7f89', detail:'Chýbajú HRV/RHR/spánok dáta.'};
-  if(rec.recovery>=67) return {label:'Pripravený na intenzitu', color:'#3ddc97', detail:'Telo je zotavené. Priestor na kvalitný tréning.'};
-  if(rec.recovery>=34) return {label:'Udržiavaj Z1/Z2', color:'#f0b429', detail:'Čiastočné zotavenie. Žiadne tvrdé intervaly.'};
-  return {label:'Regeneruj', color:'#f0553f', detail:'Nízke zotavenie. Odporúčaný odpočinok.'};
-}
-
-function fmt(v, digits, suffix){
-  suffix = suffix || '';
-  if(v===null||v===undefined) return '—';
-  return v.toFixed(digits) + suffix;
+  const {results, strainByDate, latestBaseline, stepsBaselineByDate} = computeResults(recs, activities);
+  STRAIN_BY_DATE = strainByDate;
+  LATEST_BASELINE = latestBaseline;
+  STEPS_BASELINE_BY_DATE = stepsBaselineByDate;
+  render(results, activities);
 }
 
 function render(results, activities){
@@ -711,7 +409,6 @@ function render(results, activities){
   fillR.style.background = v.color;
   fillR.style.width = (today.recovery!==null ? pct : 0) + '%';
 
-  // Strain today - vzdy pocitaj z dnesneho datumu skutocne, aj ked wellness sync este nema dnesny riadok
   const todayDate = todayISO();
   const todayStrain = STRAIN_BY_DATE.has(todayDate) ? STRAIN_BY_DATE.get(todayDate) : 0;
   const sv = strainVerdict(todayStrain);
@@ -723,25 +420,43 @@ function render(results, activities){
   fillS.style.background = sv.color;
   fillS.style.width = (clamp(todayStrain,0,21)/21*100) + '%';
 
+  // ---- Bannery: farba = odchýlka od 60-dňového baseline ----
+  function devInfo(value, bl, direction){
+    if(value==null || !bl) return {color:null, sub:null};
+    const diff = value - bl.mean;
+    const z = diff/bl.std;
+    const color = baselineColor(z, direction);
+    const sign = diff>=0 ? '+' : '';
+    return {color, sub: `${sign}${diff.toFixed(1)} vs priemer ${bl.mean.toFixed(1)}`};
+  }
+  const hrvDev = devInfo(today.hrv, LATEST_BASELINE.hrv, 1);
+  const rhrDev = devInfo(today.restingHR, LATEST_BASELINE.restingHR, -1);
+  const sleepHrDev = devInfo(today.avgSleepingHR, LATEST_BASELINE.avgSleepingHR, -1);
+  const stepsBL = LATEST_BASELINE.steps;
+  const stepsSub = (today.steps!=null && stepsBL) ?
+    `${today.steps>=stepsBL.mean?'+':''}${Math.round(today.steps-stepsBL.mean).toLocaleString('sk-SK')} vs priemer ${Math.round(stepsBL.mean).toLocaleString('sk-SK')}` : null;
+  const tsbZone = today.tsb!=null ? formaZoneFor(today.tsb) : null;
+
   const metricsRow = document.getElementById('metrics-row');
   metricsRow.innerHTML = '';
   const metrics = [
-    {label:'HRV', val: fmt(today.hrv,1)},
-    {label:'Pokojová TF', val: fmt(today.restingHR,0,' bpm')},
-    {label:'Spánková TF', val: fmt(today.avgSleepingHR,0,' bpm')},
-    {label:'Kroky dnes', val: today.steps!=null ? today.steps.toLocaleString('sk-SK') : '—'},
+    {label:'HRV', val: fmt(today.hrv,1), color:hrvDev.color, sub:hrvDev.sub},
+    {label:'Pokojová TF', val: fmt(today.restingHR,0,' bpm'), color:rhrDev.color, sub:rhrDev.sub},
+    {label:'Spánková TF', val: fmt(today.avgSleepingHR,0,' bpm'), color:sleepHrDev.color, sub:sleepHrDev.sub},
+    {label:'Kroky dnes', val: today.steps!=null ? today.steps.toLocaleString('sk-SK') : '—', sub: stepsSub},
     {label:'CTL (Fitness)', val: fmt(today.ctl,1)},
     {label:'ATL (Únava)', val: fmt(today.atl,1)},
-    {label:'TSB (Forma)', val: (today.ctl!=null&&today.atl!=null)? (today.ctl-today.atl).toFixed(1): '—'},
+    {label:'TSB (Forma)', val: today.tsb!=null? today.tsb.toFixed(1): '—', color: tsbZone?tsbZone.color:null, sub: tsbZone?tsbZone.label:null},
   ];
   metrics.forEach(m=>{
     const div = document.createElement('div');
     div.className='metric';
-    div.innerHTML = `<div class="metric-label">${m.label}</div><div class="metric-val">${m.val}</div>`;
+    div.innerHTML = `<div class="metric-label">${m.label}</div><div class="metric-val" style="${m.color?'color:'+m.color+';':''}">${m.val}</div>${m.sub?`<div class="metric-sub">${m.sub}</div>`:''}`;
     metricsRow.appendChild(div);
   });
 
   renderActivityList(activities, todayDate);
+  renderFormaLegend('forma-legend');
 
   function renderRecovery(range){
     drawChart('chart-recovery', results.slice(-range), [{field:'recovery', color:'#ff6a3d', label:'Recovery'}],
@@ -753,13 +468,24 @@ function render(results, activities){
       {fixedMin:0, fixedMax:21, gridValues:[0,7,14,21],
        tooltipFormat:(f,v)=>v.toFixed(1)});
   }
+  function renderForma(range){
+    drawChart('chart-forma', results.slice(-range), [{field:'tsb', color:'#7a7f89', label:'TSB'}],
+      {fixedMin:-40, fixedMax:25, gridValues:[20,5,-10,-30],
+       dotColorFn: v => { const z = formaZoneFor(v); return z ? z.color : '#7a7f89'; },
+       bands: FORMA_ZONES.map(z=>({min: Math.max(z.min,-40), max: Math.min(z.max,25), color: hexToRgba(z.color, 0.14)})),
+       tooltipFormat:(f,v)=>v.toFixed(1)});
+  }
   function renderPhysio(range){
     const hrvData = results.filter(r => r.date >= NEW_METHOD_CUTOFF).slice(-range);
-    const stepsData = results.slice(-range);
     drawChart('chart-hrv', hrvData, [{field:'hrv', color:'#3ddc97', label:'HRV'}], {minAtZero:true, tooltipFormat:(f,v)=>v.toFixed(1)});
     drawChart('chart-rhr', hrvData, [{field:'restingHR', color:'#f0b429', label:'RHR'}], {minAtZero:true, tooltipFormat:(f,v)=>Math.round(v)+' bpm'});
     drawChart('chart-sleephr', hrvData, [{field:'avgSleepingHR', color:'#a78bfa', label:'Spánk. TF'}], {minAtZero:true, tooltipFormat:(f,v)=>Math.round(v)+' bpm'});
-    drawChart('chart-steps', stepsData, [{field:'steps', color:'#4a9eff', label:'Kroky'}], {minAtZero:true, yFormat:v=>Math.round(v/1000)+'k', tooltipFormat:(f,v)=>Math.round(v).toLocaleString('sk-SK')});
+    drawChart('chart-steps', results.slice(-range).map(r=>({...r, stepsBaseline: STEPS_BASELINE_BY_DATE.get(r.date) ?? null})),
+      [
+        {field:'steps', color:'#4a9eff', label:'Kroky'},
+        {field:'stepsBaseline', color:'#4a4f58', label:'Priemer', dash:true, hideDots:true, width:1.5},
+      ],
+      {minAtZero:true, yFormat:v=>Math.round(v/1000)+'k', tooltipFormat:(f,v)=>Math.round(v).toLocaleString('sk-SK')});
   }
   function renderLoad(range){
     drawChart('chart-load', results.slice(-range),
@@ -769,9 +495,10 @@ function render(results, activities){
 
   renderRecovery(7);
   renderStrain(7);
+  renderForma(90);
   renderPhysio(30);
   renderLoad(90);
-  drawTable(results.slice().reverse().slice(0,90), activities);
+  drawTable('history-table', results.slice().reverse().slice(0,30), activities);
 
   document.querySelectorAll('.tab-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -781,34 +508,11 @@ function render(results, activities){
       const range = parseInt(btn.dataset.range);
       if(chartName==='recovery') renderRecovery(range);
       else if(chartName==='strain') renderStrain(range);
+      else if(chartName==='forma') renderForma(range);
       else if(chartName==='physio') renderPhysio(range);
       else if(chartName==='load') renderLoad(range);
     });
   });
-}
-
-// ---------- Tag parser: vyčíta kľúčové slová z názvu aktivity a wellness komentárov ----------
-const TAG_PATTERNS = [
-  {tag:'Z1', re:/\bz(?:óna|ona)?\s?1\b|\bzona jedna\b/i},
-  {tag:'Z2', re:/\bz(?:óna|ona)?\s?2\b|\bzona dva\b/i},
-  {tag:'Z3', re:/\bz(?:óna|ona)?\s?3\b/i},
-  {tag:'Z4', re:/\bz(?:óna|ona)?\s?4\b/i},
-  {tag:'Z5', re:/\bz(?:óna|ona)?\s?5\b/i},
-  {tag:'Recovery', re:/\brecovery\b|\bregener/i},
-  {tag:'Dlhá etapa', re:/\betapa\b|\bdlh[áa]\b/i},
-  {tag:'Kopcovitá jazda', re:/\bkopec\b|\bkopcovit/i},
-  {tag:'Sprinty', re:/\bsprint/i},
-  {tag:'Test/PR', re:/\btest\b|\bPR\b|\bpokus/i},
-  {tag:'Skupinová jazda', re:/\bskupin/i},
-];
-function parseTags(...texts){
-  const combined = texts.filter(Boolean).join(' ');
-  if(!combined) return [];
-  const found = [];
-  for(const {tag, re} of TAG_PATTERNS){
-    if(re.test(combined)) found.push(tag);
-  }
-  return found;
 }
 
 function renderActivityList(activities, todayDate){
@@ -838,304 +542,6 @@ function renderActivityList(activities, todayDate){
     list.appendChild(div);
   });
 }
-
-function pillColor(rec){
-  if(rec===null||rec===undefined) return '#7a7f89';
-  if(rec>=67) return '#3ddc97';
-  if(rec>=34) return '#f0b429';
-  return '#f0553f';
-}
-
-// ---------- Unified chart renderer: auto-scaled line chart with crosshair/tooltip ----------
-// series: [{field, color, label, fixedMax?}] - viac serii pre jeden graf (napr. ATL+CTL)
-function drawChart(svgId, data, series, opts){
-  opts = opts || {};
-  const svg = document.getElementById(svgId);
-  const W = svg.clientWidth || 600, H = opts.height || 190;
-  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-  svg.innerHTML = '';
-
-  const pad = {l:40, r:12, t:14, b:22};
-  const plotW = W-pad.l-pad.r, plotH = H-pad.t-pad.b;
-  const n = data.length;
-
-  // over ci existuje aspon jedna seria s aspon 2 platnymi bodmi
-  const anyValid = series.some(s => data.filter(d=>d[s.field]!=null && !isNaN(d[s.field])).length >= 2);
-  if(n < 2 || !anyValid){
-    svg.innerHTML = `<text x="${W/2}" y="${H/2}" fill="#7a7f89" font-size="12" text-anchor="middle">Nedostatok dát</text>`;
-    return;
-  }
-
-  let yMin, yMax;
-  if(opts.fixedMin!=null && opts.fixedMax!=null){
-    yMin = opts.fixedMin; yMax = opts.fixedMax;
-  } else {
-    const allVals = series.flatMap(s => data.map(d=>d[s.field]).filter(v=>v!=null && !isNaN(v)));
-    const vMin = Math.min(...allVals), vMax = Math.max(...allVals);
-    const margin = (vMax-vMin)*0.15 || (Math.abs(vMax)*0.1) || 2;
-    yMin = opts.minAtZero ? Math.max(0, vMin-margin) : vMin-margin;
-    yMax = vMax+margin;
-  }
-
-  const xFor = i => pad.l + (n>1 ? (i/(n-1))*plotW : plotW/2);
-  const yFor = val => pad.t + plotH - ((val-yMin)/(yMax-yMin||1))*plotH;
-
-  // gridlines + y labels
-  const gridVals = opts.gridValues || [yMin, (yMin+yMax)/2, yMax];
-  const gridGroup = document.createElementNS('http://www.w3.org/2000/svg','g');
-  gridVals.forEach(val=>{
-    const y = yFor(val);
-    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
-    line.setAttribute('x1',pad.l); line.setAttribute('x2',W-pad.r);
-    line.setAttribute('y1',y); line.setAttribute('y2',y);
-    line.setAttribute('stroke','#24282f'); line.setAttribute('stroke-width','1');
-    gridGroup.appendChild(line);
-    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
-    t.setAttribute('x',6); t.setAttribute('y',y+3);
-    t.setAttribute('fill','#7a7f89'); t.setAttribute('font-size','9.5');
-    t.textContent = opts.yFormat ? opts.yFormat(val) : Math.round(val*10)/10;
-    gridGroup.appendChild(t);
-  });
-  svg.appendChild(gridGroup);
-
-  // draw each series
-  series.forEach(s=>{
-    const valid = data.map((d,i)=>({...d,i})).filter(d=>d[s.field]!=null && !isNaN(d[s.field]));
-    if(valid.length < 2) return;
-    let path='';
-    valid.forEach((d,idx)=>{
-      const x=xFor(d.i), y=yFor(d[s.field]);
-      path += (idx===0?'M':'L')+x.toFixed(1)+','+y.toFixed(1)+' ';
-    });
-    const pathEl = document.createElementNS('http://www.w3.org/2000/svg','path');
-    pathEl.setAttribute('d',path); pathEl.setAttribute('fill','none');
-    pathEl.setAttribute('stroke',s.color); pathEl.setAttribute('stroke-width', s.width || 2.2);
-    svg.appendChild(pathEl);
-
-    if(!opts.hideDots){
-      valid.forEach(d=>{
-        const x=xFor(d.i), y=yFor(d[s.field]);
-        const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
-        c.setAttribute('cx',x); c.setAttribute('cy',y); c.setAttribute('r', n<=10?4:2.5);
-        c.setAttribute('fill', opts.dotColorFn ? opts.dotColorFn(d[s.field]) : s.color);
-        c.setAttribute('class','chart-dot');
-        svg.appendChild(c);
-      });
-    }
-  });
-
-  // legend (viac serii)
-  if(series.length > 1){
-    series.forEach((s,idx)=>{
-      const ly = pad.t + idx*13;
-      const t = document.createElementNS('http://www.w3.org/2000/svg','text');
-      t.setAttribute('x', W-pad.r); t.setAttribute('y', ly+8);
-      t.setAttribute('fill', s.color); t.setAttribute('font-size','9.5');
-      t.setAttribute('text-anchor','end');
-      t.textContent = s.label;
-      svg.appendChild(t);
-    });
-  }
-
-  // x-axis date labels (sparse)
-  const labelEvery = Math.max(1, Math.ceil(n/6));
-  data.forEach((d,i)=>{
-    if(i % labelEvery !== 0 && i !== n-1) return;
-    const x = xFor(i);
-    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
-    t.setAttribute('x',x); t.setAttribute('y', H-6);
-    t.setAttribute('fill','#7a7f89'); t.setAttribute('font-size','9');
-    t.setAttribute('text-anchor','middle');
-    t.textContent = d.date.slice(5);
-    svg.appendChild(t);
-  });
-
-  // ---------- Crosshair + tooltip (mouse + touch) ----------
-  const crosshairLine = document.createElementNS('http://www.w3.org/2000/svg','line');
-  crosshairLine.setAttribute('y1', pad.t); crosshairLine.setAttribute('y2', H-pad.b);
-  crosshairLine.setAttribute('stroke', '#4a4f58'); crosshairLine.setAttribute('stroke-width','1');
-  crosshairLine.setAttribute('stroke-dasharray','3,3');
-  crosshairLine.style.display = 'none';
-  svg.appendChild(crosshairLine);
-
-  const crosshairDots = series.map(s=>{
-    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
-    c.setAttribute('r','4.5'); c.setAttribute('fill', s.color);
-    c.setAttribute('stroke', '#0a0b0d'); c.setAttribute('stroke-width','1.5');
-    c.style.display = 'none';
-    svg.appendChild(c);
-    return c;
-  });
-
-  // HTML tooltip (mimo SVG, aby sa dal stylovat normalne)
-  let tooltip = svg.parentElement.querySelector('.chart-tooltip');
-  if(!tooltip){
-    tooltip = document.createElement('div');
-    tooltip.className = 'chart-tooltip';
-    svg.parentElement.style.position = 'relative';
-    svg.parentElement.appendChild(tooltip);
-  }
-  tooltip.style.display = 'none';
-
-  function nearestIndex(mouseX){
-    const rel = (mouseX-pad.l)/plotW;
-    const idx = Math.round(rel*(n-1));
-    return clamp(idx, 0, n-1);
-  }
-
-  function showAt(i){
-    const d = data[i];
-    const x = xFor(i);
-    crosshairLine.setAttribute('x1',x); crosshairLine.setAttribute('x2',x);
-    crosshairLine.style.display = '';
-
-    let rows = '';
-    series.forEach((s, si)=>{
-      const val = d[s.field];
-      const dot = crosshairDots[si];
-      if(val!=null && !isNaN(val)){
-        dot.setAttribute('cx',x); dot.setAttribute('cy', yFor(val));
-        dot.style.display = '';
-        const formatted = opts.tooltipFormat ? opts.tooltipFormat(s.field, val) : val;
-        rows += `<div class="tt-row"><span class="tt-dot" style="background:${s.color}"></span>${s.label||s.field}: <b>${formatted}</b></div>`;
-      } else {
-        dot.style.display = 'none';
-      }
-    });
-    tooltip.innerHTML = `<div class="tt-date">${d.date}</div>${rows}`;
-    tooltip.style.display = 'block';
-
-    // pozicionuj tooltip aby nevytekal z okraja
-    const svgRect = svg.getBoundingClientRect();
-    const parentRect = svg.parentElement.getBoundingClientRect();
-    const xRatio = x / W;
-    let left = xRatio * svgRect.width;
-    const ttWidth = 160;
-    if(left + ttWidth > svgRect.width) left = svgRect.width - ttWidth - 4;
-    if(left < 4) left = 4;
-    tooltip.style.left = left + 'px';
-    tooltip.style.top = '4px';
-  }
-  function hideTooltip(){
-    crosshairLine.style.display = 'none';
-    crosshairDots.forEach(d=>d.style.display='none');
-    tooltip.style.display = 'none';
-  }
-
-  function handlePointer(clientX){
-    const rect = svg.getBoundingClientRect();
-    const scaleX = W / rect.width;
-    const mouseX = (clientX - rect.left) * scaleX;
-    const idx = nearestIndex(mouseX);
-    showAt(idx);
-  }
-
-  svg.addEventListener('mousemove', e => handlePointer(e.clientX));
-  svg.addEventListener('mouseleave', hideTooltip);
-  svg.addEventListener('touchstart', e => { handlePointer(e.touches[0].clientX); }, {passive:true});
-  svg.addEventListener('touchmove', e => { handlePointer(e.touches[0].clientX); e.preventDefault(); }, {passive:false});
-  svg.addEventListener('touchend', hideTooltip);
-}
-
-function drawTable(rows, activities){
-  const table = document.getElementById('history-table');
-  let html = '<thead><tr><th>Dátum</th><th>Recovery</th><th>Strain</th><th>HRV</th><th>TF pokoj.</th><th>Kroky</th></tr></thead><tbody>';
-  rows.forEach(r=>{
-    const color = pillColor(r.recovery);
-    html += `<tr class="history-row" data-date="${r.date}" style="cursor:pointer;">
-      <td>${r.date}</td>
-      <td><span class="pill" style="background:${color}22;color:${color}">${r.recovery!==null? r.recovery+'%':'—'}</span></td>
-      <td>${r.strain!=null ? r.strain.toFixed(1) : '—'}</td>
-      <td>${fmt(r.hrv,1)}</td>
-      <td>${fmt(r.restingHR,0)}</td>
-      <td>${r.steps!=null ? r.steps.toLocaleString('sk-SK') : '—'}</td>
-    </tr>`;
-  });
-  html += '</tbody>';
-  table.innerHTML = html;
-
-  table.querySelectorAll('.history-row').forEach(row=>{
-    row.addEventListener('click', ()=>{
-      const date = row.dataset.date;
-      const dayResult = ALL_RESULTS.find(r=>r.date===date);
-      const dayActivities = activities.filter(a=>a.date===date);
-      openDayModal(date, dayResult, dayActivities);
-    });
-  });
-}
-
-function escapeHtml(str){
-  return String(str)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;')
-    .replace(/'/g,'&#39;');
-}
-function openDayModal(date, dayResult, dayActivities){
-  const content = document.getElementById('day-modal-content');
-  const v = dayResult ? verdictFor(dayResult) : null;
-
-  let activitiesHtml = '';
-  if(dayActivities.length===0){
-    activitiesHtml = '<div style="color:var(--text-dim);font-size:0.85rem;">Žiadna aktivita tento deň.</div>';
-  } else {
-    activitiesHtml = dayActivities.map(a=>{
-      const mins = a.moving_time ? Math.round(a.moving_time/60) : null;
-      const km = a.distance ? (a.distance/1000).toFixed(1) : null;
-      const tags = parseTags(a.name, a.comments);
-      const raw = loadToRawStrain(a);
-      const contrib = rawToStrain(raw);
-      const zoneRows = [1,2,3,4,5].map(z=>{
-        const secs = a[`hr_z${z}_secs`];
-        if(secs==null) return '';
-        const mins = Math.round(secs/60);
-        return mins>0 ? `<div class="tt-row"><span class="tt-dot" style="background:var(--text-faint)"></span>Z${z}: <b>${mins} min</b></div>` : '';
-      }).join('');
-      return `
-        <div style="border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
-          <div style="font-weight:600;margin-bottom:4px;">${a.name || a.type}</div>
-          <div style="color:var(--text-faint);font-family:var(--mono);font-size:0.76rem;margin-bottom:8px;">
-            ${a.start_date_local ? a.start_date_local.slice(11,16) : ''}${mins!=null ? ' · '+mins+' min' : ''}${km ? ' · '+km+' km' : ''}${a.icu_training_load!=null ? ' · Load '+Math.round(a.icu_training_load) : ''}
-          </div>
-          ${tags.length ? `<div style="margin-bottom:8px;">${tags.map(t=>`<span class="pill" style="background:var(--surface-3);color:var(--text-dim);margin-right:4px;">${t}</span>`).join('')}</div>` : ''}
-          ${zoneRows ? `<div style="font-family:var(--mono);font-size:0.68rem;color:var(--text-faint);margin-bottom:4px;">čas v HR zónach (info)</div><div style="font-family:var(--mono);font-size:0.78rem;color:var(--text-dim);">${zoneRows}</div>` : ''}
-          <div style="margin-top:8px;font-family:var(--mono);font-size:0.82rem;color:var(--data);">Strain príspevok: +${contrib.toFixed(1)}</div>
-        </div>
-      `;
-    }).join('');
-  }
-
-  content.innerHTML = `
-    <h3 style="display:flex;justify-content:space-between;align-items:center;">
-      <span>${date}</span>
-      <button id="day-modal-close" style="background:none;border:none;color:var(--text-dim);font-size:1.2rem;cursor:pointer;">✕</button>
-    </h3>
-    ${dayResult ? `
-      <div style="display:flex;gap:16px;margin-bottom:16px;">
-        <div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:${v.color};">${dayResult.recovery!=null?dayResult.recovery+'%':'—'}</div><div style="font-size:0.72rem;color:var(--text-faint);">recovery</div></div>
-        <div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:var(--data);">${dayResult.strain!=null?dayResult.strain.toFixed(1):'—'}</div><div style="font-size:0.72rem;color:var(--text-faint);">strain</div></div>
-        <div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">${fmt(dayResult.hrv,1)}</div><div style="font-size:0.72rem;color:var(--text-faint);">HRV</div></div>
-        <div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">${fmt(dayResult.restingHR,0)}</div><div style="font-size:0.72rem;color:var(--text-faint);">RHR</div></div>
-      </div>
-    ` : ''}
-    ${dayResult && dayResult.comments ? `
-      <div style="margin-bottom:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-3);">
-        <div style="font-size:0.72rem;color:var(--text-faint);margin-bottom:4px;">Komentár dňa</div>
-        <div style="font-size:0.88rem;color:var(--text-dim);white-space:pre-wrap;">${escapeHtml(dayResult.comments)}</div>
-      </div>
-    ` : ''}
-    <div class="section-title" style="margin:16px 0 10px;">Aktivity</div>
-    ${activitiesHtml}
-  `;
-  document.getElementById('day-modal').classList.add('show');
-  document.getElementById('day-modal-close').addEventListener('click', ()=>{
-    document.getElementById('day-modal').classList.remove('show');
-  });
-}
-document.getElementById('day-modal').addEventListener('click', (e)=>{
-  if(e.target.id==='day-modal') document.getElementById('day-modal').classList.remove('show');
-});
 
 main();
 </script>

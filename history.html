@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Celá história — Recovery / Strain — Adam</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="top-row">
+    <div>
+      <div class="brand">
+        <h1>Celá história</h1>
+        <span class="brand-tag">Adam · Čadca–Žilina</span>
+      </div>
+      <div class="sub">Všetky dni, vrátane komentárov k jednotlivým dňom</div>
+      <a class="nav-link" href="index.html">← späť na dashboard</a>
+    </div>
+  </div>
+
+  <div id="loading" class="loading">načítavam dáta…</div>
+  <div class="err" id="err"></div>
+
+  <div id="app" style="display:none;">
+    <div class="section-head">
+      <div class="section-title">Forma (TSB) — celé obdobie</div>
+      <div class="chart-tabs">
+        <button class="tab-btn" data-range="90">90D</button>
+        <button class="tab-btn" data-range="180">180D</button>
+        <button class="tab-btn active" data-range="365">365D</button>
+        <button class="tab-btn" data-range="99999">Celé obdobie</button>
+      </div>
+    </div>
+    <div class="chart-with-legend">
+      <div class="chart-card"><svg id="chart-forma-history"></svg></div>
+      <div class="forma-legend" id="forma-legend"></div>
+    </div>
+
+    <div class="section-head"><div class="section-title">Všetky dni</div></div>
+    <div class="history-filters">
+      <input type="text" id="history-filter" placeholder="filter podľa dátumu, napr. 2026-03">
+    </div>
+    <div class="chart-card" style="padding:0; overflow-x:auto;">
+      <table id="history-table-full"></table>
+    </div>
+    <div class="history-count" id="history-count"></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="day-modal">
+  <div class="modal" id="day-modal-content" style="max-width:520px;max-height:80vh;overflow-y:auto;">
+    <!-- vyplnene dynamicky cez JS -->
+  </div>
+</div>
+
+<script src="app-common.js"></script>
+<script>
+let ALL_RESULTS_ROWS = []; // newest-first, kompletná história
+let ALL_ACTIVITIES_H = [];
+
+async function main(){
+  const [history, daily, actHistory, actDaily] = await Promise.all([
+    loadJson(HISTORY_URL), loadJson(DAILY_URL),
+    loadJson(ACT_HISTORY_URL), loadJson(ACT_DAILY_URL)
+  ]);
+
+  if(!history && !daily){
+    document.getElementById('loading').style.display='none';
+    document.getElementById('err').textContent = 'Nepodarilo sa načítať dáta. Skontroluj či existujú súbory v data/.';
+    return;
+  }
+
+  let recs = mergeById(history, daily);
+  recs.sort((a,b)=> a.date < b.date ? -1 : 1);
+
+  let activities = mergeById(actHistory, actDaily);
+  activities.sort((a,b)=> (a.start_date_local||a.date) < (b.start_date_local||b.date) ? -1 : 1);
+  ALL_ACTIVITIES_H = activities;
+
+  const {results} = computeResults(recs, activities);
+  ALL_RESULTS_ROWS = results.slice().reverse(); // najnovšie prvé
+
+  document.getElementById('loading').style.display='none';
+  document.getElementById('app').style.display='block';
+
+  renderFormaLegend('forma-legend');
+  renderFormaHistory(results, 365);
+  renderFullTable(ALL_RESULTS_ROWS);
+
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      renderFormaHistory(results, parseInt(btn.dataset.range));
+    });
+  });
+
+  document.getElementById('history-filter').addEventListener('input', (e)=>{
+    const q = e.target.value.trim();
+    const filtered = q ? ALL_RESULTS_ROWS.filter(r=>r.date.includes(q)) : ALL_RESULTS_ROWS;
+    renderFullTable(filtered);
+  });
+}
+
+function renderFormaHistory(results, range){
+  const data = results.slice(-range);
+  drawChart('chart-forma-history', data, [{field:'tsb', color:'#7a7f89', label:'TSB'}],
+    {fixedMin:-40, fixedMax:25, gridValues:[20,5,-10,-30],
+     dotColorFn: v => { const z = formaZoneFor(v); return z ? z.color : '#7a7f89'; },
+     bands: FORMA_ZONES.map(z=>({min: Math.max(z.min,-40), max: Math.min(z.max,25), color: hexToRgba(z.color, 0.14)})),
+     tooltipFormat:(f,v)=>v.toFixed(1)});
+}
+
+function renderFullTable(rows){
+  drawTable('history-table-full', rows, ALL_ACTIVITIES_H);
+  document.getElementById('history-count').textContent = rows.length + ' záznamov';
+}
+
+main();
+</script>
+</body>
+</html>
