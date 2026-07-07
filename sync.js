@@ -6,7 +6,7 @@
 // z Intervals.icu a zlúči do data/wellness_daily.json a data/activities_daily.json.
 //
 // Očakáva premenné prostredia: ICU_API_KEY, ICU_ATHLETE_ID
-// Voliteľné: SYNC_DAYS (koľko dní dozadu sťahovať, default 10)
+// Voliteľné: SYNC_DAYS (koľko dní dozadu sťahovať, default 3)
 
 const https = require('https');
 const fs = require('fs');
@@ -14,7 +14,7 @@ const path = require('path');
 
 const API_KEY = process.env.ICU_API_KEY;
 const ATHLETE_ID = process.env.ICU_ATHLETE_ID;
-const SYNC_DAYS = parseInt(process.env.SYNC_DAYS || '10', 10);
+const SYNC_DAYS = parseInt(process.env.SYNC_DAYS || '3', 3);
 
 if (!API_KEY || !ATHLETE_ID) {
   console.error('Chýba ICU_API_KEY alebo ICU_ATHLETE_ID v environment premenných.');
