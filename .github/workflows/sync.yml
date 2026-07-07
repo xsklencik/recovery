@@ -9,7 +9,7 @@ on:
       days:
         description: 'Koľko dní dozadu synchronizovať'
         required: false
-        default: '10'
+        default: '3'
 
 permissions:
   contents: write
