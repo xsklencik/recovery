@@ -278,7 +278,8 @@
     <div class="section-head"><div class="section-title">Metodika</div></div>
     <div class="methodology">
       <div class="m-block"><b>Recovery %</b> — fixné cez celý deň, počíta sa z ranných dát: vážené z-skóre voči 60-dňovému kĺzavému priemeru, mapované na stupnicu s posunutým stredom (priemerný deň ≈ 63 %, horšie-než-zvyčajne dni klesajú rýchlejšie než lepšie-než-zvyčajne dni stúpajú — podobne ako referenčné hodnoty z Whoop dokumentácie). HRV 45 % · pokojová TF 20 % · spánková TF 15 % · spánok 10 % · záťaž/TSB 10 %.</div>
-      <div class="m-block"><b>Strain 0–21</b> — rastie počas dňa. Počíta sa z času stráveného v 5 HR zónach (Z1 Active Recovery až Z5 VO2 Max) každej dnešnej aktivity — vyššia zóna = exponenciálne vyššia váha (TRIMP metodika) — plus menší príspevok z celkových denných krokov. Súčet sa škáluje logaritmicky, takže pridávanie záťaže pri už vysokom strain rastie čoraz pomalšie.</div>
+      <div class="m-block"><b>Strain 0–21</b> — rastie počas dňa. Počíta sa priamo z Intervals.icu <b>Load</b> (spoľahlivá, kalibrovaná záťažová metrika pre každú aktivitu) namiesto prepočtu z HR zón — bulk API endpoint totiž niekedy vracia neúplné zónové dáta, zatiaľ čo Load je vždy presný. Kroky sa pripočítajú len v dňoch <b>bez</b> trackovanej aktivity, aby sa tá istá fyzická práca nepočítala dvakrát. Súčet sa škáluje logaritmicky, takže pridávanie záťaže pri už vysokom strain rastie čoraz pomalšie.</div>
+      <div class="m-block" style="color:var(--text-faint);font-size:0.76rem;">Poznámka k HR zónam: čas v jednotlivých zónach (Z1–Z5) sa stále zobrazuje v detaile aktivity ako informačný údaj, no do výpočtu Strain už nevstupuje.</div>
       <div class="m-block"><b>↻ Aktualizovať</b> spustí GitHub Actions sync na pozadí (stiahne najnovšie aktivity a wellness z Intervals.icu) a po dokončení znovu načíta dáta — po skončení jazdy uvidíš Strain narásť do minúty.</div>
     </div>
   </div>
@@ -514,17 +515,26 @@ document.getElementById('btn-refresh').addEventListener('click', async ()=>{
 });
 
 // ---------- Strain calculation ----------
+// HR zóny (z1-z5 secs) sa už NEPOUŽÍVAJÚ na výpočet Strain — slúžia len ako doplnkový detail
+// v modáli dňa. Dôvod: bulk API endpoint niekedy vracia neúplné/čiastočné zónové dáta
+// (súčet sekúnd nesedí s moving_time), zatiaľ čo icu_training_load je Intervals.icu vlastná,
+// spoľahlivo kalibrovaná záťažová metrika (podobná TSS) — používame priamo tú.
 function zoneSecsToRawStrain(act){
-  // Athlete používa 5-zónový systém (Z1 Active Recovery ... Z5 VO2 Max). Z6/Z7 sú vždy null pri tomto nastavení Intervals.icu, takže sa ignorujú.
   const zones = [act.hr_z1_secs, act.hr_z2_secs, act.hr_z3_secs, act.hr_z4_secs, act.hr_z5_secs];
   let total = 0;
   zones.forEach((secs, idx)=>{
     if(secs===null || secs===undefined || secs==='') return;
     const zone = idx+1;
-    const weight = Math.exp(0.55*zone); // k=0.55 kalibrované pre 5 zón (Z5/Z1 pomer ~9x, podobné pôvodnému 7-zónovému rozsahu)
+    const weight = Math.exp(0.55*zone);
     total += (secs/60) * weight;
   });
   return total;
+}
+// Load->raw prevod: 1:1 (Intervals.icu Load je už na rozumnej škále), scale v rawToStrain robí kompresiu
+function loadToRawStrain(act){
+  if(act.icu_training_load!=null && act.icu_training_load>0) return act.icu_training_load;
+  // fallback ak load chýba: odhadni z HR zón (menej presné, ale lepšie než nič)
+  return zoneSecsToRawStrain(act) * 0.35;
 }
 function stepsToRawStrain(steps){
   if(!steps) return 0;
@@ -532,22 +542,26 @@ function stepsToRawStrain(steps){
 }
 function rawToStrain(raw){
   if(raw<=0) return 0;
-  return 21 * (1 - Math.exp(-raw/220.0));
+  return 21 * (1 - Math.exp(-raw/140.0));
 }
 
 function computeDailyStrain(activities, wellnessByDate){
-  // grupuje aktivity podla datumu, spocita raw strain + kroky z wellness, vrati mapu date->strain
+  // grupuje aktivity podla datumu a spocita raw strain z icu_training_load (spolahlivy zdroj)
   const rawByDate = new Map();
+  const hasActivityOnDate = new Set();
   for(const act of activities){
-    const raw = zoneSecsToRawStrain(act);
+    const raw = loadToRawStrain(act);
     rawByDate.set(act.date, (rawByDate.get(act.date)||0) + raw);
+    hasActivityOnDate.add(act.date);
   }
   const strainByDate = new Map();
   const allDates = new Set([...rawByDate.keys(), ...Object.keys(wellnessByDate)]);
   for(const date of allDates){
     let raw = rawByDate.get(date) || 0;
     const w = wellnessByDate[date];
-    if(w && w.steps){
+    // Kroky sa pripočítajú LEN ak v ten deň nebola žiadna trackovaná aktivita —
+    // inak by sa tá istá fyzická práca počítala dvakrát (raz cez load, raz cez kroky).
+    if(!hasActivityOnDate.has(date) && w && w.steps){
       raw += stepsToRawStrain(w.steps);
     }
     strainByDate.set(date, Math.round(rawToStrain(raw)*10)/10);
@@ -806,7 +820,7 @@ function renderActivityList(activities, todayDate){
   }
   list.innerHTML = '';
   todays.forEach(a=>{
-    const raw = zoneSecsToRawStrain(a);
+    const raw = loadToRawStrain(a);
     const contrib = rawToStrain(raw);
     const div = document.createElement('div');
     div.className = 'activity-row';
@@ -1062,7 +1076,7 @@ function openDayModal(date, dayResult, dayActivities){
       const mins = a.moving_time ? Math.round(a.moving_time/60) : null;
       const km = a.distance ? (a.distance/1000).toFixed(1) : null;
       const tags = parseTags(a.name, a.comments);
-      const raw = zoneSecsToRawStrain(a);
+      const raw = loadToRawStrain(a);
       const contrib = rawToStrain(raw);
       const zoneRows = [1,2,3,4,5].map(z=>{
         const secs = a[`hr_z${z}_secs`];
@@ -1077,7 +1091,7 @@ function openDayModal(date, dayResult, dayActivities){
             ${a.start_date_local ? a.start_date_local.slice(11,16) : ''}${mins!=null ? ' · '+mins+' min' : ''}${km ? ' · '+km+' km' : ''}${a.icu_training_load!=null ? ' · Load '+Math.round(a.icu_training_load) : ''}
           </div>
           ${tags.length ? `<div style="margin-bottom:8px;">${tags.map(t=>`<span class="pill" style="background:var(--surface-3);color:var(--text-dim);margin-right:4px;">${t}</span>`).join('')}</div>` : ''}
-          <div style="font-family:var(--mono);font-size:0.78rem;color:var(--text-dim);">${zoneRows || 'Bez HR zón'}</div>
+          ${zoneRows ? `<div style="font-family:var(--mono);font-size:0.68rem;color:var(--text-faint);margin-bottom:4px;">čas v HR zónach (info)</div><div style="font-family:var(--mono);font-size:0.78rem;color:var(--text-dim);">${zoneRows}</div>` : ''}
           <div style="margin-top:8px;font-family:var(--mono);font-size:0.82rem;color:var(--data);">Strain príspevok: +${contrib.toFixed(1)}</div>
         </div>
       `;

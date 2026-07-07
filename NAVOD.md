@@ -1,7 +1,7 @@
 # Recovery Score — návod na nasadenie (GitHub Pages + automatický sync)
 
 Táto stránka beží úplne bez tvojho počítača — GitHub raz denne sám stiahne
-dáta z Intervals.icu a stránka na `https://adamceek.github.io/recovery/`
+dáta z Intervals.icu a stránka na `https://xsklencik.github.io/recovery/`
 sa zobrazí vždy s aktuálnymi dátami.
 
 ## Ako to funguje (v skratke)
@@ -14,7 +14,7 @@ Každý deň o 5:00 UTC:
     → commitne zmenu do repozitára
 
 Keď otvoríš stránku:
-  recovery.html načíta data/wellness_history.json (tvoja stará história)
+  index.html načíta data/wellness_history.json (tvoja stará história)
   + data/wellness_daily.json (nové dáta od 5.7.2026)
   → spočíta recovery a zobrazí grafy
 ```
@@ -26,8 +26,8 @@ Secret, čo je šifrované úložisko prístupné len samotnému workflow behu.
 
 ## Krok 1 — Založ repozitár
 
-1. Choď na github.com, prihlás sa ako `adamceek`
-2. Vytvor nový repozitár s presným názvom **`recovery`** (musí sedieť s URL, ktorú chceš: `adamceek.github.io/recovery/`)
+1. Choď na github.com, prihlás sa ako `xsklencik`
+2. Vytvor nový repozitár s presným názvom **`recovery`** (musí sedieť s URL, ktorú chceš: `xsklencik.github.io/recovery/`)
 3. Nastav ho ako **Public** (GitHub Pages zadarmo funguje len na public repách, pokiaľ nemáš platený plán)
 
 ## Krok 2 — Nahraj súbory
@@ -36,7 +36,7 @@ Nahraj do repozitára presne túto štruktúru (zachovaj priečinky):
 
 ```
 recovery/
-├── recovery.html
+├── index.html
 ├── sync.js
 ├── .gitignore
 ├── data/
@@ -72,10 +72,8 @@ inak prvý beh sync skriptu zlyhá pri čítaní.
 3. Branch: `main`, priečinok `/ (root)`
 4. Save
 
-Po pár minútach bude stránka dostupná na `https://adamceek.github.io/recovery/recovery.html`
-
-(Ak chceš presne `https://adamceek.github.io/recovery/` bez `/recovery.html` na konci,
-premenuj `recovery.html` na `index.html`.)
+Po pár minútach bude stránka dostupná priamo na `https://xsklencik.github.io/recovery/`
+(súbor sa volá `index.html`, takže GitHub Pages ho zobrazí automaticky na koreňovej URL).
 
 ## Krok 5 — Over si automatický sync
 
@@ -100,7 +98,7 @@ namiesto čakania na denný cron o 5:00 UTC.
    - Repository access: **Only select repositories** → vyber `recovery`
    - Repository permissions → **Contents** → **Read and write**
 5. Generate token, skopíruj hodnotu (začína `github_pat_...`) — **uvidíš ju len raz**
-6. Na stránke `recovery.html` klikni **⚙️ Token**, vlož token, ulož
+6. Na stránke klikni **⚙️ Token**, vlož token, ulož
 
 Token sa uloží len v prehliadači tvojho zariadenia (localStorage), nikdy sa
 neposiela nikam okrem `api.github.com`. Ak používaš viac zariadení (telefón
@@ -120,7 +118,7 @@ Uprav riadok `- cron: '0 5 * * *'` v `.github/workflows/sync.yml`. Formát je
 `minúta hodina deň mesiac deň-v-týždni`, čas je vždy v UTC.
 
 **Čo ak Huawei hodinky sync-ujú do Intervals.icu neskoro (napr. až podvečer)?**
-Sync skript sťahuje vždy posledných 10 dní dozadu (nie len dnešok), takže aj
+Sync skript sťahuje vždy posledných 3 dní dozadu (nie len dnešok), takže aj
 keď sa dáta objavia v Intervals.icu neskôr, ďalší denný beh ich doplní.
 
 **Môžem si to spustiť aj lokálne na počítači na test?**
