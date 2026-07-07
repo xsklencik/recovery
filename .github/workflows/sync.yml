@@ -30,7 +30,7 @@ jobs:
         env:
           ICU_API_KEY: ${{ secrets.ICU_API_KEY }}
           ICU_ATHLETE_ID: ${{ secrets.ICU_ATHLETE_ID }}
-          SYNC_DAYS: ${{ github.event.inputs.days || '10' }}
+          SYNC_DAYS: ${{ github.event.inputs.days || '3' }}
         run: node sync.js
 
       - name: Commit and push updated data
