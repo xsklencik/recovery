@@ -1064,6 +1064,14 @@ function drawTable(rows, activities){
   });
 }
 
+function escapeHtml(str){
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
 function openDayModal(date, dayResult, dayActivities){
   const content = document.getElementById('day-modal-content');
   const v = dayResult ? verdictFor(dayResult) : null;
@@ -1109,6 +1117,12 @@ function openDayModal(date, dayResult, dayActivities){
         <div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:var(--data);">${dayResult.strain!=null?dayResult.strain.toFixed(1):'—'}</div><div style="font-size:0.72rem;color:var(--text-faint);">strain</div></div>
         <div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">${fmt(dayResult.hrv,1)}</div><div style="font-size:0.72rem;color:var(--text-faint);">HRV</div></div>
         <div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">${fmt(dayResult.restingHR,0)}</div><div style="font-size:0.72rem;color:var(--text-faint);">RHR</div></div>
+      </div>
+    ` : ''}
+    ${dayResult && dayResult.comments ? `
+      <div style="margin-bottom:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-3);">
+        <div style="font-size:0.72rem;color:var(--text-faint);margin-bottom:4px;">Komentár dňa</div>
+        <div style="font-size:0.88rem;color:var(--text-dim);white-space:pre-wrap;">${escapeHtml(dayResult.comments)}</div>
       </div>
     ` : ''}
     <div class="section-title" style="margin:16px 0 10px;">Aktivity</div>

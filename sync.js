@@ -85,6 +85,7 @@ async function main() {
     ctl: w.ctl ?? null,
     atl: w.atl ?? null,
     weight: w.weight ?? null,
+    comments: w.comments ?? null,
     source: 'intervals_api',
     syncedAt: new Date().toISOString(),
   }));
