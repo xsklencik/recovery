@@ -90,32 +90,45 @@ async function main() {
   }));
 
   console.log(`Sťahujem activities ${oldest} → ${newest} ...`);
+  // DÔLEŽITÉ: bulk /activities endpoint nevracia hr_z1_secs...hr_z5_secs ako samostatné polia
+  // (tie existujú len na detailnom /activities/{id} endpointe). Namiesto toho vracia
+  // icu_hr_zone_times ako pole [z1_secs, z2_secs, z3_secs, z4_secs, z5_secs, ...].
+  // Parameter fields= to vynucuje explicitne, aby sa pole vždy vrátilo.
+  const activityFields = [
+    'id','start_date_local','name','type','description','moving_time','distance',
+    'total_elevation_gain','average_heartrate','max_heartrate',
+    'icu_training_load','icu_ctl','icu_atl','icu_intensity','icu_rpe',
+    'icu_hr_zone_times',
+  ].join(',');
   const activitiesRaw = await get(
-    `/api/v1/athlete/${ATHLETE_ID}/activities?oldest=${oldest}&newest=${newest}`
+    `/api/v1/athlete/${ATHLETE_ID}/activities?oldest=${oldest}&newest=${newest}&fields=${activityFields}`
   );
-  const activitiesNew = (Array.isArray(activitiesRaw) ? activitiesRaw : []).map(a => ({
-    id: String(a.id),
-    date: (a.start_date_local || '').slice(0, 10),
-    start_date_local: a.start_date_local,
-    name: a.name,
-    type: a.type,
-    moving_time: a.moving_time,
-    distance: a.distance,
-    total_elevation_gain: a.total_elevation_gain,
-    average_heartrate: a.average_heartrate,
-    max_heartrate: a.max_heartrate,
-    icu_training_load: a.icu_training_load,
-    icu_ctl: a.icu_ctl,
-    icu_atl: a.icu_atl,
-    icu_intensity: a.icu_intensity,
-    hr_z1_secs: a.hr_z1_secs ?? null,
-    hr_z2_secs: a.hr_z2_secs ?? null,
-    hr_z3_secs: a.hr_z3_secs ?? null,
-    hr_z4_secs: a.hr_z4_secs ?? null,
-    hr_z5_secs: a.hr_z5_secs ?? null,
-    hr_z6_secs: a.hr_z6_secs ?? null,
-    hr_z7_secs: a.hr_z7_secs ?? null,
-  }));
+  const activitiesNew = (Array.isArray(activitiesRaw) ? activitiesRaw : []).map(a => {
+    const zoneTimes = Array.isArray(a.icu_hr_zone_times) ? a.icu_hr_zone_times : [];
+    return {
+      id: String(a.id),
+      date: (a.start_date_local || '').slice(0, 10),
+      start_date_local: a.start_date_local,
+      name: a.name,
+      type: a.type,
+      comments: a.description ?? null,
+      moving_time: a.moving_time,
+      distance: a.distance,
+      total_elevation_gain: a.total_elevation_gain,
+      average_heartrate: a.average_heartrate,
+      max_heartrate: a.max_heartrate,
+      icu_training_load: a.icu_training_load,
+      icu_ctl: a.icu_ctl,
+      icu_atl: a.icu_atl,
+      icu_intensity: a.icu_intensity,
+      icu_rpe: a.icu_rpe ?? null,
+      hr_z1_secs: zoneTimes[0] ?? null,
+      hr_z2_secs: zoneTimes[1] ?? null,
+      hr_z3_secs: zoneTimes[2] ?? null,
+      hr_z4_secs: zoneTimes[3] ?? null,
+      hr_z5_secs: zoneTimes[4] ?? null,
+    };
+  });
 
   const wellnessFile = path.join(DATA_DIR, 'wellness_daily.json');
   const activitiesFile = path.join(DATA_DIR, 'activities_daily.json');
