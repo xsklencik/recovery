@@ -12,8 +12,9 @@
   "ctl": 40.925266,
   "atl": 66.03767,
   "weight": null,
+  "comments": "Zóna 2 cez mosty do istebnej",
   "source": "intervals_api",
-  "syncedAt": "2026-07-07T11:53:03.996Z"
+  "syncedAt": "2026-07-07T13:35:06.251Z"
  },
  {
   "id": "2026-07-05",
@@ -28,8 +29,9 @@
   "ctl": 39.962364,
   "atl": 57.246593,
   "weight": null,
+  "comments": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-07T11:53:03.996Z"
+  "syncedAt": "2026-07-07T13:35:06.251Z"
  },
  {
   "id": "2026-07-06",
@@ -44,23 +46,25 @@
   "ctl": 39.375042,
   "atl": 51.62264,
   "weight": null,
+  "comments": "laser game, rano prve cvicenie na rehabilitaciach c.4",
   "source": "intervals_api",
-  "syncedAt": "2026-07-07T11:53:03.996Z"
+  "syncedAt": "2026-07-07T13:35:06.252Z"
  },
  {
   "id": "2026-07-07",
   "date": "2026-07-07",
   "restingHR": 50,
-  "hrv": 60.60606,
+  "hrv": 58.444443,
   "hrvSDNN": null,
   "avgSleepingHR": 57,
   "sleepScore": 82,
   "sleepSecs": 27180,
-  "steps": 6159,
+  "steps": 6317,
   "ctl": 38.5192,
   "atl": 45.14989,
   "weight": null,
+  "comments": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-07T11:53:03.996Z"
+  "syncedAt": "2026-07-07T13:35:06.252Z"
  }
 ]
