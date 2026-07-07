@@ -403,6 +403,19 @@ function render(results, activities){
   document.getElementById('recovery-verdict').style.color = v.color;
   document.getElementById('recovery-detail').textContent = v.detail;
 
+  // "Dopad na regeneráciu": ak by sa skóre (nesprávne) počítalo z dnešného CTL/ATL namiesto
+  // včerajšieho, bolo by iné o toľkoto. Zobrazí sa len keď je záporný (dnešný tréning by inak
+  // umelo navýšil ranné skóre) — malým červeným písmom pod hlavným gauge.
+  const existingImpactEl = document.getElementById('recovery-impact-note');
+  if(existingImpactEl) existingImpactEl.remove();
+  if(today.recoveryImpact!=null && today.recoveryImpact < 0){
+    const impactEl = document.createElement('div');
+    impactEl.id = 'recovery-impact-note';
+    impactEl.style.cssText = 'font-size:0.7rem;color:#f0553f;margin-top:2px;';
+    impactEl.textContent = `📉 Dopad na regeneráciu: ${today.recoveryImpact}%`;
+    document.getElementById('recovery-detail').insertAdjacentElement('afterend', impactEl);
+  }
+
   const pct = today.recovery ?? 0;
   document.getElementById('recovery-pct').textContent = today.recovery!==null ? pct : '—';
   const fillR = document.getElementById('fill-recovery');

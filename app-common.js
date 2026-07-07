@@ -14,6 +14,7 @@ const ACT_DAILY_URL = 'data/activities_daily.json';
 function mean(arr){ return arr.reduce((a,b)=>a+b,0)/arr.length; }
 function stdev(arr){ const m = mean(arr); return Math.sqrt(mean(arr.map(x=>(x-m)**2))); }
 function clamp(x,lo,hi){return Math.max(lo,Math.min(hi,x));}
+
 function todayISO(){ return new Date().toISOString().slice(0,10); }
 
 async function loadJson(url){
@@ -215,33 +216,52 @@ function computeResults(recs, activities){
   const sleepScoreStats = rollingStats(recs, 'sleepScore', null);
   const stepsStats = rollingStats(recs, 'steps', null);
 
-  const tsbSeries = recs.map(r => (r.ctl!=null && r.atl!=null) ? r.ctl-r.atl : null);
+  const tsbSeriesPrev = recs.map((r,i) => {
+    const prev = i>0 ? recs[i-1] : null;
+    return (prev && prev.ctl!=null && prev.atl!=null) ? prev.ctl-prev.atl : null;
+  });
   const tsbStats = (()=>{
     const stats = [];
     for(let i=0;i<recs.length;i++){
       const lo = Math.max(0, i-60);
-      const vals = tsbSeries.slice(lo,i).filter(v=>v!==null);
+      const vals = tsbSeriesPrev.slice(lo,i).filter(v=>v!==null);
       if(vals.length >= 5) stats.push({mean: mean(vals), std: stdev(vals) || 1});
       else stats.push(null);
     }
     return stats;
   })();
 
-  const results = recs.map((r,i)=>{
+  function buildRecovery(r, i, useSameDayTsb){
     const parts = [];
     if(r.hrv!=null && hrvStats[i]){ const z=(r.hrv-hrvStats[i].mean)/hrvStats[i].std; parts.push({w:0.45,score:zToScore(z)}); }
     if(r.restingHR!=null && rhrStats[i]){ const z=(r.restingHR-rhrStats[i].mean)/rhrStats[i].std; parts.push({w:0.20,score:zToScore(-z)}); }
     if(r.avgSleepingHR!=null && sleepHrStats[i]){ const z=(r.avgSleepingHR-sleepHrStats[i].mean)/sleepHrStats[i].std; parts.push({w:0.15,score:zToScore(-z)}); }
     if(r.sleepScore!=null && sleepScoreStats[i]){ const z=(r.sleepScore-sleepScoreStats[i].mean)/sleepScoreStats[i].std; parts.push({w:0.10,score:zToScore(z)}); }
-    const tsb = (r.ctl!=null && r.atl!=null) ? r.ctl - r.atl : null;
+    let tsb;
+    if(useSameDayTsb){
+      tsb = (r.ctl!=null && r.atl!=null) ? r.ctl - r.atl : null;
+    } else {
+      const prev = i>0 ? recs[i-1] : null;
+      tsb = (prev && prev.ctl!=null && prev.atl!=null) ? prev.ctl - prev.atl : null;
+    }
     if(tsb!=null && tsbStats[i]){
       const z = (tsb - tsbStats[i].mean) / tsbStats[i].std;
       parts.push({w:0.10, score: zToScore(z)});
     }
-    if(parts.length===0) return {...r, recovery:null, tsb};
+    if(parts.length===0) return {recovery:null, tsb};
     const totalW = parts.reduce((s,p)=>s+p.w,0);
     const recovery = parts.reduce((s,p)=>s+p.score*(p.w/totalW),0);
-    return {...r, recovery: Math.round(recovery), tsb};
+    return {recovery: Math.round(recovery), tsb};
+  }
+
+  const results = recs.map((r,i)=>{
+    const prevDay = buildRecovery(r, i, false);
+    const sameDay = buildRecovery(r, i, true);
+    let recoveryImpact = null;
+    if(prevDay.recovery!=null && sameDay.recovery!=null){
+      recoveryImpact = sameDay.recovery - prevDay.recovery;
+    }
+    return {...r, recovery: prevDay.recovery, tsb: prevDay.tsb, recoveryImpact};
   });
 
   const wellnessByDate = {};
@@ -476,9 +496,16 @@ function drawTable(tableId, rows, activities){
   let html = '<thead><tr><th>Dátum</th><th>Recovery</th><th>Strain</th><th>HRV</th><th>TF pokoj.</th><th>Kroky</th></tr></thead><tbody>';
   rows.forEach(r=>{
     const color = pillColor(r.recovery);
+    // "Dopad na regeneráciu": o koľko by dnešné skóre bolo iné, keby sa (nesprávne) počítalo
+    // z CTL/ATL toho istého dňa namiesto včerajška. Zobrazí sa len keď je záporný (t.j. dnešný
+    // tréning by inak umelo navýšil ranné skóre) — malým červeným písmom pod recovery pilulkou.
+    let impactHtml = '';
+    if(r.recoveryImpact!=null && r.recoveryImpact < 0){
+      impactHtml = `<div style="font-size:0.68rem;color:#f0553f;margin-top:2px;">📉 Dopad na regeneráciu: ${r.recoveryImpact}%</div>`;
+    }
     html += `<tr class="history-row" data-date="${r.date}" style="cursor:pointer;">
       <td>${r.date}${r.comments ? '<span class="comment-dot" title="Má komentár k dňu"></span>' : ''}</td>
-      <td><span class="pill" style="background:${color}22;color:${color}">${r.recovery!==null? r.recovery+'%':'—'}</span></td>
+      <td><span class="pill" style="background:${color}22;color:${color}">${r.recovery!==null? r.recovery+'%':'—'}</span>${impactHtml}</td>
       <td>${r.strain!=null ? r.strain.toFixed(1) : '—'}</td>
       <td>${fmt(r.hrv,1)}</td>
       <td>${fmt(r.restingHR,0)}</td>
