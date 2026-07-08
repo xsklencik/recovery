@@ -79,7 +79,7 @@ const FATIGUE_WEIGHT_SUM = (1 - Math.pow(FATIGUE_DECAY, FATIGUE_LOOKBACK_DAYS)) 
 // a algoritmus by prestal reagovať práve vtedy, keď má varovať najviac.
 const FATIGUE_RATIO_CENTER = 63; // pomer = 1.0 (presne na svojej udržateľnej hranici) -> stred škály
 const FATIGUE_RATIO_DOWN_SLOPE = 32; // nad pomerom 1.0 (viac než zvyčajne) skóre klesá strmo
-const FATIGUE_RATIO_UP_SLOPE = 25;   // pod pomerom 1.0 (menej než zvyčajne, oddych) skóre stúpa
+const FATIGUE_RATIO_UP_SLOPE = 37;   // pod pomerom 1.0 (menej než zvyčajne, oddych) skóre stúpa
 
 function dateAddDays(dateStr, n){
   const d = new Date(dateStr + 'T00:00:00Z');
