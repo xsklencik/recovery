@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recovery / Strain — Adam</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="top-row">
+    <div>
+      <div class="brand">
+        <h1>Recovery / Strain</h1>
+        <span class="brand-tag">Adam · Čadca–Žilina</span>
+      </div>
+      <div class="sub">Zotavenie sa počíta ráno a zostáva fixné · záťaž rastie počas dňa</div>
+      <div class="sync-info" id="sync-info">načítavam…</div>
+    </div>
+    <div class="btn-group">
+      <button class="btn" id="btn-copy-ai"><span class="btn-icon">⧉</span> Copy pre AI</button>
+      <button class="btn" id="btn-token"><span class="btn-icon">⚙</span> Token</button>
+      <button class="btn primary" id="btn-refresh"><span class="btn-icon">↻</span> Aktualizovať</button>
+    </div>
+  </div>
+
+  <div id="loading" class="loading">načítavam dáta…</div>
+  <div class="err" id="err"></div>
+
+  <div id="app" style="display:none;">
+    <div class="gauge-row">
+      <div class="gauge-card" style="--gauge-accent:var(--accent);">
+        <div class="gauge-top">
+          <span class="gauge-label">Recovery</span>
+          <span class="gauge-scale-label">0–100</span>
+        </div>
+        <div class="gauge-value-row">
+          <div><span class="gauge-value" id="recovery-pct">—</span><span class="gauge-value-unit">%</span></div>
+          <div class="gauge-verdict">
+            <div class="gauge-verdict-label" id="recovery-verdict"></div>
+            <div class="gauge-verdict-detail" id="recovery-detail"></div>
+          </div>
+        </div>
+        <div class="gauge-track"><div class="gauge-fill" id="fill-recovery" style="width:0%;background:var(--accent);"></div></div>
+        <div class="gauge-ticks"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
+        <div class="gauge-date" id="recovery-date"></div>
+      </div>
+
+      <div class="gauge-card" style="--gauge-accent:var(--data);">
+        <div class="gauge-top">
+          <span class="gauge-label">Strain dnes</span>
+          <span class="gauge-scale-label">0–21</span>
+        </div>
+        <div class="gauge-value-row">
+          <div><span class="gauge-value" id="strain-val">—</span></div>
+          <div class="gauge-verdict">
+            <div class="gauge-verdict-label" id="strain-verdict"></div>
+            <div class="gauge-verdict-detail" id="strain-detail"></div>
+          </div>
+        </div>
+        <div class="gauge-track"><div class="gauge-fill" id="fill-strain" style="width:0%;background:var(--data);"></div></div>
+        <div class="gauge-ticks"><span>0</span><span>5.25</span><span>10.5</span><span>15.75</span><span>21</span></div>
+        <div class="gauge-date">dnešná kumulatívna záťaž</div>
+      </div>
+    </div>
+
+    <div class="metrics-row" id="metrics-row"></div>
+    <div class="history-count" id="baseline-note">Farba hodnoty = odchýlka od tvojho 60-dňového priemeru (od {NEW_METHOD_CUTOFF} pre HRV a spánkovú TF, kvôli zmene metódy merania).</div>
+
+    <div class="section-head">
+      <div class="section-title">Dnešné aktivity</div>
+    </div>
+    <div class="activity-list" id="activity-list"></div>
+
+    <div class="section-head">
+      <div class="section-title">Recovery trend</div>
+      <div class="chart-tabs">
+        <button class="tab-btn active" data-chart="recovery" data-range="7">7D</button>
+        <button class="tab-btn" data-chart="recovery" data-range="30">30D</button>
+        <button class="tab-btn" data-chart="recovery" data-range="90">90D</button>
+      </div>
+    </div>
+    <div class="chart-card"><svg id="chart-recovery"></svg></div>
+
+    <div class="section-head">
+      <div class="section-title">Strain trend</div>
+      <div class="chart-tabs">
+        <button class="tab-btn active" data-chart="strain" data-range="7">7D</button>
+        <button class="tab-btn" data-chart="strain" data-range="30">30D</button>
+        <button class="tab-btn" data-chart="strain" data-range="90">90D</button>
+      </div>
+    </div>
+    <div class="chart-card"><svg id="chart-strain"></svg></div>
+
+    <div class="section-head">
+      <div class="section-title">Forma (TSB = CTL − ATL)</div>
+      <div class="chart-tabs">
+        <button class="tab-btn" data-chart="forma" data-range="30">30D</button>
+        <button class="tab-btn active" data-chart="forma" data-range="90">90D</button>
+        <button class="tab-btn" data-chart="forma" data-range="180">180D</button>
+      </div>
+    </div>
+    <div class="chart-with-legend">
+      <div class="chart-card"><svg id="chart-forma"></svg></div>
+      <div class="forma-legend" id="forma-legend"></div>
+    </div>
+
+    <div class="section-head">
+      <div class="section-title">HRV · pokojová TF · spánková TF</div>
+      <div class="chart-tabs">
+        <button class="tab-btn" data-chart="physio" data-range="7">7D</button>
+        <button class="tab-btn active" data-chart="physio" data-range="30">30D</button>
+        <button class="tab-btn" data-chart="physio" data-range="90">90D</button>
+      </div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-card"><div class="chart-card-title">HRV</div><svg id="chart-hrv"></svg></div>
+      <div class="chart-card"><div class="chart-card-title">Pokojová TF</div><svg id="chart-rhr"></svg></div>
+      <div class="chart-card"><div class="chart-card-title">Spánková TF</div><svg id="chart-sleephr"></svg></div>
+      <div class="chart-card"><div class="chart-card-title">Kroky (prerušovaná čiara = 60-dňový priemer)</div><svg id="chart-steps"></svg></div>
+    </div>
+
+    <div class="section-head">
+      <div class="section-title">Fitness / Únava (CTL · ATL)</div>
+      <div class="chart-tabs">
+        <button class="tab-btn" data-chart="load" data-range="30">30D</button>
+        <button class="tab-btn active" data-chart="load" data-range="90">90D</button>
+        <button class="tab-btn" data-chart="load" data-range="180">180D</button>
+      </div>
+    </div>
+    <div class="chart-card"><svg id="chart-load"></svg></div>
+
+    <div class="section-head"><div class="section-title">História</div></div>
+    <div class="chart-card" style="padding:0; overflow-x:auto;">
+      <table id="history-table"></table>
+    </div>
+    <div id="history-note" style="color:var(--text-faint);font-size:0.72rem;font-family:var(--mono);margin-top:8px;">
+      Zobrazených posledných 30 dní · klikni na riadok pre detail dňa (vrátane komentára) · <a class="nav-link" href="history.html">zobraziť celú históriu →</a>
+    </div>
+
+    <div class="section-head"><div class="section-title">Metodika</div></div>
+    <div class="methodology">
+      <div class="m-block"><b>Recovery %</b> — počíta sa z ranných fyziologických dát a zo skutočnej tréningovej záťaže, v pomere <b>60&nbsp;% fyziológia · 40&nbsp;% tréningová únava</b>. Huawei Watch Fit 5 dáva iba jedno nočné meranie (HRV/RHR/spánok), ktoré samo osebe nevie spoľahlivo zachytiť viacdňovú kumulovanú únavu — preto má skutočná záťaž (Intervals.icu Load) väčšiu váhu než pri klasických HRV-first modeloch. Fyziológia: HRV 30&nbsp;% · pokojová TF 15&nbsp;% · spánková TF 10&nbsp;% · spánok 5&nbsp;% (vážené z-skóre voči 60-dňovému kĺzavému priemeru, mapované na stupnicu s posunutým stredom — priemerný deň ≈ 63&nbsp;%). Tréningová únava 40&nbsp;% — pozri nižšie.</div>
+      <div class="m-block"><b>Tréningová únava (40 %)</b> — <i>Fatigue Score</i> = súčet Load z posledných 14 dní (T-1 a staršie, nikdy nie z dnešného dňa), každý deň exponenciálne menej váhový (0,70× na deň dozadu) a nelineárne "napenalizovaný" (Load^1,12), aby veľké tréningy dopadli neúmerne viac než malé. Fatigue Score sa porovná s tvojou aktuálnou "kapacitou" (odvodenou z CTL predošlého dňa — vyšší CTL = viac tolerancie na rovnakú záťaž), výsledný pomer sa mapuje na skóre s pevným stredom v 1,0 (nie voči plávajúcemu priemeru — inak by si sa pri chronickom preťažení sám "znecitlivel"). TSB do tohto výpočtu už nevstupuje, je len informačná metrika (pozri nižšie).</div>
+      <div class="m-block"><b>Strain 0–21</b> — rastie počas dňa. Počíta sa priamo z Intervals.icu <b>Load</b> (spoľahlivá, kalibrovaná záťažová metrika pre každú aktivitu) namiesto prepočtu z HR zón. Kroky sa pripočítajú len v dňoch <b>bez</b> trackovanej aktivity a majú vyššiu váhu, ak sú nad tvojím 60-dňovým priemerom (nadpriemerná chôdza/pohyb = viac záťaže, nie len viac krokov). Súčet sa škáluje logaritmicky, takže pridávanie záťaže pri už vysokom strain rastie čoraz pomalšie.</div>
+      <div class="m-block"><b>Forma (TSB)</b> — CTL mínus ATL, teraz už len informačná metrika dlhodobej formy (do Recovery nevstupuje). Farebné pásma podľa štandardných zón: <b>Prechod</b> (nad 20, riziko odtrénovania), <b>Svieži</b> (5 až 20), <b>Sivá zóna</b> (-10 až 5, neutrál), <b>Optimálne</b> (-30 až -10, tréningové okno), <b>Vysoké riziko</b> (pod -30, preťaženie/únava).</div>
+      <div class="m-block"><b>Bannery hore</b> (HRV, pokojová/spánková TF, kroky, tréningová únava, CTL/ATL/TSB) — rýchly denný prehľad. Farba hodnoty HRV/TF/krokov ukazuje odchýlku od tvojho vlastného 60-dňového priemeru (zelená = lepšie ako zvyčajne, žltá = mierne horšie, červená = výrazne horšie). Tréningová únava je farebná podľa pásma pomeru (svieži/v norme/zvýšená/vysoká/extrémna). TSB je farebné podľa zóny Forma grafu vyššie.</div>
+      <div class="m-block" style="color:var(--text-faint);font-size:0.76rem;">Poznámka k HR zónam: čas v jednotlivých zónach (Z1–Z5) sa stále zobrazuje v detaile aktivity ako informačný údaj, no do výpočtu Strain už nevstupuje.</div>
+      <div class="m-block"><b>↻ Aktualizovať</b> spustí GitHub Actions sync na pozadí (stiahne najnovšie aktivity a wellness z Intervals.icu) a po dokončení znovu načíta dáta — po skončení jazdy uvidíš Strain narásť do minúty.</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="token-modal">
+  <div class="modal">
+    <h3>GitHub token pre tlačidlo Aktualizovať</h3>
+    <p>
+      Fine-grained Personal Access Token s prístupom <b>len na tento repozitár</b> a oprávnením
+      <b>Contents: Read and write</b>. Vytvor ho na github.com → Settings → Developer settings →
+      Fine-grained tokens. Token sa uloží len v tomto prehliadači (localStorage), nikam sa neposiela okrem GitHub API.
+    </p>
+    <input type="password" id="token-input" placeholder="github_pat_xxxxxxxx">
+    <div class="modal-actions">
+      <button class="cancel" id="token-cancel">Zrušiť</button>
+      <button class="save" id="token-save">Uložiť</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="day-modal">
+  <div class="modal" id="day-modal-content" style="max-width:520px;max-height:80vh;overflow-y:auto;">
+    <!-- vyplnene dynamicky cez JS -->
+  </div>
+</div>
+
+<script src="app-common.js"></script>
+<script>
+const REPO_OWNER = 'xsklencik';
+const REPO_NAME = 'recovery';
+const WORKFLOW_FILE = 'sync.yml';
+
+document.getElementById('baseline-note').textContent =
+  'Farba hodnoty = odchýlka od tvojho 60-dňového priemeru (od ' + NEW_METHOD_CUTOFF + ' pre HRV a spánkovú TF, kvôli zmene metódy merania).';
+
+// ---------- GitHub token modal ----------
+function getToken(){ return localStorage.getItem('gh_pat') || ''; }
+function setToken(t){ localStorage.setItem('gh_pat', t); }
+
+document.getElementById('btn-token').addEventListener('click', ()=>{
+  document.getElementById('token-input').value = getToken();
+  document.getElementById('token-modal').classList.add('show');
+});
+document.getElementById('token-cancel').addEventListener('click', ()=>{
+  document.getElementById('token-modal').classList.remove('show');
+});
+document.getElementById('token-save').addEventListener('click', ()=>{
+  setToken(document.getElementById('token-input').value.trim());
+  document.getElementById('token-modal').classList.remove('show');
+});
+
+// ---------- Copy pre AI: zostaví kompletný kontext (7 dní + komentáre + odchýlky od baseline + fitness) ----------
+function buildAiContext(){
+  if(ALL_RESULTS.length===0) return 'Dáta ešte nie sú načítané.';
+
+  const last7 = ALL_RESULTS.slice(-7);
+  const today = ALL_RESULTS[ALL_RESULTS.length-1];
+
+  function deviation(field, baselineKey){
+    const bl = LATEST_BASELINE[baselineKey || field];
+    if(!bl || today[field]==null) return null;
+    const diff = today[field] - bl.mean;
+    const z = diff / bl.std;
+    return {mean: bl.mean, value: today[field], diff, z};
+  }
+
+  const lines = [];
+  lines.push('# Kontext pre AI trénera — cyklistika');
+  lines.push('');
+  lines.push(`Dátum: ${today.date}`);
+  lines.push('');
+
+  lines.push('## Dnešný stav');
+  lines.push(`- Recovery: ${today.recovery!=null?today.recovery+'%':'—'} (${today.recovery!=null?verdictFor(today).label:'bez dát'})`);
+  const todayStrain = STRAIN_BY_DATE.get(today.date);
+  lines.push(`- Strain dnes: ${todayStrain!=null?todayStrain.toFixed(1):'0.0'} / 21`);
+  const todayTsbZone = today.tsb!=null ? formaZoneFor(today.tsb) : null;
+  lines.push(`- CTL (Fitness): ${fmt(today.ctl,1)} · ATL (Únava): ${fmt(today.atl,1)} · TSB (Forma): ${today.tsb!=null?today.tsb.toFixed(1):'—'}${todayTsbZone?' ('+todayTsbZone.label+')':''}`);
+  if(today.comments) lines.push(`- Komentár k dnešku: "${today.comments}"`);
+  lines.push('');
+
+  lines.push('## Odchýlky od 60-dňového baseline (dnes)');
+  const hrvDev = deviation('hrv');
+  const rhrDev = deviation('restingHR');
+  const sleepHrDev = deviation('avgSleepingHR');
+  if(hrvDev) lines.push(`- HRV: ${hrvDev.value.toFixed(1)} vs. baseline ${hrvDev.mean.toFixed(1)} (${hrvDev.diff>=0?'+':''}${hrvDev.diff.toFixed(1)}, z=${hrvDev.z.toFixed(2)})`);
+  if(rhrDev) lines.push(`- Pokojová TF: ${Math.round(rhrDev.value)} vs. baseline ${rhrDev.mean.toFixed(1)} (${rhrDev.diff>=0?'+':''}${rhrDev.diff.toFixed(1)}, z=${rhrDev.z.toFixed(2)})`);
+  if(sleepHrDev) lines.push(`- Spánková TF: ${Math.round(sleepHrDev.value)} vs. baseline ${sleepHrDev.mean.toFixed(1)} (${sleepHrDev.diff>=0?'+':''}${sleepHrDev.diff.toFixed(1)}, z=${sleepHrDev.z.toFixed(2)})`);
+  if(!hrvDev && !rhrDev && !sleepHrDev) lines.push('- Nedostatok dát na výpočet odchýlok.');
+  lines.push('');
+
+  lines.push('## Posledných 7 dní — Recovery / Strain / HRV / RHR / komentár k dňu');
+  last7.forEach(r=>{
+    const s = STRAIN_BY_DATE.get(r.date);
+    const commentPart = r.comments ? `, komentár: "${r.comments}"` : '';
+    lines.push(`- ${r.date}: recovery ${r.recovery!=null?r.recovery+'%':'—'}, strain ${s!=null?s.toFixed(1):'0.0'}, HRV ${fmt(r.hrv,1)}, RHR ${fmt(r.restingHR,0)}, kroky ${r.steps!=null?r.steps:'—'}${commentPart}`);
+  });
+  lines.push('');
+
+  lines.push('## Aktivity za posledných 7 dní');
+  const sevenDaysAgo = last7[0].date;
+  const recentActivities = ALL_ACTIVITIES.filter(a => a.date >= sevenDaysAgo);
+  if(recentActivities.length===0){
+    lines.push('- Žiadne zaznamenané aktivity.');
+  } else {
+    recentActivities.forEach(a=>{
+      const mins = a.moving_time ? Math.round(a.moving_time/60) : null;
+      const km = a.distance ? (a.distance/1000).toFixed(1) : null;
+      const tags = parseTags(a.name, a.comments);
+      lines.push(`- ${a.date} "${a.name||a.type}"${mins!=null?', '+mins+' min':''}${km?', '+km+' km':''}${a.icu_training_load!=null?', load '+Math.round(a.icu_training_load):''}${tags.length?', tagy: '+tags.join('/'):''}`);
+    });
+  }
+  lines.push('');
+  lines.push('---');
+  lines.push('Na základe vyššie uvedených dát mi poraď, ako naplánovať najbližší tréning (zohľadni Husárik cieľ na september a 130km skupinovú jazdu Zone 2).');
+
+  return lines.join('\n');
+}
+
+document.getElementById('btn-copy-ai').addEventListener('click', async ()=>{
+  const btn = document.getElementById('btn-copy-ai');
+  const text = buildAiContext();
+  try{
+    await navigator.clipboard.writeText(text);
+    const original = btn.innerHTML;
+    btn.innerHTML = '<span class="btn-icon">✓</span> Skopírované';
+    setTimeout(()=>{ btn.innerHTML = original; }, 2000);
+  }catch(e){
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    const original = btn.innerHTML;
+    btn.innerHTML = '<span class="btn-icon">✓</span> Skopírované';
+    setTimeout(()=>{ btn.innerHTML = original; }, 2000);
+  }
+});
+
+// ---------- Refresh button: trigger workflow_dispatch, poll, reload ----------
+document.getElementById('btn-refresh').addEventListener('click', async ()=>{
+  const btn = document.getElementById('btn-refresh');
+  const token = getToken();
+  if(!token){
+    document.getElementById('token-modal').classList.add('show');
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = '⏳ Spúšťam sync…';
+  document.getElementById('err').textContent = '';
+  try{
+    const dispatchRes = await fetch(
+      `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${WORKFLOW_FILE}/dispatches`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
+        body: JSON.stringify({ ref: 'main', inputs: { days: '3' } }),
+      }
+    );
+    if(!dispatchRes.ok){
+      const txt = await dispatchRes.text();
+      throw new Error(`GitHub API ${dispatchRes.status}: ${txt.slice(0,200)}`);
+    }
+    btn.textContent = '⏳ Čakám na dokončenie…';
+    const before = await loadJson(SYNC_URL);
+    const beforeTs = before && before.lastSync ? before.lastSync : null;
+    let done = false;
+    for(let i=0;i<15;i++){
+      await new Promise(r=>setTimeout(r, 5000));
+      const check = await loadJson(SYNC_URL);
+      if(check && check.lastSync && check.lastSync !== beforeTs){
+        done = true;
+        break;
+      }
+      btn.textContent = `⏳ Čakám na dokončenie… (${(i+1)*5}s)`;
+    }
+    if(done){
+      btn.textContent = '✅ Hotovo, načítavam…';
+      await main();
+    } else {
+      btn.textContent = '⚠️ Trvá to dlhšie, skús znova o chvíľu';
+      setTimeout(()=>{ btn.textContent='🔄 Aktualizovať'; }, 4000);
+    }
+  }catch(err){
+    document.getElementById('err').textContent = 'Chyba pri spúšťaní syncu: ' + err.message;
+    btn.textContent = '🔄 Aktualizovať';
+  }finally{
+    btn.disabled = false;
+    if(btn.textContent.includes('Hotovo')) btn.textContent = '🔄 Aktualizovať';
+  }
+});
+
+// ---------- Main ----------
+let ALL_RESULTS = [];
+let ALL_ACTIVITIES = [];
+let STRAIN_BY_DATE = new Map();
+let LATEST_BASELINE = {};
+let STEPS_BASELINE_BY_DATE = new Map();
+
+async function main(){
+  const [history, daily, sync, actHistory, actDaily] = await Promise.all([
+    loadJson(HISTORY_URL), loadJson(DAILY_URL), loadJson(SYNC_URL),
+    loadJson(ACT_HISTORY_URL), loadJson(ACT_DAILY_URL)
+  ]);
+
+  if(!history && !daily){
+    document.getElementById('loading').style.display='none';
+    document.getElementById('err').textContent = 'Nepodarilo sa načítať dáta. Skontroluj či existujú súbory v data/.';
+    return;
+  }
+
+  let recs = mergeById(history, daily);
+  recs.sort((a,b)=> a.date < b.date ? -1 : 1);
+
+  let activities = mergeById(actHistory, actDaily);
+  activities.sort((a,b)=> (a.start_date_local||a.date) < (b.start_date_local||b.date) ? -1 : 1);
+  ALL_ACTIVITIES = activities;
+
+  if(sync && sync.lastSync){
+    const d = new Date(sync.lastSync);
+    document.getElementById('sync-info').textContent = 'Posledná synchronizácia: ' + d.toLocaleString('sk-SK');
+  } else {
+    document.getElementById('sync-info').textContent = 'Zatiaľ žiadny sync.';
+  }
+
+  document.getElementById('loading').style.display='none';
+
+  const {results, strainByDate, latestBaseline, stepsBaselineByDate} = computeResults(recs, activities);
+  STRAIN_BY_DATE = strainByDate;
+  LATEST_BASELINE = latestBaseline;
+  STEPS_BASELINE_BY_DATE = stepsBaselineByDate;
+  render(results, activities);
+}
+
+function render(results, activities){
+  ALL_RESULTS = results;
+  document.getElementById('app').style.display='block';
+
+  const withScore = results.filter(r=>r.recovery!==null);
+  const today = withScore[withScore.length-1] || results[results.length-1];
+  const v = verdictFor(today);
+
+  document.getElementById('recovery-date').textContent = today.date;
+  document.getElementById('recovery-verdict').textContent = v.label;
+  document.getElementById('recovery-verdict').style.color = v.color;
+  document.getElementById('recovery-detail').textContent = v.detail;
+
+  const pct = today.recovery ?? 0;
+  document.getElementById('recovery-pct').textContent = today.recovery!==null ? pct : '—';
+  const fillR = document.getElementById('fill-recovery');
+  fillR.style.background = v.color;
+  fillR.style.width = (today.recovery!==null ? pct : 0) + '%';
+
+  const todayDate = todayISO();
+  const todayStrain = STRAIN_BY_DATE.has(todayDate) ? STRAIN_BY_DATE.get(todayDate) : 0;
+  const sv = strainVerdict(todayStrain);
+  document.getElementById('strain-val').textContent = todayStrain.toFixed(1);
+  document.getElementById('strain-verdict').textContent = sv.label;
+  document.getElementById('strain-verdict').style.color = sv.color;
+  document.getElementById('strain-detail').textContent = sv.detail;
+  const fillS = document.getElementById('fill-strain');
+  fillS.style.background = sv.color;
+  fillS.style.width = (clamp(todayStrain,0,21)/21*100) + '%';
+
+  // ---- Bannery: farba = odchýlka od 60-dňového baseline ----
+  function devInfo(value, bl, direction){
+    if(value==null || !bl) return {color:null, sub:null};
+    const diff = value - bl.mean;
+    const z = diff/bl.std;
+    const color = baselineColor(z, direction);
+    const sign = diff>=0 ? '+' : '';
+    return {color, sub: `${sign}${diff.toFixed(1)} vs priemer ${bl.mean.toFixed(1)}`};
+  }
+  const hrvDev = devInfo(today.hrv, LATEST_BASELINE.hrv, 1);
+  const rhrDev = devInfo(today.restingHR, LATEST_BASELINE.restingHR, -1);
+  const sleepHrDev = devInfo(today.avgSleepingHR, LATEST_BASELINE.avgSleepingHR, -1);
+  const stepsBL = LATEST_BASELINE.steps;
+  const stepsSub = (today.steps!=null && stepsBL) ?
+    `${today.steps>=stepsBL.mean?'+':''}${Math.round(today.steps-stepsBL.mean).toLocaleString('sk-SK')} vs priemer ${Math.round(stepsBL.mean).toLocaleString('sk-SK')}` : null;
+  const tsbZone = today.tsb!=null ? formaZoneFor(today.tsb) : null;
+  const fatigueZone = today.fatigueRatio!=null ? fatigueRatioZoneFor(today.fatigueRatio) : null;
+
+  const metricsRow = document.getElementById('metrics-row');
+  metricsRow.innerHTML = '';
+  const metrics = [
+    {label:'HRV', val: fmt(today.hrv,1), color:hrvDev.color, sub:hrvDev.sub},
+    {label:'Pokojová TF', val: fmt(today.restingHR,0,' bpm'), color:rhrDev.color, sub:rhrDev.sub},
+    {label:'Spánková TF', val: fmt(today.avgSleepingHR,0,' bpm'), color:sleepHrDev.color, sub:sleepHrDev.sub},
+    {label:'Kroky dnes', val: today.steps!=null ? today.steps.toLocaleString('sk-SK') : '—', sub: stepsSub},
+    {label:'Tréningová únava', val: today.fatigueRatio!=null ? Math.round(today.fatigueRatio*100)+' %' : '—', color: fatigueZone?fatigueZone.color:null, sub: fatigueZone?fatigueZone.label:null},
+    {label:'CTL (Fitness)', val: fmt(today.ctl,1)},
+    {label:'ATL (Únava)', val: fmt(today.atl,1)},
+    {label:'TSB (Forma, info)', val: today.tsb!=null? today.tsb.toFixed(1): '—', color: tsbZone?tsbZone.color:null, sub: tsbZone?tsbZone.label:null},
+  ];
+  metrics.forEach(m=>{
+    const div = document.createElement('div');
+    div.className='metric';
+    div.innerHTML = `<div class="metric-label">${m.label}</div><div class="metric-val" style="${m.color?'color:'+m.color+';':''}">${m.val}</div>${m.sub?`<div class="metric-sub">${m.sub}</div>`:''}`;
+    metricsRow.appendChild(div);
+  });
+
+  renderActivityList(activities, todayDate);
+  renderFormaLegend('forma-legend');
+
+  function renderRecovery(range){
+    drawChart('chart-recovery', results.slice(-range), [{field:'recovery', color:'#ff6a3d', label:'Recovery'}],
+      {fixedMin:0, fixedMax:100, gridValues:[0,25,50,75,100], dotColorFn: pillColor,
+       tooltipFormat:(f,v)=>v+'%'});
+  }
+  function renderStrain(range){
+    drawChart('chart-strain', results.slice(-range), [{field:'strain', color:'#4a9eff', label:'Strain'}],
+      {fixedMin:0, fixedMax:21, gridValues:[0,7,14,21],
+       tooltipFormat:(f,v)=>v.toFixed(1)});
+  }
+  function renderForma(range){
+    drawChart('chart-forma', results.slice(-range), [{field:'tsb', color:'#7a7f89', label:'TSB'}],
+      {fixedMin:-40, fixedMax:25, gridValues:[20,5,-10,-30],
+       dotColorFn: v => { const z = formaZoneFor(v); return z ? z.color : '#7a7f89'; },
+       bands: FORMA_ZONES.map(z=>({min: Math.max(z.min,-40), max: Math.min(z.max,25), color: hexToRgba(z.color, 0.14)})),
+       tooltipFormat:(f,v)=>v.toFixed(1)});
+  }
+  function renderPhysio(range){
+    const hrvData = results.filter(r => r.date >= NEW_METHOD_CUTOFF).slice(-range);
+    drawChart('chart-hrv', hrvData, [{field:'hrv', color:'#3ddc97', label:'HRV'}], {minAtZero:true, tooltipFormat:(f,v)=>v.toFixed(1)});
+    drawChart('chart-rhr', hrvData, [{field:'restingHR', color:'#f0b429', label:'RHR'}], {minAtZero:true, tooltipFormat:(f,v)=>Math.round(v)+' bpm'});
+    drawChart('chart-sleephr', hrvData, [{field:'avgSleepingHR', color:'#a78bfa', label:'Spánk. TF'}], {minAtZero:true, tooltipFormat:(f,v)=>Math.round(v)+' bpm'});
+    drawChart('chart-steps', results.slice(-range).map(r=>({...r, stepsBaseline: STEPS_BASELINE_BY_DATE.get(r.date) ?? null})),
+      [
+        {field:'steps', color:'#4a9eff', label:'Kroky'},
+        {field:'stepsBaseline', color:'#4a4f58', label:'Priemer', dash:true, hideDots:true, width:1.5},
+      ],
+      {minAtZero:true, yFormat:v=>Math.round(v/1000)+'k', tooltipFormat:(f,v)=>Math.round(v).toLocaleString('sk-SK')});
+  }
+  function renderLoad(range){
+    drawChart('chart-load', results.slice(-range),
+      [{field:'ctl', color:'#4a9eff', label:'CTL'}, {field:'atl', color:'#f0553f', label:'ATL'}],
+      {minAtZero:true, hideDots:true, tooltipFormat:(f,v)=>v.toFixed(1)});
+  }
+
+  renderRecovery(7);
+  renderStrain(7);
+  renderForma(90);
+  renderPhysio(30);
+  renderLoad(90);
+  drawTable('history-table', results.slice().reverse().slice(0,30), activities);
+
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const chartName = btn.dataset.chart;
+      document.querySelectorAll(`.tab-btn[data-chart="${chartName}"]`).forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const range = parseInt(btn.dataset.range);
+      if(chartName==='recovery') renderRecovery(range);
+      else if(chartName==='strain') renderStrain(range);
+      else if(chartName==='forma') renderForma(range);
+      else if(chartName==='physio') renderPhysio(range);
+      else if(chartName==='load') renderLoad(range);
+    });
+  });
+}
+
+function renderActivityList(activities, todayDate){
+  const list = document.getElementById('activity-list');
+  const todays = activities.filter(a => a.date === todayDate);
+  if(todays.length===0){
+    list.innerHTML = `<div class="activity-empty">Dnes zatiaľ žiadna aktivita. Klikni "Aktualizovať" po skončení jazdy.</div>`;
+    return;
+  }
+  list.innerHTML = '';
+  todays.forEach(a=>{
+    const raw = loadToRawStrain(a);
+    const contrib = rawToStrain(raw);
+    const div = document.createElement('div');
+    div.className = 'activity-row';
+    const mins = a.moving_time ? Math.round(a.moving_time/60) : null;
+    const timeStr = a.start_date_local ? a.start_date_local.slice(11,16) : '';
+    const tags = parseTags(a.name, a.comments);
+    const tagsHtml = tags.length ? `<span style="color:var(--text-faint);"> · ${tags.join(', ')}</span>` : '';
+    div.innerHTML = `
+      <div>
+        <div class="activity-name">${a.name || a.type}</div>
+        <div class="activity-meta">${timeStr}${mins!==null ? ' · '+mins+' min' : ''}${a.icu_training_load!=null ? ' · TL '+Math.round(a.icu_training_load) : ''}${tagsHtml}</div>
+      </div>
+      <div class="activity-strain">+${contrib.toFixed(1)}</div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+main();
+</script>
+</body>
+</html>
