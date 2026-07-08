@@ -31,7 +31,7 @@
   "weight": null,
   "comments": "Voľno ",
   "source": "intervals_api",
-  "syncedAt": "2026-07-08T16:41:53.491Z"
+  "syncedAt": "2026-07-08T16:53:34.485Z"
  },
  {
   "id": "2026-07-06",
@@ -48,7 +48,7 @@
   "weight": null,
   "comments": "laser game, rano prve cvicenie na rehabilitaciach c.4",
   "source": "intervals_api",
-  "syncedAt": "2026-07-08T16:41:53.491Z"
+  "syncedAt": "2026-07-08T16:53:34.485Z"
  },
  {
   "id": "2026-07-07",
@@ -65,7 +65,7 @@
   "weight": null,
   "comments": "Úplne voľno ",
   "source": "intervals_api",
-  "syncedAt": "2026-07-08T16:41:53.491Z"
+  "syncedAt": "2026-07-08T16:53:34.485Z"
  },
  {
   "id": "2026-07-08",
@@ -76,12 +76,12 @@
   "avgSleepingHR": 57,
   "sleepScore": 82,
   "sleepSecs": 26760,
-  "steps": 9152,
-  "ctl": 40.437965,
-  "atl": 55.16726,
+  "steps": 9347,
+  "ctl": 40.34385,
+  "atl": 54.634773,
   "weight": null,
-  "comments": null,
+  "comments": "Valy: 5:21 | 176 bpm\n\nValy: 5:32 | 177 bpm\n\nOd trójstyku: 4:53 | 170 bpm\n\n3 styki do tablicy: 4:34 | 172 bpm\n\nBlažkovci: 1:47 | 169 bpm\n\nrovinka podzávoz: 40s | 164 bpm\n\nmedzi tymi 5 minutovymi som mal 5 minut pauzu cca, blazkovci potom po 20 mimutach a podzavoz po 10",
   "source": "intervals_api",
-  "syncedAt": "2026-07-08T16:41:53.491Z"
+  "syncedAt": "2026-07-08T16:53:34.485Z"
  }
 ]
