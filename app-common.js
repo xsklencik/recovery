@@ -50,7 +50,10 @@ function fmt(v, digits, suffix){
 // horšie-než-zvyčajne dni klesajú rýchlejšie (DOWN_SCALE), než lepšie-než-zvyčajne dni stúpajú (UP_SCALE).
 const SCORE_CENTER = 63;
 const SCORE_UP_SCALE = 18;
-const SCORE_DOWN_SCALE = 26;
+const SCORE_DOWN_SCALE = 19; // zmiernené z 26 -> 19: pôvodná hodnota pri ~2 std horšej HRV noci
+// strhla skóre danej zložky takmer na 0, čo pri váhe HRV 45% zrútilo celé recovery skóre aj keď
+// RHR a spánková TF boli v norme. Whoop v praxi nedovolí, aby jeden zhoršený parameter takto
+// dominoval nad ostatnými - zníženie strmosti to lepšie vybalansuje.
 function zToScore(z){
   const raw = z>=0 ? SCORE_CENTER + z*SCORE_UP_SCALE : SCORE_CENTER + z*SCORE_DOWN_SCALE;
   return clamp(raw, 0, 100);
@@ -233,9 +236,15 @@ function computeResults(recs, activities){
 
   function buildRecovery(r, i){
     const parts = [];
-    if(r.hrv!=null && hrvStats[i]){ const z=(r.hrv-hrvStats[i].mean)/hrvStats[i].std; parts.push({w:0.45,score:zToScore(z)}); }
-    if(r.restingHR!=null && rhrStats[i]){ const z=(r.restingHR-rhrStats[i].mean)/rhrStats[i].std; parts.push({w:0.20,score:zToScore(-z)}); }
-    if(r.avgSleepingHR!=null && sleepHrStats[i]){ const z=(r.avgSleepingHR-sleepHrStats[i].mean)/sleepHrStats[i].std; parts.push({w:0.15,score:zToScore(-z)}); }
+    // Váhy zložiek recovery skóre. TSB (kumulatívna únava/forma z CTL-ATL) má vedome vyššiu váhu
+    // (35%) ako pri pôvodnom Whoop-podobnom rozdelení, pretože pri cyklistike s veľkými dennými
+    // záťažami (dlhé jazdy, teplo) samotné jednorazové ranné HRV/RHR nestačí zachytiť, či telo
+    // ešte "dolieča" viacdňovú kumulovanú záťaž. Vďaka tomu deň po náročnej jazde dôsledne
+    // vykazuje nižšie recovery než dni s dostatočným oddychom pred ním, aj keď HRV/RHR tú
+    // konkrétnu noc vyzerajú v poriadku.
+    if(r.hrv!=null && hrvStats[i]){ const z=(r.hrv-hrvStats[i].mean)/hrvStats[i].std; parts.push({w:0.30,score:zToScore(z)}); }
+    if(r.restingHR!=null && rhrStats[i]){ const z=(r.restingHR-rhrStats[i].mean)/rhrStats[i].std; parts.push({w:0.15,score:zToScore(-z)}); }
+    if(r.avgSleepingHR!=null && sleepHrStats[i]){ const z=(r.avgSleepingHR-sleepHrStats[i].mean)/sleepHrStats[i].std; parts.push({w:0.10,score:zToScore(-z)}); }
     if(r.sleepScore!=null && sleepScoreStats[i]){ const z=(r.sleepScore-sleepScoreStats[i].mean)/sleepScoreStats[i].std; parts.push({w:0.10,score:zToScore(z)}); }
     // TSB (forma) sa berie z CTL/ATL predchádzajúceho dňa (T-1) — odráža stav tela PRED
     // dnešným tréningom, teda presne to, čo ranné recovery skóre má vyjadrovať.
@@ -243,7 +252,7 @@ function computeResults(recs, activities){
     const tsb = (prev && prev.ctl!=null && prev.atl!=null) ? prev.ctl - prev.atl : null;
     if(tsb!=null && tsbStats[i]){
       const z = (tsb - tsbStats[i].mean) / tsbStats[i].std;
-      parts.push({w:0.10, score: zToScore(z)});
+      parts.push({w:0.35, score: zToScore(z)});
     }
     if(parts.length===0) return {recovery:null, tsb};
     const totalW = parts.reduce((s,p)=>s+p.w,0);
