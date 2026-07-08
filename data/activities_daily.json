@@ -42,28 +42,4 @@
   "hr_z3_secs": 560,
   "hr_z4_secs": 0,
   "hr_z5_secs": 0
- },
- {
-  "id": "i163451180",
-  "date": "2026-07-07",
-  "start_date_local": "2026-07-07T08:42:16",
-  "name": "Morning Walk",
-  "type": "Walk",
-  "comments": null,
-  "moving_time": 1824,
-  "distance": 870,
-  "total_elevation_gain": 4.200012,
-  "average_heartrate": 81,
-  "max_heartrate": 93,
-  "icu_training_load": 3,
-  "icu_ctl": 38.5192,
-  "icu_atl": 45.14989,
-  "icu_intensity": 24.273401,
-  "icu_rpe": null,
-  "hr_z1_secs": 1835,
-  "hr_z2_secs": 0,
-  "hr_z3_secs": 0,
-  "hr_z4_secs": 0,
-  "hr_z5_secs": 0
- }
-]
+ }]
