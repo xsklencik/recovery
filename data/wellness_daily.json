@@ -31,7 +31,7 @@
   "weight": null,
   "comments": "Voľno ",
   "source": "intervals_api",
-  "syncedAt": "2026-07-08T05:46:37.799Z"
+  "syncedAt": "2026-07-08T05:57:02.055Z"
  },
  {
   "id": "2026-07-06",
@@ -48,13 +48,13 @@
   "weight": null,
   "comments": "laser game, rano prve cvicenie na rehabilitaciach c.4",
   "source": "intervals_api",
-  "syncedAt": "2026-07-08T05:46:37.799Z"
+  "syncedAt": "2026-07-08T05:57:02.055Z"
  },
  {
   "id": "2026-07-07",
   "date": "2026-07-07",
   "restingHR": 50,
-  "hrv": 58.444443,
+  "hrv": 57.355556,
   "hrvSDNN": null,
   "avgSleepingHR": 57,
   "sleepScore": 82,
@@ -65,7 +65,7 @@
   "weight": null,
   "comments": "Úplne voľno ",
   "source": "intervals_api",
-  "syncedAt": "2026-07-08T05:46:37.799Z"
+  "syncedAt": "2026-07-08T05:57:02.055Z"
  },
  {
   "id": "2026-07-08",
@@ -76,12 +76,12 @@
   "avgSleepingHR": 57,
   "sleepScore": 82,
   "sleepSecs": 26760,
-  "steps": 2100,
-  "ctl": 37.54398,
-  "atl": 38.793243,
+  "steps": 2522,
+  "ctl": 37.638096,
+  "atl": 39.32573,
   "weight": null,
   "comments": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-08T05:46:37.799Z"
+  "syncedAt": "2026-07-08T05:57:02.055Z"
  }
 ]
