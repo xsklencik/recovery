@@ -236,9 +236,7 @@ function buildAiContext(){
   lines.push('');
 
   lines.push('## Dnešný stav');
-  lines.push(`- Recovery: ${today.recovery!=null?today.recovery+'%':'—'} (${today.recovery!=null?verdictFor(today).label:'bez dát'})`);
-  const todayStrain = STRAIN_BY_DATE.get(today.date);
-  lines.push(`- Strain dnes: ${todayStrain!=null?todayStrain.toFixed(1):'0.0'} / 21`);
+  lines.push(`- Mnou vypocitane Recovery: ${today.recovery!=null?today.recovery+'%':'—'} (${today.recovery!=null?verdictFor(today).label:'bez dát'})`);
   const todayTsbZone = today.tsb!=null ? formaZoneFor(today.tsb) : null;
   lines.push(`- CTL (Fitness): ${fmt(today.ctl,1)} · ATL (Únava): ${fmt(today.atl,1)} · TSB (Forma): ${today.tsb!=null?today.tsb.toFixed(1):'—'}${todayTsbZone?' ('+todayTsbZone.label+')':''}`);
   if(today.comments) lines.push(`- Komentár k dnešku: "${today.comments}"`);
@@ -277,7 +275,7 @@ function buildAiContext(){
   }
   lines.push('');
   lines.push('---');
-  lines.push('Na základe vyššie uvedených dát mi poraď, ako naplánovať najbližší tréning (zohľadni Husárik cieľ na september a 130km skupinovú jazdu Zone 2).');
+  lines.push('Na základe vyššie uvedených dát mi poraď, ako naplánovať najbližší tréning.');
 
   return lines.join('\n');
 }
