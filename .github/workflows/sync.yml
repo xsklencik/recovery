@@ -3,7 +3,7 @@ name: Sync Intervals.icu data
 on:
   schedule:
     # Beží každý deň o 4:38 UTC (6:38 SELČ v lete / 6:00 SEČ v zime)
-    - cron: '38 4 * * *'
+    - cron: '50 5 * * *'
   workflow_dispatch:
     inputs:
       days:
