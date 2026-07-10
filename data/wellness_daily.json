@@ -65,7 +65,7 @@
   "weight": null,
   "comments": "Úplne voľno ",
   "source": "intervals_api",
-  "syncedAt": "2026-07-10T09:31:14.416Z"
+  "syncedAt": "2026-07-10T09:41:03.247Z"
  },
  {
   "id": "2026-07-08",
@@ -82,40 +82,40 @@
   "weight": null,
   "comments": "Valy: 5:21 | 176 bpm\n\nValy: 5:32 | 177 bpm\n\nOd trójstyku: 4:53 | 170 bpm\n\n3 styki do tablicy: 4:34 | 172 bpm\n\nBlažkovci: 1:47 | 169 bpm\n\nrovinka podzávoz: 40s | 164 bpm\n\nmedzi tymi 5 minutovymi som mal 5 minut pauzu cca, blazkovci potom po 20 mimutach a podzavoz po 10",
   "source": "intervals_api",
-  "syncedAt": "2026-07-10T09:31:14.416Z"
+  "syncedAt": "2026-07-10T09:41:03.247Z"
  },
  {
   "id": "2026-07-09",
   "date": "2026-07-09",
-  "restingHR": 56,
+  "restingHR": 54,
   "hrv": 49.25,
   "hrvSDNN": 48,
   "avgSleepingHR": 63,
   "sleepScore": 83,
   "sleepSecs": 27120,
-  "steps": 19723,
+  "steps": 19771,
   "ctl": 40.124004,
   "atl": 51.488464,
   "weight": null,
   "comments": "Z1 hike na zivčákovú s famíliou",
   "source": "intervals_api",
-  "syncedAt": "2026-07-10T09:31:14.416Z"
+  "syncedAt": "2026-07-10T09:41:03.247Z"
  },
  {
   "id": "2026-07-10",
   "date": "2026-07-10",
-  "restingHR": null,
+  "restingHR": 53,
   "hrv": null,
   "hrvSDNN": 60,
   "avgSleepingHR": 57,
   "sleepScore": 83,
   "sleepSecs": 27900,
-  "steps": null,
+  "steps": 6959,
   "ctl": 39.203484,
   "atl": 44.767334,
   "weight": null,
   "comments": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-10T09:31:14.416Z"
+  "syncedAt": "2026-07-10T09:41:03.247Z"
  }
 ]
