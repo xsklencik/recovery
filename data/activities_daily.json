@@ -111,5 +111,28 @@
   "hr_z3_secs": 985,
   "hr_z4_secs": 190,
   "hr_z5_secs": 0
+ },
+ {
+  "id": "i164798621",
+  "date": "2026-07-11",
+  "start_date_local": "2026-07-11T16:51:41",
+  "name": "Afternoon Ride",
+  "type": "Ride",
+  "comments": null,
+  "moving_time": 3753,
+  "distance": 13320,
+  "total_elevation_gain": 208,
+  "average_heartrate": 117,
+  "max_heartrate": 139,
+  "icu_training_load": 28,
+  "icu_ctl": 43.856476,
+  "icu_atl": 67.23096,
+  "icu_intensity": 51.797604,
+  "icu_rpe": null,
+  "hr_z1_secs": 3755,
+  "hr_z2_secs": 10,
+  "hr_z3_secs": 0,
+  "hr_z4_secs": 0,
+  "hr_z5_secs": 0
  }
 ]
