@@ -29,7 +29,37 @@ const SYNC_URL = 'data/last_sync.json';
 const ACT_HISTORY_URL = 'data/activities_history.json';
 const ACT_DAILY_URL = 'data/activities_daily.json';
 
-// ---------- Základné utility ----------
+// ---------- Zápis do Intervals.icu z prehliadača ----------
+// /api/v1/ endpointy Intervals.icu podporujú CORS (na rozdiel od starších /api/ bez v1), takže
+// sa dá zapisovať priamo z tejto (statickej, GitHub Pages) stránky - bez vlastného backendu.
+// API key sa NIKDY neukladá do repozitára - zadáva sa raz v prehliadači a ostáva len v localStorage
+// tohto zariadenia (rovnaký princíp ako GitHub token pri tlačidle "Aktualizovať").
+function getIcuApiKey(){ return localStorage.getItem('icu_api_key') || ''; }
+function setIcuApiKey(k){ localStorage.setItem('icu_api_key', k); }
+function icuAuthHeader(){
+  return 'Basic ' + btoa('API_KEY:' + getIcuApiKey());
+}
+async function icuRequest(path, method, body){
+  const key = getIcuApiKey();
+  if(!key) throw new Error('Chýba Intervals.icu API key (tlačidlo "Intervals kľúč").');
+  const res = await fetch(`https://intervals.icu/api/v1${path}`, {
+    method,
+    headers: { 'Authorization': icuAuthHeader(), 'Content-Type': 'application/json' },
+    body: body!=null ? JSON.stringify(body) : undefined,
+  });
+  if(!res.ok){
+    const txt = await res.text().catch(()=> '');
+    throw new Error(`Intervals.icu API ${res.status}: ${txt.slice(0,200) || res.statusText}`);
+  }
+  if(res.status===204) return null;
+  return res.json().catch(()=>null);
+}
+// athlete/0 = "prihlásený athlete podľa API key" - nemusíme poznať/posielať skutočné ID.
+function icuPutWellness(date, payload){ return icuRequest(`/athlete/0/wellness/${date}`, 'PUT', payload); }
+function icuUpdateActivity(id, payload){ return icuRequest(`/activity/${id}`, 'PUT', payload); }
+function icuDeleteActivity(id){ return icuRequest(`/activity/${id}`, 'DELETE'); }
+
+
 function mean(arr){ return arr.reduce((a,b)=>a+b,0)/arr.length; }
 function stdev(arr){ const m = mean(arr); return Math.sqrt(mean(arr.map(x=>(x-m)**2))); }
 function clamp(x,lo,hi){return Math.max(lo,Math.min(hi,x));}
@@ -358,12 +388,14 @@ function computeResults(recs, activities){
   const sleepScoreStats = rollingStats(recs, 'sleepScore', null);
   const stepsStats = rollingStats(recs, 'steps', null);
 
-  // TSB (Forma = CTL-ATL) sa naďalej počíta a zobrazuje (grafy, bannery), ale je to už len
-  // INFORMAČNÁ metrika o dlhodobej forme - do samotného Recovery skóre nevstupuje. Berie sa
-  // z predchádzajúceho dňa (T-1), aby nebola skreslená tréningom vykonaným v priebehu dňa T.
+  // Forma (TSB) - predtým sa zámerne brala z T-1, aby ju "neskreslil" dnešný tréning. Adam chce,
+  // aby sa Forma počas dňa reálne hýbala (nie len raz ráno) - preto teraz berieme priamo dnešné
+  // CTL/ATL z Intervals.icu (tie sa aktualizujú akonáhle sa dnešná aktivita zosynchronizuje).
+  // Dôsledok, o ktorom treba vedieť: hneď po tvrdom tréningu Forma v ten istý deň klesne (namiesto
+  // toho, aby to bolo vidieť až zajtra) - to je fyziologicky správne (čerstvá záťaž = okamžitá únava),
+  // len to vyzerá "nervóznejšie" než predtým.
   const tsbSeries = recs.map((r,i) => {
-    const prev = i>0 ? recs[i-1] : null;
-    return (prev && prev.ctl!=null && prev.atl!=null) ? prev.ctl-prev.atl : null;
+    return (r.ctl!=null && r.atl!=null) ? r.ctl-r.atl : null;
   });
 
   // Denný Load (Intervals.icu icu_training_load) spočítaný podľa dátumu aktivity - vstup pre
@@ -393,9 +425,13 @@ function computeResults(recs, activities){
     // Huawei Watch Fit 5 poskytuje len jedno nočné meranie, ktoré samo o sebe nevie spoľahlivo
     // zachytiť viacdňovú kumulovanú únavu - preto má skutočná tréningová záťaž (Fatigue Score)
     // väčšiu váhu než pri klasických HRV-first modeloch (napr. Whoop).
+    // Whoop/Oura porovnania (viď diskusia) ukazujú, že "RHR" u špičkových trackerov je v podstate
+    // vždy nočný priemer TF - žiadna samostatná "denná" pokojová TF sa tam nepoužíva. Garminova
+    // denná resting HR sa naopak počíta z ľubovoľného 30-min okna cez deň (metodicky slabšie).
+    // Preto má nočná TF (avgSleepingHR) VYŠŠIU váhu než denná (restingHR) - opak pôvodného 15/10.
     if(r.hrv!=null && hrvStats[i]){ const z=(r.hrv-hrvStats[i].mean)/hrvStats[i].std; parts.push({w:0.30,score:zToScore(z)}); }
-    if(r.restingHR!=null && rhrStats[i]){ const z=(r.restingHR-rhrStats[i].mean)/rhrStats[i].std; parts.push({w:0.15,score:zToScore(-z)}); }
-    if(r.avgSleepingHR!=null && sleepHrStats[i]){ const z=(r.avgSleepingHR-sleepHrStats[i].mean)/sleepHrStats[i].std; parts.push({w:0.10,score:zToScore(-z)}); }
+    if(r.restingHR!=null && rhrStats[i]){ const z=(r.restingHR-rhrStats[i].mean)/rhrStats[i].std; parts.push({w:0.10,score:zToScore(-z)}); }
+    if(r.avgSleepingHR!=null && sleepHrStats[i]){ const z=(r.avgSleepingHR-sleepHrStats[i].mean)/sleepHrStats[i].std; parts.push({w:0.15,score:zToScore(-z)}); }
     if(r.sleepScore!=null && sleepScoreStats[i]){ const z=(r.sleepScore-sleepScoreStats[i].mean)/sleepScoreStats[i].std; parts.push({w:0.05,score:zToScore(z)}); }
     const fatigueRatio = fatigueRatioSeries[i];
     if(fatigueRatio!=null){
@@ -669,6 +705,77 @@ function drawTable(tableId, rows, activities){
   });
 }
 
+function activityDetailHtml(a){
+  const mins = a.moving_time ? Math.round(a.moving_time/60) : null;
+  const km = a.distance ? (a.distance/1000).toFixed(1) : null;
+  const elev = a.total_elevation_gain!=null ? Math.round(a.total_elevation_gain) : null;
+  const zoneRows = [1,2,3,4,5].map(z=>{
+    const secs = a[`hr_z${z}_secs`];
+    if(secs==null) return '';
+    const m = Math.round(secs/60);
+    return m>0 ? `<div class="tt-row"><span class="tt-dot" style="background:var(--text-faint)"></span>Z${z}: <b>${m} min</b></div>` : '';
+  }).join('');
+  return `
+    <div style="font-family:var(--mono);font-size:0.8rem;color:var(--text-dim);line-height:1.8;">
+      <div>Typ: <b>${a.type||'—'}</b></div>
+      <div>Dátum/čas: <b>${a.start_date_local ? a.start_date_local.slice(0,16).replace('T',' ') : (a.date||'—')}</b></div>
+      ${mins!=null?`<div>Trvanie: <b>${mins} min</b></div>`:''}
+      ${km?`<div>Vzdialenosť: <b>${km} km</b></div>`:''}
+      ${elev!=null?`<div>Prevýšenie: <b>${elev} m</b></div>`:''}
+      ${a.average_heartrate!=null?`<div>Priem. TF: <b>${Math.round(a.average_heartrate)} bpm</b></div>`:''}
+      ${a.max_heartrate!=null?`<div>Max TF: <b>${Math.round(a.max_heartrate)} bpm</b></div>`:''}
+      ${a.icu_training_load!=null?`<div>Load: <b>${Math.round(a.icu_training_load)}</b></div>`:''}
+      ${a.icu_intensity!=null?`<div>Intenzita: <b>${Math.round(a.icu_intensity)}</b></div>`:''}
+      ${a.icu_rpe!=null?`<div>RPE: <b>${a.icu_rpe}</b></div>`:''}
+      ${a.comments?`<div style="margin-top:6px;white-space:pre-wrap;">${escapeHtml(a.comments)}</div>`:''}
+    </div>
+    ${zoneRows?`<div style="font-family:var(--mono);font-size:0.68rem;color:var(--text-faint);margin:10px 0 4px;">čas v HR zónach</div><div style="font-family:var(--mono);font-size:0.78rem;color:var(--text-dim);">${zoneRows}</div>`:''}
+  `;
+}
+
+// Detail aktivity - premenovanie a zmazanie sa posiela priamo na Intervals.icu (vyžaduje uložený
+// API key). Lokálne dáta na tejto stránke sa aktualizujú až pri ďalšom syncu (tlačidlo "Aktualizovať").
+function openActivityModal(a){
+  const modal = document.getElementById('activity-modal');
+  const content = document.getElementById('activity-modal-content');
+  if(!modal || !content) return;
+  content.innerHTML = `
+    <h3 style="display:flex;justify-content:space-between;align-items:center;">
+      <span>Detail aktivity</span>
+      <button id="activity-modal-close" style="background:none;border:none;color:var(--text-dim);font-size:1.2rem;cursor:pointer;">✕</button>
+    </h3>
+    <div style="margin-bottom:10px;">
+      <input type="text" id="act-name-input" value="${escapeHtml(a.name||'')}" style="width:100%;font-size:0.95rem;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);box-sizing:border-box;">
+    </div>
+    ${activityDetailHtml(a)}
+    <div id="act-modal-status" style="font-size:0.76rem;color:var(--text-faint);margin-top:10px;min-height:1.2em;"></div>
+    <div class="modal-actions" style="margin-top:10px;">
+      <button class="cancel" id="act-delete-btn" style="color:#f0553f;">Zmazať z Intervals</button>
+      <button class="save" id="act-rename-btn">Uložiť názov do Intervals</button>
+    </div>
+  `;
+  modal.classList.add('show');
+  const status = document.getElementById('act-modal-status');
+  document.getElementById('activity-modal-close').addEventListener('click', ()=> modal.classList.remove('show'));
+  document.getElementById('act-rename-btn').addEventListener('click', async ()=>{
+    const newName = document.getElementById('act-name-input').value.trim();
+    if(!newName) return;
+    status.textContent = 'Ukladám do Intervals.icu…';
+    try{
+      await icuUpdateActivity(a.id, {name: newName});
+      status.textContent = '✅ Uložené na Intervals.icu. Tu na stránke sa to prejaví po ďalšom syncu ("Aktualizovať").';
+    }catch(e){ status.textContent = '⚠️ ' + e.message; }
+  });
+  document.getElementById('act-delete-btn').addEventListener('click', async ()=>{
+    if(!confirm('Naozaj natrvalo zmazať túto aktivitu z Intervals.icu? Nedá sa to vrátiť späť.')) return;
+    status.textContent = 'Mažem na Intervals.icu…';
+    try{
+      await icuDeleteActivity(a.id);
+      status.textContent = '✅ Zmazané na Intervals.icu. Tu na stránke zmizne po ďalšom syncu ("Aktualizovať").';
+    }catch(e){ status.textContent = '⚠️ ' + e.message; }
+  });
+}
+
 function openDayModal(date, dayResult, dayActivities){
   const content = document.getElementById('day-modal-content');
   const v = dayResult ? verdictFor(dayResult) : null;
@@ -683,21 +790,14 @@ function openDayModal(date, dayResult, dayActivities){
       const tags = parseTags(a.name, a.comments);
       const raw = loadToRawStrain(a);
       const contrib = rawToStrain(raw);
-      const zoneRows = [1,2,3,4,5].map(z=>{
-        const secs = a[`hr_z${z}_secs`];
-        if(secs==null) return '';
-        const m = Math.round(secs/60);
-        return m>0 ? `<div class="tt-row"><span class="tt-dot" style="background:var(--text-faint)"></span>Z${z}: <b>${m} min</b></div>` : '';
-      }).join('');
       return `
-        <div style="border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
+        <div class="day-modal-activity" data-activity-id="${a.id}" style="border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;cursor:pointer;">
           <div style="font-weight:600;margin-bottom:4px;">${a.name || a.type}</div>
-          <div style="color:var(--text-faint);font-family:var(--mono);font-size:0.76rem;margin-bottom:8px;">
+          <div style="color:var(--text-faint);font-family:var(--mono);font-size:0.76rem;margin-bottom:4px;">
             ${a.start_date_local ? a.start_date_local.slice(11,16) : ''}${mins!=null ? ' · '+mins+' min' : ''}${km ? ' · '+km+' km' : ''}${a.icu_training_load!=null ? ' · Load '+Math.round(a.icu_training_load) : ''}
           </div>
-          ${tags.length ? `<div style="margin-bottom:8px;">${tags.map(t=>`<span class="pill" style="background:var(--surface-3);color:var(--text-dim);margin-right:4px;">${t}</span>`).join('')}</div>` : ''}
-          ${zoneRows ? `<div style="font-family:var(--mono);font-size:0.68rem;color:var(--text-faint);margin-bottom:4px;">čas v HR zónach (info)</div><div style="font-family:var(--mono);font-size:0.78rem;color:var(--text-dim);">${zoneRows}</div>` : ''}
-          <div style="margin-top:8px;font-family:var(--mono);font-size:0.82rem;color:var(--data);">Strain príspevok: +${contrib.toFixed(1)}</div>
+          ${tags.length ? `<div style="margin-bottom:4px;">${tags.map(t=>`<span class="pill" style="background:var(--surface-3);color:var(--text-dim);margin-right:4px;">${t}</span>`).join('')}</div>` : ''}
+          <div style="font-family:var(--mono);font-size:0.82rem;color:var(--data);">Strain príspevok: +${contrib.toFixed(1)} <span style="color:var(--text-faint);font-size:0.7rem;">· klikni pre detail / premenovanie / zmazanie</span></div>
         </div>
       `;
     }).join('');
@@ -717,6 +817,8 @@ function openDayModal(date, dayResult, dayActivities){
         <div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">${fmt(dayResult.hrv,1)}</div><div style="font-size:0.72rem;color:var(--text-faint);">HRV</div></div>
         <div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">${fmt(dayResult.restingHR,0)}</div><div style="font-size:0.72rem;color:var(--text-faint);">RHR</div></div>
         <div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">${fmt(dayResult.avgSleepingHR,0)}</div><div style="font-size:0.72rem;color:var(--text-faint);">TF spánok</div></div>
+        <div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">${fmt(dayResult.ctl,1)}</div><div style="font-size:0.72rem;color:var(--text-faint);">CTL</div></div>
+        <div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">${fmt(dayResult.atl,1)}</div><div style="font-size:0.72rem;color:var(--text-faint);">ATL</div></div>
         ${tsbZone ? `<div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:${tsbZone.color};">${dayResult.tsb.toFixed(1)}</div><div style="font-size:0.72rem;color:var(--text-faint);">forma · ${tsbZone.label}</div></div>` : ''}
       </div>
     ` : ''}
@@ -733,6 +835,12 @@ function openDayModal(date, dayResult, dayActivities){
   document.getElementById('day-modal-close').addEventListener('click', ()=>{
     document.getElementById('day-modal').classList.remove('show');
   });
+  content.querySelectorAll('.day-modal-activity').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const act = dayActivities.find(x => String(x.id)===el.dataset.activityId);
+      if(act) openActivityModal(act);
+    });
+  });
 }
 
 // zatvorenie modálu kliknutím mimo neho (na tmavé pozadie) — spoločné pre obe stránky
@@ -741,6 +849,12 @@ document.addEventListener('DOMContentLoaded', ()=>{
   if(dm){
     dm.addEventListener('click', (e)=>{
       if(e.target.id==='day-modal') dm.classList.remove('show');
+    });
+  }
+  const am = document.getElementById('activity-modal');
+  if(am){
+    am.addEventListener('click', (e)=>{
+      if(e.target.id==='activity-modal') am.classList.remove('show');
     });
   }
 });
