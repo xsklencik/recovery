@@ -23,6 +23,7 @@
     <div class="btn-group">
       <button class="btn" id="btn-copy-ai"><span class="btn-icon">⧉</span> Copy pre AI</button>
       <button class="btn" id="btn-token"><span class="btn-icon">⚙</span> Token</button>
+      <button class="btn" id="btn-icu-key"><span class="btn-icon">🔑</span> Intervals kľúč</button>
       <button class="btn primary" id="btn-refresh"><span class="btn-icon">↻</span> Aktualizovať</button>
     </div>
   </div>
@@ -76,6 +77,37 @@
     <div class="activity-list" id="activity-list"></div>
 
     <div class="section-head">
+      <div class="section-title">Zápis do Intervals.icu</div>
+    </div>
+    <div class="chart-card" style="padding:14px 16px;">
+      <div style="color:var(--text-faint);font-size:0.76rem;margin-bottom:10px;">
+        Zapíše priamo na Intervals.icu (vyžaduje uložený API key, tlačidlo "🔑 Intervals kľúč" hore). Prejaví sa tu na stránke po ďalšom syncu.
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+        <div>
+          <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Dátum</div>
+          <input type="date" id="icu-w-date" style="padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);">
+        </div>
+        <div>
+          <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Nočná TF (avgSleepingHR)</div>
+          <input type="number" id="icu-w-hr" placeholder="napr. 54" style="width:110px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);">
+        </div>
+        <div>
+          <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">HRV do SDNN (avg počas spánku)</div>
+          <input type="number" step="0.1" id="icu-w-hrv" placeholder="napr. 60" style="width:110px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);">
+        </div>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Komentár k dňu</div>
+        <textarea id="icu-w-comment" rows="2" style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);font-family:inherit;"></textarea>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button class="btn primary" id="btn-icu-wellness-save">Uložiť do Intervals.icu</button>
+        <span id="icu-w-status" style="font-size:0.76rem;color:var(--text-faint);"></span>
+      </div>
+    </div>
+
+    <div class="section-head">
       <div class="section-title">Recovery trend</div>
       <div class="chart-tabs">
         <button class="tab-btn active" data-chart="recovery" data-range="7">7D</button>
@@ -109,19 +141,6 @@
     </div>
 
     <div class="section-head">
-      <div class="section-title">Tréningová únava (Fatigue Score / kapacita)</div>
-      <div class="chart-tabs">
-        <button class="tab-btn" data-chart="fatigue" data-range="30">30D</button>
-        <button class="tab-btn active" data-chart="fatigue" data-range="90">90D</button>
-        <button class="tab-btn" data-chart="fatigue" data-range="180">180D</button>
-      </div>
-    </div>
-    <div class="chart-with-legend">
-      <div class="chart-card"><svg id="chart-fatigue"></svg></div>
-      <div class="forma-legend" id="fatigue-legend"></div>
-    </div>
-
-    <div class="section-head">
       <div class="section-title">HRV · pokojová TF · spánková TF</div>
       <div class="chart-tabs">
         <button class="tab-btn" data-chart="physio" data-range="7">7D</button>
@@ -130,10 +149,9 @@
       </div>
     </div>
     <div class="chart-grid">
-      <div class="chart-card"><div class="chart-card-title">HRV</div><svg id="chart-hrv"></svg></div>
-      <div class="chart-card"><div class="chart-card-title">Pokojová TF</div><svg id="chart-rhr"></svg></div>
-      <div class="chart-card"><div class="chart-card-title">Spánková TF</div><svg id="chart-sleephr"></svg></div>
-      <div class="chart-card"><div class="chart-card-title">Kroky (prerušovaná čiara = 60-dňový priemer)</div><svg id="chart-steps"></svg></div>
+      <div class="chart-card"><div class="chart-card-title">HRV (prerušovaná čiara = 7-dňový priemer)</div><svg id="chart-hrv"></svg></div>
+      <div class="chart-card"><div class="chart-card-title">Pokojová TF (prerušovaná čiara = 7-dňový priemer)</div><svg id="chart-rhr"></svg></div>
+      <div class="chart-card"><div class="chart-card-title">Spánková TF (prerušovaná čiara = 7-dňový priemer)</div><svg id="chart-sleephr"></svg></div>
     </div>
 
     <div class="section-head">
@@ -156,11 +174,11 @@
 
     <div class="section-head"><div class="section-title">Metodika</div></div>
     <div class="methodology">
-      <div class="m-block"><b>Recovery %</b> — počíta sa z ranných fyziologických dát a zo skutočnej tréningovej záťaže, v pomere <b>60&nbsp;% fyziológia · 40&nbsp;% tréningová únava</b>. Huawei Watch Fit 5 dáva iba jedno nočné meranie (HRV/RHR/spánok), ktoré samo osebe nevie spoľahlivo zachytiť viacdňovú kumulovanú únavu — preto má skutočná záťaž (Intervals.icu Load) väčšiu váhu než pri klasických HRV-first modeloch. Fyziológia: HRV 30&nbsp;% · pokojová TF 15&nbsp;% · spánková TF 10&nbsp;% · spánok 5&nbsp;% (vážené z-skóre voči 60-dňovému kĺzavému priemeru, mapované na stupnicu s posunutým stredom — priemerný deň ≈ 63&nbsp;%). Tréningová únava 40&nbsp;% — pozri nižšie.</div>
-      <div class="m-block"><b>Tréningová únava (40 %)</b> — <i>Fatigue Score</i> = súčet Load z posledných 14 dní (T-1 a staršie, nikdy nie z dnešného dňa), každý deň exponenciálne menej váhový (0,70× na deň dozadu) a nelineárne "napenalizovaný" (Load^1,12), aby veľké tréningy dopadli neúmerne viac než malé. Fatigue Score sa porovná s tvojou aktuálnou "kapacitou" (odvodenou z CTL predošlého dňa — vyšší CTL = viac tolerancie na rovnakú záťaž), výsledný pomer sa mapuje na skóre s pevným stredom v 1,0 (nie voči plávajúcemu priemeru — inak by si sa pri chronickom preťažení sám "znecitlivel"). TSB do tohto výpočtu už nevstupuje, je len informačná metrika (pozri nižšie).</div>
-      <div class="m-block"><b>Strain 0–21</b> — rastie počas dňa. Počíta sa priamo z Intervals.icu <b>Load</b> (spoľahlivá, kalibrovaná záťažová metrika pre každú aktivitu) namiesto prepočtu z HR zón. Kroky sa pripočítajú len v dňoch <b>bez</b> trackovanej aktivity a majú vyššiu váhu, ak sú nad tvojím 60-dňovým priemerom (nadpriemerná chôdza/pohyb = viac záťaže, nie len viac krokov). Súčet sa škáluje logaritmicky, takže pridávanie záťaže pri už vysokom strain rastie čoraz pomalšie.</div>
-      <div class="m-block"><b>Forma (TSB)</b> — CTL mínus ATL, teraz už len informačná metrika dlhodobej formy (do Recovery nevstupuje). Farebné pásma podľa štandardných zón: <b>Prechod</b> (nad 20, riziko odtrénovania), <b>Svieži</b> (5 až 20), <b>Sivá zóna</b> (-10 až 5, neutrál), <b>Optimálne</b> (-30 až -10, tréningové okno), <b>Vysoké riziko</b> (pod -30, preťaženie/únava).</div>
-      <div class="m-block"><b>Bannery hore</b> (HRV, pokojová/spánková TF, kroky, tréningová únava, CTL/ATL/TSB) — rýchly denný prehľad. Farba hodnoty HRV/TF/krokov ukazuje odchýlku od tvojho vlastného 60-dňového priemeru (zelená = lepšie ako zvyčajne, žltá = mierne horšie, červená = výrazne horšie). Tréningová únava je farebná podľa pásma pomeru (svieži/v norme/zvýšená/vysoká/extrémna). TSB je farebné podľa zóny Forma grafu vyššie.</div>
+      <div class="m-block"><b>Recovery %</b> — počíta sa z ranných fyziologických dát a zo skutočnej tréningovej záťaže, v pomere <b>60&nbsp;% fyziológia · 40&nbsp;% tréningová únava</b>. Huawei Watch Fit 5 dáva iba jedno nočné meranie (HRV/RHR/spánok), ktoré samo osebe nevie spoľahlivo zachytiť viacdňovú kumulovanú únavu — preto má skutočná záťaž (Intervals.icu Load) väčšiu váhu než pri klasických HRV-first modeloch. Fyziológia: HRV 30&nbsp;% · spánková TF 15&nbsp;% · pokojová TF (denná) 10&nbsp;% · spánok 5&nbsp;% (spánková TF má vyššiu váhu než denná, lebo nočný priemer je presnejší signál - rovnaký princíp ako RHR u Whoop/Oura). Vážené z-skóre voči 60-dňovému kĺzavému priemeru, mapované na stupnicu s posunutým stredom — priemerný deň ≈ 63&nbsp;%. Tréningová únava 40&nbsp;% — pozri nižšie.</div>
+      <div class="m-block"><b>Tréningová únava (40 %)</b> — <i>Fatigue Score</i> = súčet Load z posledných 14 dní (T-1 a staršie, nikdy nie z dnešného dňa), každý deň exponenciálne menej váhový (0,70× na deň dozadu) a nelineárne "napenalizovaný" (Load^1,12), aby veľké tréningy dopadli neúmerne viac než malé. Fatigue Score sa porovná s tvojou aktuálnou "kapacitou" (odvodenou z CTL predošlého dňa — vyšší CTL = viac tolerancie na rovnakú záťaž), výsledný pomer sa mapuje na skóre s pevným stredom v 1,0 (nie voči plávajúcemu priemeru — inak by si sa pri chronickom preťažení sám "znecitlivel"). Graf tejto metriky bol odstránený (bol zle vyladený, väčšina dní vychádzala príliš vysoko) - hodnota sa naďalej počíta a vstupuje do Recovery (banner "Tréningová únava" hore), len sa už nezobrazuje ako samostatný graf.</div>
+      <div class="m-block"><b>Strain 0–21</b> — rastie počas dňa. Počíta sa priamo z Intervals.icu <b>Load</b> (spoľahlivá, kalibrovaná záťažová metrika pre každú aktivitu). Kroky sa pripočítajú <b>vždy</b>, ale ak si mal v ten deň pešiu aktivitu (hike/walk/beh, rozpoznané podľa typu alebo chôdzového tempa - nie podľa toho, ako to Intervals.icu náhodou označí), jej odhadnuté kroky sa z denného súčtu najprv odčítajú, aby sa nezapočítali dvakrát (raz cez Load aktivity, raz cez kroky). Súčet sa škáluje logaritmicky, takže pridávanie záťaže pri už vysokom strain rastie čoraz pomalšie.</div>
+      <div class="m-block"><b>Forma (TSB)</b> — CTL mínus ATL, informačná metrika dlhodobej formy (do Recovery nevstupuje). Počíta sa z <b>dnešných</b> CTL/ATL (nie zo včerajška), takže sa mení počas dňa, akonáhle sa zosynchronizuje nová aktivita - vrátane okamžitého poklesu hneď po tvrdom tréningu (čerstvá záťaž = okamžitá únava, fyziologicky správne). Farebné pásma podľa štandardných zón: <b>Prechod</b> (nad 20, riziko odtrénovania), <b>Svieži</b> (5 až 20), <b>Sivá zóna</b> (-10 až 5, neutrál), <b>Optimálne</b> (-30 až -10, tréningové okno), <b>Vysoké riziko</b> (pod -30, preťaženie/únava).</div>
+      <div class="m-block"><b>Bannery hore</b> (HRV, pokojová/spánková TF, kroky, tréningová únava, CTL/ATL/TSB) — rýchly denný prehľad. Farba hodnoty HRV/TF/krokov ukazuje odchýlku od tvojho vlastného 60-dňového priemeru (zelená = lepšie ako zvyčajne, žltá = mierne horšie, červená = výrazne horšie). Tréningová únava je farebná podľa pásma pomeru (svieži/v norme/zvýšená/vysoká/extrémna). TSB je farebné podľa zóny Forma grafu vyššie. Kliknutím na riadok v histórii uvidíš aj Formu/CTL/ATL daného dňa a kliknutím na aktivitu jej detail (vrátane premenovania/zmazania priamo na Intervals.icu).</div>
       <div class="m-block" style="color:var(--text-faint);font-size:0.76rem;">Poznámka k HR zónam: čas v jednotlivých zónach (Z1–Z5) sa stále zobrazuje v detaile aktivity ako informačný údaj, no do výpočtu Strain už nevstupuje.</div>
       <div class="m-block"><b>↻ Aktualizovať</b> spustí GitHub Actions sync na pozadí (stiahne najnovšie aktivity a wellness z Intervals.icu) a po dokončení znovu načíta dáta — po skončení jazdy uvidíš Strain narásť do minúty.</div>
     </div>
@@ -183,8 +201,30 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="icu-key-modal">
+  <div class="modal">
+    <h3>Intervals.icu API key</h3>
+    <p>
+      Nájdeš na intervals.icu → Settings → Developer Settings. Používa sa na priamy zápis
+      (wellness, premenovanie/zmazanie aktivity) z tejto stránky. Ukladá sa len v tomto prehliadači
+      (localStorage), posiela sa iba na intervals.icu (endpointy /api/v1/, ktoré podporujú CORS).
+    </p>
+    <input type="password" id="icu-key-input" placeholder="tvoj Intervals.icu API key">
+    <div class="modal-actions">
+      <button class="cancel" id="icu-key-cancel">Zrušiť</button>
+      <button class="save" id="icu-key-save">Uložiť</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="day-modal">
   <div class="modal" id="day-modal-content" style="max-width:520px;max-height:80vh;overflow-y:auto;">
+    <!-- vyplnene dynamicky cez JS -->
+  </div>
+</div>
+
+<div class="modal-backdrop" id="activity-modal">
+  <div class="modal" id="activity-modal-content" style="max-width:480px;max-height:80vh;overflow-y:auto;">
     <!-- vyplnene dynamicky cez JS -->
   </div>
 </div>
@@ -212,6 +252,41 @@ document.getElementById('token-cancel').addEventListener('click', ()=>{
 document.getElementById('token-save').addEventListener('click', ()=>{
   setToken(document.getElementById('token-input').value.trim());
   document.getElementById('token-modal').classList.remove('show');
+});
+
+// ---------- Intervals.icu API key modal ----------
+document.getElementById('btn-icu-key').addEventListener('click', ()=>{
+  document.getElementById('icu-key-input').value = getIcuApiKey();
+  document.getElementById('icu-key-modal').classList.add('show');
+});
+document.getElementById('icu-key-cancel').addEventListener('click', ()=>{
+  document.getElementById('icu-key-modal').classList.remove('show');
+});
+document.getElementById('icu-key-save').addEventListener('click', ()=>{
+  setIcuApiKey(document.getElementById('icu-key-input').value.trim());
+  document.getElementById('icu-key-modal').classList.remove('show');
+});
+
+// ---------- Zápis nočnej TF / HRV(SDNN) / komentára do Intervals.icu ----------
+document.getElementById('icu-w-date').value = todayISO();
+document.getElementById('btn-icu-wellness-save').addEventListener('click', async ()=>{
+  const status = document.getElementById('icu-w-status');
+  const date = document.getElementById('icu-w-date').value || todayISO();
+  const hr = document.getElementById('icu-w-hr').value;
+  const hrv = document.getElementById('icu-w-hrv').value;
+  const comment = document.getElementById('icu-w-comment').value;
+  const payload = {};
+  if(hr!=='') payload.avgSleepingHR = Number(hr);
+  if(hrv!=='') payload.hrvSDNN = Number(hrv);
+  if(comment.trim()!=='') payload.comments = comment.trim();
+  if(Object.keys(payload).length===0){ status.textContent = 'Vyplň aspoň jedno pole.'; return; }
+  status.textContent = 'Ukladám do Intervals.icu…';
+  try{
+    await icuPutWellness(date, payload);
+    status.textContent = '✅ Uložené na Intervals.icu (' + date + '). Tu na stránke sa to prejaví po ďalšom syncu ("Aktualizovať").';
+  }catch(e){
+    status.textContent = '⚠️ ' + e.message;
+  }
 });
 
 // ---------- Copy pre AI: zostaví kompletný kontext (7 dní + komentáre + odchýlky od baseline + fitness) ----------
@@ -471,7 +546,6 @@ function render(results, activities){
 
   renderActivityList(activities, todayDate);
   renderFormaLegend('forma-legend');
-  renderFatigueLegend('fatigue-legend');
 
   function renderRecovery(range){
     drawChart('chart-recovery', results.slice(-range), [{field:'recovery', color:'#ff6a3d', label:'Recovery'}],
@@ -490,25 +564,39 @@ function render(results, activities){
        bands: FORMA_ZONES.map(z=>({min: Math.max(z.min,-40), max: Math.min(z.max,25), color: hexToRgba(z.color, 0.14)})),
        tooltipFormat:(f,v)=>v.toFixed(1)});
   }
-  function renderFatigue(range){
-    const data = results.slice(-range).map(r => ({...r, fatiguePct: r.fatigueRatio!=null ? r.fatigueRatio*100 : null}));
-    drawChart('chart-fatigue', data, [{field:'fatiguePct', color:'#f0553f', label:'Únava'}],
-      {fixedMin:0, fixedMax:260, gridValues:[0,75,115,160,210,260],
-       dotColorFn: v => { const z = fatigueRatioZoneFor(v/100); return z ? z.color : '#7a7f89'; },
-       bands: FATIGUE_RATIO_ZONES.map(z=>({min: Math.max(z.min*100,0), max: Math.min(z.max*100,260), color: hexToRgba(z.color, 0.14)})),
-       tooltipFormat:(f,v)=>Math.round(v)+' %'});
-  }
   function renderPhysio(range){
-    const hrvData = results.filter(r => r.date >= NEW_METHOD_CUTOFF).slice(-range);
-    drawChart('chart-hrv', hrvData, [{field:'hrv', color:'#3ddc97', label:'HRV'}], {minAtZero:true, tooltipFormat:(f,v)=>v.toFixed(1)});
-    drawChart('chart-rhr', hrvData, [{field:'restingHR', color:'#f0b429', label:'RHR'}], {minAtZero:true, tooltipFormat:(f,v)=>Math.round(v)+' bpm'});
-    drawChart('chart-sleephr', hrvData, [{field:'avgSleepingHR', color:'#a78bfa', label:'Spánk. TF'}], {minAtZero:true, tooltipFormat:(f,v)=>Math.round(v)+' bpm'});
-    drawChart('chart-steps', results.slice(-range).map(r=>({...r, stepsBaseline: STEPS_BASELINE_BY_DATE.get(r.date) ?? null})),
+    // Prerušovaná čiara = 7-dňový trailing priemer (rovnaký princíp ako predtým pri grafe krokov),
+    // počíta sa na celej dostupnej histórii a až potom sa oreže na zvolený rozsah, aby aj prvé
+    // zobrazené dni mali plnohodnotný priemer z dát spred rozsahu.
+    const hrvFull = results.filter(r => r.date >= NEW_METHOD_CUTOFF);
+    const hrvTrail = rollingStats(hrvFull, 'hrv', null, 7);
+    const rhrTrail = rollingStats(hrvFull, 'restingHR', null, 7);
+    const sleepTrail = rollingStats(hrvFull, 'avgSleepingHR', null, 7);
+    const hrvData = hrvFull.map((r,i)=>({
+      ...r,
+      hrvTrailAvg: hrvTrail[i] ? hrvTrail[i].mean : null,
+      rhrTrailAvg: rhrTrail[i] ? rhrTrail[i].mean : null,
+      sleepTrailAvg: sleepTrail[i] ? sleepTrail[i].mean : null,
+    })).slice(-range);
+
+    drawChart('chart-hrv', hrvData,
       [
-        {field:'steps', color:'#4a9eff', label:'Kroky'},
-        {field:'stepsBaseline', color:'#4a4f58', label:'Priemer', dash:true, hideDots:true, width:1.5},
+        {field:'hrv', color:'#3ddc97', label:'HRV'},
+        {field:'hrvTrailAvg', color:'#4a4f58', label:'Priemer (7D)', dash:true, hideDots:true, width:1.5},
       ],
-      {minAtZero:true, yFormat:v=>Math.round(v/1000)+'k', tooltipFormat:(f,v)=>Math.round(v).toLocaleString('sk-SK')});
+      {minAtZero:true, tooltipFormat:(f,v)=>v.toFixed(1)});
+    drawChart('chart-rhr', hrvData,
+      [
+        {field:'restingHR', color:'#f0b429', label:'RHR'},
+        {field:'rhrTrailAvg', color:'#4a4f58', label:'Priemer (7D)', dash:true, hideDots:true, width:1.5},
+      ],
+      {minAtZero:true, tooltipFormat:(f,v)=>Math.round(v)+' bpm'});
+    drawChart('chart-sleephr', hrvData,
+      [
+        {field:'avgSleepingHR', color:'#a78bfa', label:'Spánk. TF'},
+        {field:'sleepTrailAvg', color:'#4a4f58', label:'Priemer (7D)', dash:true, hideDots:true, width:1.5},
+      ],
+      {minAtZero:true, tooltipFormat:(f,v)=>Math.round(v)+' bpm'});
   }
   function renderLoad(range){
     drawChart('chart-load', results.slice(-range),
@@ -519,7 +607,6 @@ function render(results, activities){
   renderRecovery(7);
   renderStrain(7);
   renderForma(90);
-  renderFatigue(90);
   renderPhysio(30);
   renderLoad(90);
   drawTable('history-table', results.slice().reverse().slice(0,30), activities);
@@ -533,7 +620,6 @@ function render(results, activities){
       if(chartName==='recovery') renderRecovery(range);
       else if(chartName==='strain') renderStrain(range);
       else if(chartName==='forma') renderForma(range);
-      else if(chartName==='fatigue') renderFatigue(range);
       else if(chartName==='physio') renderPhysio(range);
       else if(chartName==='load') renderLoad(range);
     });
@@ -553,6 +639,7 @@ function renderActivityList(activities, todayDate){
     const contrib = rawToStrain(raw);
     const div = document.createElement('div');
     div.className = 'activity-row';
+    div.style.cursor = 'pointer';
     const mins = a.moving_time ? Math.round(a.moving_time/60) : null;
     const timeStr = a.start_date_local ? a.start_date_local.slice(11,16) : '';
     const tags = parseTags(a.name, a.comments);
@@ -564,6 +651,7 @@ function renderActivityList(activities, todayDate){
       </div>
       <div class="activity-strain">+${contrib.toFixed(1)}</div>
     `;
+    div.addEventListener('click', ()=> openActivityModal(a));
     list.appendChild(div);
   });
 }
