@@ -97,13 +97,13 @@
   "ctl": 40.124004,
   "atl": 51.488464,
   "weight": null,
-  "comments": "Z1 hike na zivčákovú s famíliou",
+  "comments": "Z1 hike na zivč��kovú s famíliou",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-12T18:01:27.966Z"
+  "syncedAt": "2026-07-12T18:11:07.674Z"
  },
  {
   "id": "2026-07-10",
@@ -124,7 +124,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-12T18:01:27.966Z"
+  "syncedAt": "2026-07-12T18:11:07.674Z"
  },
  {
   "id": "2026-07-11",
@@ -145,7 +145,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-12T18:01:27.966Z"
+  "syncedAt": "2026-07-12T18:11:07.674Z"
  },
  {
   "id": "2026-07-12",
@@ -166,6 +166,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-12T18:01:27.966Z"
+  "syncedAt": "2026-07-12T18:11:07.674Z"
  }
 ]
