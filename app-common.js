@@ -59,6 +59,96 @@ function icuPutWellness(date, payload){ return icuRequest(`/athlete/0/wellness/$
 function icuUpdateActivity(id, payload){ return icuRequest(`/activity/${id}`, 'PUT', payload); }
 function icuDeleteActivity(id){ return icuRequest(`/activity/${id}`, 'DELETE'); }
 
+// ---------- Priemer poľa cez pole záznamov (ignoruje null/undefined) ----------
+function meanOf(arr, field){
+  const vals = arr.map(r=>r[field]).filter(v=>v!=null && !isNaN(v));
+  if(!vals.length) return null;
+  return vals.reduce((a,b)=>a+b,0)/vals.length;
+}
+
+// ---------- Týždenný súhrn (zoskupenie podľa týždňa, pondelok = začiatok) ----------
+function mondayOf(dateStr){
+  const d = new Date(dateStr+'T00:00:00');
+  const day = d.getDay(); // 0=Ne,1=Po,...
+  const diff = (day===0 ? -6 : 1-day);
+  d.setDate(d.getDate()+diff);
+  return d.toISOString().slice(0,10);
+}
+function addDaysStr(dateStr, days){
+  const d = new Date(dateStr+'T00:00:00');
+  d.setDate(d.getDate()+days);
+  return d.toISOString().slice(0,10);
+}
+function fmtHM(totalSeconds){
+  if(!totalSeconds) return '0 min';
+  const h = Math.floor(totalSeconds/3600);
+  const m = Math.round((totalSeconds%3600)/60);
+  return h>0 ? (h+' h'+(m>0?' '+m+' min':'')) : (m+' min');
+}
+function activityBucket(type){
+  const t = type || '';
+  if(BIKE_ACTIVITY_TYPE_RE.test(t)) return 'Bicykel';
+  if(t==='Run' || t==='TrailRun' || t==='VirtualRun') return 'Beh';
+  if(t==='Walk' || t==='Hike' || t==='Snowshoe') return 'Chôdza/Hike';
+  return 'Ostatné';
+}
+function renderWeeklySummary(containerId, results, activities){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  const weekMap = new Map(); // pondelok (YYYY-MM-DD) -> {days:[], acts:[]}
+  results.forEach(r=>{
+    const wk = mondayOf(r.date);
+    if(!weekMap.has(wk)) weekMap.set(wk, {days:[], acts:[]});
+    weekMap.get(wk).days.push(r);
+  });
+  activities.forEach(a=>{
+    const date = a.date || (a.start_date_local||'').slice(0,10);
+    if(!date) return;
+    const wk = mondayOf(date);
+    if(!weekMap.has(wk)) weekMap.set(wk, {days:[], acts:[]});
+    weekMap.get(wk).acts.push(a);
+  });
+  const weeks = [...weekMap.keys()].sort().reverse();
+  el.innerHTML = weeks.map(wk=>{
+    const {days, acts} = weekMap.get(wk);
+    const wkEnd = addDaysStr(wk, 6);
+    const timeByBucket = {};
+    acts.forEach(a=>{ const b = activityBucket(a.type); timeByBucket[b] = (timeByBucket[b]||0) + (a.moving_time||0); });
+    const totalLoad = acts.reduce((s,a)=>s+(a.icu_training_load||0),0);
+    const avgRecovery = meanOf(days,'recovery');
+    const avgStrain = meanOf(days,'strain');
+    const avgHrv = meanOf(days,'hrv');
+    const avgRhr = meanOf(days,'restingHR');
+    const avgSleepHr = meanOf(days,'avgSleepingHR');
+    const totalSteps = days.reduce((s,d)=>s+(d.steps||0),0);
+    const avgMood = meanOf(days,'mood');
+    const avgSoreness = meanOf(days,'soreness');
+    const avgFatiguePerceived = meanOf(days,'fatigue');
+    const avgStress = meanOf(days,'stress');
+    const bucketsHtml = Object.keys(timeByBucket).length
+      ? Object.entries(timeByBucket).map(([b,s])=>`<span class="pill" style="background:var(--surface-3);color:var(--text-dim);margin-right:6px;">${b}: ${fmtHM(s)}</span>`).join('')
+      : '<span style="color:var(--text-faint);font-size:0.8rem;">žiadne aktivity</span>';
+    return `
+      <div class="chart-card" style="padding:14px 16px;margin-bottom:10px;">
+        <div style="font-weight:600;margin-bottom:8px;">${wk} – ${wkEnd}</div>
+        <div style="margin-bottom:10px;">${bucketsHtml}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px 18px;font-family:var(--mono);font-size:0.8rem;color:var(--text-dim);">
+          <div>Load: <b>${Math.round(totalLoad)}</b></div>
+          <div>Ø Recovery: <b>${avgRecovery!=null?Math.round(avgRecovery)+'%':'—'}</b></div>
+          <div>Ø Strain: <b>${avgStrain!=null?avgStrain.toFixed(1):'—'}</b></div>
+          <div>Ø HRV: <b>${avgHrv!=null?avgHrv.toFixed(1):'—'}</b></div>
+          <div>Ø RHR: <b>${avgRhr!=null?Math.round(avgRhr):'—'}</b></div>
+          <div>Ø TF spánok: <b>${avgSleepHr!=null?Math.round(avgSleepHr):'—'}</b></div>
+          <div>Kroky spolu: <b>${totalSteps.toLocaleString('sk-SK')}</b></div>
+          ${avgMood!=null?`<div>Ø nálada: <b>${avgMood.toFixed(1)}</b></div>`:''}
+          ${avgSoreness!=null?`<div>Ø bolestivosť: <b>${avgSoreness.toFixed(1)}</b></div>`:''}
+          ${avgFatiguePerceived!=null?`<div>Ø vnímaná únava: <b>${avgFatiguePerceived.toFixed(1)}</b></div>`:''}
+          ${avgStress!=null?`<div>Ø stres: <b>${avgStress.toFixed(1)}</b></div>`:''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
 
 function mean(arr){ return arr.reduce((a,b)=>a+b,0)/arr.length; }
 function stdev(arr){ const m = mean(arr); return Math.sqrt(mean(arr.map(x=>(x-m)**2))); }
@@ -820,6 +910,14 @@ function openDayModal(date, dayResult, dayActivities){
         <div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">${fmt(dayResult.ctl,1)}</div><div style="font-size:0.72rem;color:var(--text-faint);">CTL</div></div>
         <div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">${fmt(dayResult.atl,1)}</div><div style="font-size:0.72rem;color:var(--text-faint);">ATL</div></div>
         ${tsbZone ? `<div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:${tsbZone.color};">${dayResult.tsb.toFixed(1)}</div><div style="font-size:0.72rem;color:var(--text-faint);">forma · ${tsbZone.label}</div></div>` : ''}
+      </div>
+    ` : ''}
+    ${dayResult && (dayResult.mood!=null||dayResult.soreness!=null||dayResult.fatigue!=null||dayResult.stress!=null) ? `
+      <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;font-family:var(--mono);font-size:0.8rem;color:var(--text-dim);">
+        ${dayResult.mood!=null?`<div>Nálada: <b>${dayResult.mood}/4</b></div>`:''}
+        ${dayResult.soreness!=null?`<div>Bolestivosť: <b>${dayResult.soreness}/4</b></div>`:''}
+        ${dayResult.fatigue!=null?`<div>Vnímaná únava: <b>${dayResult.fatigue}/4</b></div>`:''}
+        ${dayResult.stress!=null?`<div>Stres: <b>${dayResult.stress}/4</b></div>`:''}
       </div>
     ` : ''}
     ${dayResult && dayResult.comments ? `

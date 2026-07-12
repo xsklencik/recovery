@@ -86,6 +86,13 @@ async function main() {
     atl: w.atl ?? null,
     weight: w.weight ?? null,
     comments: w.comments ?? null,
+    // Subjektívne ranné hodnotenie (1-4 škála, zapisované cez formulár na stránke alebo priamo
+    // v Intervals.icu appke) - zatiaľ len na zobrazenie v histórii/týždennom súhrne, do výpočtu
+    // Recovery nevstupuje.
+    mood: w.mood ?? null,
+    soreness: w.soreness ?? null,
+    fatigue: w.fatigue ?? null,
+    stress: w.stress ?? null,
     source: 'intervals_api',
     syncedAt: new Date().toISOString(),
   }));

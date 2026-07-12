@@ -97,6 +97,53 @@
           <input type="number" step="0.1" id="icu-w-hrv" placeholder="napr. 60" style="width:110px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);">
         </div>
       </div>
+      <div style="color:var(--text-faint);font-size:0.76rem;margin:14px 0 10px;border-top:1px solid var(--line);padding-top:10px;">
+        <b>Ranné subjektívne hodnotenie</b> — vyplň hneď po zobudení, ešte PRED tým, než sa pozrieš na HRV/recovery číslo (inak si podvedome "dorovnáš" pocit podľa čísla a stráca to zmysel). Škála 1-4 pri každom poli.
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+        <div>
+          <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Nálada</div>
+          <select id="icu-w-mood" style="padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);">
+            <option value="">—</option>
+            <option value="1">1 - zlá, podráždený/otrávený</option>
+            <option value="2">2 - skôr horšia</option>
+            <option value="3">3 - dobrá, normálna</option>
+            <option value="4">4 - výborná, natešený</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Bolestivosť svalov</div>
+          <select id="icu-w-soreness" style="padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);">
+            <option value="">—</option>
+            <option value="1">1 - žiadna</option>
+            <option value="2">2 - mierna</option>
+            <option value="3">3 - výrazná</option>
+            <option value="4">4 - extrémna, obmedzuje pohyb</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+        <div>
+          <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Vnímaná únava (nie z čísel, ale pocitovo)</div>
+          <select id="icu-w-fatigue" style="padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);">
+            <option value="">—</option>
+            <option value="1">1 - svieži, plný energie</option>
+            <option value="2">2 - mierne unavený</option>
+            <option value="3">3 - výrazne unavený</option>
+            <option value="4">4 - vyčerpaný</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Stres (škola/práca/vzťahy, nie tréning)</div>
+          <select id="icu-w-stress" style="padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);">
+            <option value="">—</option>
+            <option value="1">1 - žiadny, v pohode</option>
+            <option value="2">2 - mierny</option>
+            <option value="3">3 - výrazný</option>
+            <option value="4">4 - extrémny</option>
+          </select>
+        </div>
+      </div>
       <div style="margin-bottom:10px;">
         <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Komentár k dňu</div>
         <textarea id="icu-w-comment" rows="2" style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);font-family:inherit;"></textarea>
@@ -149,9 +196,9 @@
       </div>
     </div>
     <div class="chart-grid">
-      <div class="chart-card"><div class="chart-card-title">HRV (prerušovaná čiara = 7-dňový priemer)</div><svg id="chart-hrv"></svg></div>
-      <div class="chart-card"><div class="chart-card-title">Pokojová TF (prerušovaná čiara = 7-dňový priemer)</div><svg id="chart-rhr"></svg></div>
-      <div class="chart-card"><div class="chart-card-title">Spánková TF (prerušovaná čiara = 7-dňový priemer)</div><svg id="chart-sleephr"></svg></div>
+      <div class="chart-card"><div class="chart-card-title">HRV (prerušovaná čiara = priemer za zvolené obdobie)</div><svg id="chart-hrv"></svg></div>
+      <div class="chart-card"><div class="chart-card-title">Pokojová TF (prerušovaná čiara = priemer za zvolené obdobie)</div><svg id="chart-rhr"></svg></div>
+      <div class="chart-card"><div class="chart-card-title">Spánková TF (prerušovaná čiara = priemer za zvolené obdobie)</div><svg id="chart-sleephr"></svg></div>
     </div>
 
     <div class="section-head">
@@ -275,10 +322,18 @@ document.getElementById('btn-icu-wellness-save').addEventListener('click', async
   const hr = document.getElementById('icu-w-hr').value;
   const hrv = document.getElementById('icu-w-hrv').value;
   const comment = document.getElementById('icu-w-comment').value;
+  const mood = document.getElementById('icu-w-mood').value;
+  const soreness = document.getElementById('icu-w-soreness').value;
+  const fatigue = document.getElementById('icu-w-fatigue').value;
+  const stress = document.getElementById('icu-w-stress').value;
   const payload = {};
   if(hr!=='') payload.avgSleepingHR = Number(hr);
   if(hrv!=='') payload.hrvSDNN = Number(hrv);
   if(comment.trim()!=='') payload.comments = comment.trim();
+  if(mood!=='') payload.mood = Number(mood);
+  if(soreness!=='') payload.soreness = Number(soreness);
+  if(fatigue!=='') payload.fatigue = Number(fatigue);
+  if(stress!=='') payload.stress = Number(stress);
   if(Object.keys(payload).length===0){ status.textContent = 'Vyplň aspoň jedno pole.'; return; }
   status.textContent = 'Ukladám do Intervals.icu…';
   try{
@@ -565,36 +620,30 @@ function render(results, activities){
        tooltipFormat:(f,v)=>v.toFixed(1)});
   }
   function renderPhysio(range){
-    // Prerušovaná čiara = 7-dňový trailing priemer (rovnaký princíp ako predtým pri grafe krokov),
-    // počíta sa na celej dostupnej histórii a až potom sa oreže na zvolený rozsah, aby aj prvé
-    // zobrazené dni mali plnohodnotný priemer z dát spred rozsahu.
-    const hrvFull = results.filter(r => r.date >= NEW_METHOD_CUTOFF);
-    const hrvTrail = rollingStats(hrvFull, 'hrv', null, 7);
-    const rhrTrail = rollingStats(hrvFull, 'restingHR', null, 7);
-    const sleepTrail = rollingStats(hrvFull, 'avgSleepingHR', null, 7);
-    const hrvData = hrvFull.map((r,i)=>({
-      ...r,
-      hrvTrailAvg: hrvTrail[i] ? hrvTrail[i].mean : null,
-      rhrTrailAvg: rhrTrail[i] ? rhrTrail[i].mean : null,
-      sleepTrailAvg: sleepTrail[i] ? sleepTrail[i].mean : null,
-    })).slice(-range);
+    // Prerušovaná čiara = ROVNÁ vodorovná čiara = priemer za práve zobrazené obdobie (7D → 7-dňový
+    // priemer, 30D → 30-dňový priemer, 90D → 90-dňový priemer) - nie kĺzavý priemer bod po bode.
+    const hrvData = results.filter(r => r.date >= NEW_METHOD_CUTOFF).slice(-range);
+    const hrvAvg = meanOf(hrvData, 'hrv');
+    const rhrAvg = meanOf(hrvData, 'restingHR');
+    const sleepAvg = meanOf(hrvData, 'avgSleepingHR');
+    const hrvDataWithAvg = hrvData.map(r=>({...r, hrvAvgLine: hrvAvg, rhrAvgLine: rhrAvg, sleepAvgLine: sleepAvg}));
 
-    drawChart('chart-hrv', hrvData,
+    drawChart('chart-hrv', hrvDataWithAvg,
       [
         {field:'hrv', color:'#3ddc97', label:'HRV'},
-        {field:'hrvTrailAvg', color:'#4a4f58', label:'Priemer (7D)', dash:true, hideDots:true, width:1.5},
+        {field:'hrvAvgLine', color:'#4a4f58', label:'Priemer ('+range+'D)', dash:true, hideDots:true, width:1.5},
       ],
       {minAtZero:true, tooltipFormat:(f,v)=>v.toFixed(1)});
-    drawChart('chart-rhr', hrvData,
+    drawChart('chart-rhr', hrvDataWithAvg,
       [
         {field:'restingHR', color:'#f0b429', label:'RHR'},
-        {field:'rhrTrailAvg', color:'#4a4f58', label:'Priemer (7D)', dash:true, hideDots:true, width:1.5},
+        {field:'rhrAvgLine', color:'#4a4f58', label:'Priemer ('+range+'D)', dash:true, hideDots:true, width:1.5},
       ],
       {minAtZero:true, tooltipFormat:(f,v)=>Math.round(v)+' bpm'});
-    drawChart('chart-sleephr', hrvData,
+    drawChart('chart-sleephr', hrvDataWithAvg,
       [
         {field:'avgSleepingHR', color:'#a78bfa', label:'Spánk. TF'},
-        {field:'sleepTrailAvg', color:'#4a4f58', label:'Priemer (7D)', dash:true, hideDots:true, width:1.5},
+        {field:'sleepAvgLine', color:'#4a4f58', label:'Priemer ('+range+'D)', dash:true, hideDots:true, width:1.5},
       ],
       {minAtZero:true, tooltipFormat:(f,v)=>Math.round(v)+' bpm'});
   }

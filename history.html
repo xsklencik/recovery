@@ -40,6 +40,9 @@
       <div class="forma-legend" id="forma-legend"></div>
     </div>
 
+    <div class="section-head"><div class="section-title">Týždenný súhrn</div></div>
+    <div id="weekly-summary"></div>
+
     <div class="section-head"><div class="section-title">Všetky dni</div></div>
     <div class="history-filters">
       <input type="text" id="history-filter" placeholder="filter podľa dátumu, napr. 2026-03">
@@ -95,6 +98,7 @@ async function main(){
 
   renderFormaLegend('forma-legend');
   renderFormaHistory(results, 365);
+  renderWeeklySummary('weekly-summary', results, activities);
   renderFullTable(ALL_RESULTS_ROWS);
 
   document.querySelectorAll('.tab-btn').forEach(btn=>{
