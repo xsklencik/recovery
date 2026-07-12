@@ -98,8 +98,12 @@
   "atl": 51.488464,
   "weight": null,
   "comments": "Z1 hike na zivčákovú s famíliou",
+  "mood": null,
+  "soreness": null,
+  "fatigue": null,
+  "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-12T06:11:01.421Z"
+  "syncedAt": "2026-07-12T06:21:01.822Z"
  },
  {
   "id": "2026-07-10",
@@ -115,14 +119,18 @@
   "atl": 73.25546,
   "weight": null,
   "comments": "Dlhá jazda, väčšina v zóne 2, Čadca -Turzovka-Semeteš- Žilina ",
+  "mood": null,
+  "soreness": null,
+  "fatigue": null,
+  "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-12T06:11:01.421Z"
+  "syncedAt": "2026-07-12T06:21:01.822Z"
  },
  {
   "id": "2026-07-11",
   "date": "2026-07-11",
   "restingHR": 53,
-  "hrv": 54.173912,
+  "hrv": 53.727272,
   "hrvSDNN": 55,
   "avgSleepingHR": 61,
   "sleepScore": 86,
@@ -132,14 +140,18 @@
   "atl": 67.23096,
   "weight": 59.8,
   "comments": "Recovery jazda",
+  "mood": null,
+  "soreness": null,
+  "fatigue": null,
+  "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-12T06:11:01.421Z"
+  "syncedAt": "2026-07-12T06:21:01.823Z"
  },
  {
   "id": "2026-07-12",
   "date": "2026-07-12",
   "restingHR": 57,
-  "hrv": null,
+  "hrv": 70.15,
   "hrvSDNN": 66,
   "avgSleepingHR": 57,
   "sleepScore": 87,
@@ -149,7 +161,11 @@
   "atl": 58.281033,
   "weight": null,
   "comments": null,
+  "mood": null,
+  "soreness": null,
+  "fatigue": null,
+  "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-12T06:11:01.421Z"
+  "syncedAt": "2026-07-12T06:21:01.823Z"
  }
 ]
