@@ -99,7 +99,7 @@
   "weight": null,
   "comments": "Z1 hike na zivčákovú s famíliou",
   "source": "intervals_api",
-  "syncedAt": "2026-07-12T04:31:10.270Z"
+  "syncedAt": "2026-07-12T04:41:00.660Z"
  },
  {
   "id": "2026-07-10",
@@ -116,7 +116,7 @@
   "weight": null,
   "comments": "Dlhá jazda, väčšina v zóne 2, Čadca -Turzovka-Semeteš- Žilina ",
   "source": "intervals_api",
-  "syncedAt": "2026-07-12T04:31:10.270Z"
+  "syncedAt": "2026-07-12T04:41:00.660Z"
  },
  {
   "id": "2026-07-11",
@@ -127,29 +127,29 @@
   "avgSleepingHR": 61,
   "sleepScore": 86,
   "sleepSecs": 28440,
-  "steps": 6573,
+  "steps": 7402,
   "ctl": 43.856476,
   "atl": 67.23096,
   "weight": 59.8,
   "comments": "Recovery jazda",
   "source": "intervals_api",
-  "syncedAt": "2026-07-12T04:31:10.270Z"
+  "syncedAt": "2026-07-12T04:41:00.660Z"
  },
  {
   "id": "2026-07-12",
   "date": "2026-07-12",
-  "restingHR": null,
+  "restingHR": 57,
   "hrv": null,
   "hrvSDNN": null,
   "avgSleepingHR": null,
-  "sleepScore": null,
-  "sleepSecs": null,
-  "steps": null,
+  "sleepScore": 87,
+  "sleepSecs": 27720,
+  "steps": 6,
   "ctl": 42.824608,
   "atl": 58.281033,
   "weight": null,
   "comments": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-12T04:31:10.270Z"
+  "syncedAt": "2026-07-12T04:41:00.660Z"
  }
 ]
