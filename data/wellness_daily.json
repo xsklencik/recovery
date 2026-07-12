@@ -97,9 +97,9 @@
   "ctl": 40.124004,
   "atl": 51.488464,
   "weight": null,
-  "comments": "Z1 hike na zivčákovú s famíliou",
+  "comments": "Z1 hike na zivč��kovú s famíliou",
   "source": "intervals_api",
-  "syncedAt": "2026-07-12T03:21:01.595Z"
+  "syncedAt": "2026-07-12T03:31:14.415Z"
  },
  {
   "id": "2026-07-10",
@@ -116,7 +116,7 @@
   "weight": null,
   "comments": "Dlhá jazda, väčšina v zóne 2, Čadca -Turzovka-Semeteš- Žilina ",
   "source": "intervals_api",
-  "syncedAt": "2026-07-12T03:21:01.595Z"
+  "syncedAt": "2026-07-12T03:31:14.415Z"
  },
  {
   "id": "2026-07-11",
@@ -133,7 +133,7 @@
   "weight": 59.8,
   "comments": "Recovery jazda",
   "source": "intervals_api",
-  "syncedAt": "2026-07-12T03:21:01.595Z"
+  "syncedAt": "2026-07-12T03:31:14.415Z"
  },
  {
   "id": "2026-07-12",
@@ -150,6 +150,6 @@
   "weight": null,
   "comments": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-12T03:21:01.595Z"
+  "syncedAt": "2026-07-12T03:31:14.415Z"
  }
 ]
