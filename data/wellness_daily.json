@@ -118,13 +118,13 @@
   "ctl": 44.23854,
   "atl": 73.25546,
   "weight": null,
-  "comments": "Dlhá jazda, väčšina v zóne 2, Čadca -Turzovka-Semeteš- Žilina ",
+  "comments": "Dlhá jazda, väčšina v z��ne 2, Čadca -Turzovka-Semeteš- Žilina ",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-12T23:51:03.648Z"
+  "syncedAt": "2026-07-13T00:01:26.787Z"
  },
  {
   "id": "2026-07-11",
@@ -145,7 +145,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-12T23:51:03.648Z"
+  "syncedAt": "2026-07-13T00:01:26.787Z"
  },
  {
   "id": "2026-07-12",
@@ -166,6 +166,27 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-12T23:51:03.648Z"
+  "syncedAt": "2026-07-13T00:01:26.787Z"
+ },
+ {
+  "id": "2026-07-13",
+  "date": "2026-07-13",
+  "restingHR": null,
+  "hrv": null,
+  "hrvSDNN": null,
+  "avgSleepingHR": null,
+  "sleepScore": null,
+  "sleepSecs": null,
+  "steps": null,
+  "ctl": 41.817017,
+  "atl": 50.522537,
+  "weight": null,
+  "comments": null,
+  "mood": null,
+  "soreness": null,
+  "fatigue": null,
+  "stress": null,
+  "source": "intervals_api",
+  "syncedAt": "2026-07-13T00:01:26.787Z"
  }
 ]
