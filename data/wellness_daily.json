@@ -145,7 +145,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-14T05:21:09.102Z"
+  "syncedAt": "2026-07-14T05:24:57.759Z"
  },
  {
   "id": "2026-07-12",
@@ -166,7 +166,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-14T05:21:09.102Z"
+  "syncedAt": "2026-07-14T05:24:57.759Z"
  },
  {
   "id": "2026-07-13",
@@ -181,33 +181,33 @@
   "ctl": 41.817017,
   "atl": 50.522537,
   "weight": null,
-  "comments": null,
+  "comments": "Od 12.7 17:30 cestovanie do Talianska až do 13.7. 14:00. Od 22:30 do 5:50 som sa s prerosovanými prestávkami asi každé 2-3 hodinky čo som sa išiel s vodičom osviežiť na wc. Mal som klapky na očiach počas tých cca 7 hodín a snažil sa spať. Ušlo mi to rýchlo čiže som asi aj pospal.",
   "mood": null,
   "soreness": null,
-  "fatigue": null,
-  "stress": null,
+  "fatigue": 4,
+  "stress": 3,
   "source": "intervals_api",
-  "syncedAt": "2026-07-14T05:21:09.102Z"
+  "syncedAt": "2026-07-14T05:24:57.759Z"
  },
  {
   "id": "2026-07-14",
   "date": "2026-07-14",
   "restingHR": null,
   "hrv": null,
-  "hrvSDNN": null,
-  "avgSleepingHR": null,
+  "hrvSDNN": 40,
+  "avgSleepingHR": 62,
   "sleepScore": null,
   "sleepSecs": null,
   "steps": null,
   "ctl": 40.833134,
   "atl": 43.79687,
   "weight": null,
-  "comments": null,
-  "mood": null,
-  "soreness": null,
-  "fatigue": null,
-  "stress": null,
+  "comments": "Noc č.1 v Taliansku",
+  "mood": 3,
+  "soreness": 2,
+  "fatigue": 3,
+  "stress": 1,
   "source": "intervals_api",
-  "syncedAt": "2026-07-14T05:21:09.102Z"
+  "syncedAt": "2026-07-14T05:24:57.759Z"
  }
 ]
