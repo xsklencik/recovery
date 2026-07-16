@@ -134,5 +134,27 @@
   "hr_z3_secs": 0,
   "hr_z4_secs": 0,
   "hr_z5_secs": 0
+ },
+ {
+  "id": "i166371560",
+  "date": "2026-07-16",
+  "start_date_local": "2026-07-16T14:41:57",
+  "name": "Afternoon Open Water Swim",
+  "type": "OpenWaterSwim",
+  "comments": null,
+  "moving_time": 1074,
+  "distance": 728,
+  "average_heartrate": 133,
+  "max_heartrate": 160,
+  "icu_training_load": 10,
+  "icu_ctl": 39.16955,
+  "icu_atl": 34.243576,
+  "icu_intensity": 57.896072,
+  "icu_rpe": null,
+  "hr_z1_secs": 251,
+  "hr_z2_secs": 658,
+  "hr_z3_secs": 168,
+  "hr_z4_secs": 0,
+  "hr_z5_secs": 0
  }
 ]
