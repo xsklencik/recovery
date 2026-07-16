@@ -76,82 +76,12 @@
     </div>
     <div class="activity-list" id="activity-list"></div>
 
-    <div class="section-head">
-      <div class="section-title">Zápis do Intervals.icu</div>
-    </div>
-    <div class="chart-card" style="padding:14px 16px;">
-      <div style="color:var(--text-faint);font-size:0.76rem;margin-bottom:10px;">
-        Zapíše priamo na Intervals.icu (vyžaduje uložený API key, tlačidlo "🔑 Intervals kľúč" hore). Prejaví sa tu na stránke po ďalšom syncu.
+    <div class="chart-card" style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+      <div>
+        <div style="font-weight:600;margin-bottom:2px;">📝 Ranný check-in</div>
+        <div style="color:var(--text-faint);font-size:0.76rem;">Nálada, bolestivosť, únava, stres + nočná TF/HRV — samostatná stránka bez recovery čísla, nech ju otvárať priamo (bookmark).</div>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
-        <div>
-          <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Dátum</div>
-          <input type="date" id="icu-w-date" style="padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);">
-        </div>
-        <div>
-          <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Nočná TF (avgSleepingHR)</div>
-          <input type="number" id="icu-w-hr" placeholder="napr. 54" style="width:110px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);">
-        </div>
-        <div>
-          <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">HRV do SDNN (avg počas spánku)</div>
-          <input type="number" step="0.1" id="icu-w-hrv" placeholder="napr. 60" style="width:110px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);">
-        </div>
-      </div>
-      <div style="color:var(--text-faint);font-size:0.76rem;margin:14px 0 10px;border-top:1px solid var(--line);padding-top:10px;">
-        <b>Ranné subjektívne hodnotenie</b> — vyplň hneď po zobudení, ešte PRED tým, než sa pozrieš na HRV/recovery číslo (inak si podvedome "dorovnáš" pocit podľa čísla a stráca to zmysel). Škála 1-4 pri každom poli.
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
-        <div>
-          <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Nálada</div>
-          <select id="icu-w-mood" style="padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);">
-            <option value="">—</option>
-            <option value="1">1 - zlá, podráždený/otrávený</option>
-            <option value="2">2 - skôr horšia</option>
-            <option value="3">3 - dobrá, normálna</option>
-            <option value="4">4 - výborná, natešený</option>
-          </select>
-        </div>
-        <div>
-          <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Bolestivosť svalov</div>
-          <select id="icu-w-soreness" style="padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);">
-            <option value="">—</option>
-            <option value="1">1 - žiadna</option>
-            <option value="2">2 - mierna</option>
-            <option value="3">3 - výrazná</option>
-            <option value="4">4 - extrémna, obmedzuje pohyb</option>
-          </select>
-        </div>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
-        <div>
-          <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Vnímaná únava (nie z čísel, ale pocitovo)</div>
-          <select id="icu-w-fatigue" style="padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);">
-            <option value="">—</option>
-            <option value="1">1 - svieži, plný energie</option>
-            <option value="2">2 - mierne unavený</option>
-            <option value="3">3 - výrazne unavený</option>
-            <option value="4">4 - vyčerpaný</option>
-          </select>
-        </div>
-        <div>
-          <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Stres (škola/práca/vzťahy, nie tréning)</div>
-          <select id="icu-w-stress" style="padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);">
-            <option value="">—</option>
-            <option value="1">1 - žiadny, v pohode</option>
-            <option value="2">2 - mierny</option>
-            <option value="3">3 - výrazný</option>
-            <option value="4">4 - extrémny</option>
-          </select>
-        </div>
-      </div>
-      <div style="margin-bottom:10px;">
-        <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Komentár k dňu</div>
-        <textarea id="icu-w-comment" rows="2" style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);font-family:inherit;"></textarea>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <button class="btn primary" id="btn-icu-wellness-save">Uložiť do Intervals.icu</button>
-        <span id="icu-w-status" style="font-size:0.76rem;color:var(--text-faint);"></span>
-      </div>
+      <a class="btn primary" href="checkin.html">Otvoriť check-in →</a>
     </div>
 
     <div class="section-head">
@@ -314,35 +244,8 @@ document.getElementById('icu-key-save').addEventListener('click', ()=>{
   document.getElementById('icu-key-modal').classList.remove('show');
 });
 
-// ---------- Zápis nočnej TF / HRV(SDNN) / komentára do Intervals.icu ----------
-document.getElementById('icu-w-date').value = todayISO();
-document.getElementById('btn-icu-wellness-save').addEventListener('click', async ()=>{
-  const status = document.getElementById('icu-w-status');
-  const date = document.getElementById('icu-w-date').value || todayISO();
-  const hr = document.getElementById('icu-w-hr').value;
-  const hrv = document.getElementById('icu-w-hrv').value;
-  const comment = document.getElementById('icu-w-comment').value;
-  const mood = document.getElementById('icu-w-mood').value;
-  const soreness = document.getElementById('icu-w-soreness').value;
-  const fatigue = document.getElementById('icu-w-fatigue').value;
-  const stress = document.getElementById('icu-w-stress').value;
-  const payload = {};
-  if(hr!=='') payload.avgSleepingHR = Number(hr);
-  if(hrv!=='') payload.hrvSDNN = Number(hrv);
-  if(comment.trim()!=='') payload.comments = comment.trim();
-  if(mood!=='') payload.mood = Number(mood);
-  if(soreness!=='') payload.soreness = Number(soreness);
-  if(fatigue!=='') payload.fatigue = Number(fatigue);
-  if(stress!=='') payload.stress = Number(stress);
-  if(Object.keys(payload).length===0){ status.textContent = 'Vyplň aspoň jedno pole.'; return; }
-  status.textContent = 'Ukladám do Intervals.icu…';
-  try{
-    await icuPutWellness(date, payload);
-    status.textContent = '✅ Uložené na Intervals.icu (' + date + '). Tu na stránke sa to prejaví po ďalšom syncu ("Aktualizovať").';
-  }catch(e){
-    status.textContent = '⚠️ ' + e.message;
-  }
-});
+// ---------- Zápis nočnej TF / HRV(SDNN) / ranného check-inu ----------
+// presunuté na samostatnú stránku checkin.html (pozri tlačidlo "Otvoriť check-in →" hore)
 
 // ---------- Copy pre AI: zostaví kompletný kontext (7 dní + komentáre + odchýlky od baseline + fitness) ----------
 function buildAiContext(){

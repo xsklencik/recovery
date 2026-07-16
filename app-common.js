@@ -907,6 +907,8 @@ function openDayModal(date, dayResult, dayActivities){
         <div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">${fmt(dayResult.hrv,1)}</div><div style="font-size:0.72rem;color:var(--text-faint);">HRV</div></div>
         <div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">${fmt(dayResult.restingHR,0)}</div><div style="font-size:0.72rem;color:var(--text-faint);">RHR</div></div>
         <div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">${fmt(dayResult.avgSleepingHR,0)}</div><div style="font-size:0.72rem;color:var(--text-faint);">TF spánok</div></div>
+        <div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">${dayResult.sleepScore!=null?dayResult.sleepScore:'—'}</div><div style="font-size:0.72rem;color:var(--text-faint);">sleep score</div></div>
+        <div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">${dayResult.sleepSecs!=null?fmtHM(dayResult.sleepSecs):'—'}</div><div style="font-size:0.72rem;color:var(--text-faint);">dĺžka spánku</div></div>
         <div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">${fmt(dayResult.ctl,1)}</div><div style="font-size:0.72rem;color:var(--text-faint);">CTL</div></div>
         <div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">${fmt(dayResult.atl,1)}</div><div style="font-size:0.72rem;color:var(--text-faint);">ATL</div></div>
         ${tsbZone ? `<div><div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:${tsbZone.color};">${dayResult.tsb.toFixed(1)}</div><div style="font-size:0.72rem;color:var(--text-faint);">forma · ${tsbZone.label}</div></div>` : ''}
