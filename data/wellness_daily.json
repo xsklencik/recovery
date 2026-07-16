@@ -181,13 +181,13 @@
   "ctl": 41.817017,
   "atl": 50.522537,
   "weight": null,
-  "comments": "Od 12.7 17:30 cestovanie do Talianska a�� do 13.7. 14:00. Od 22:30 do 5:50 som sa s prerosovanými prestávkami asi každé 2-3 hodinky čo som sa išiel s vodičom osviežiť na wc. Mal som klapky na očiach počas tých cca 7 hodín a snažil sa spať. Ušlo mi to rýchlo čiže som asi aj pospal.",
+  "comments": "Od 12.7 17:30 cestovanie do Talianska až do 13.7. 14:00. Od 22:30 do 5:50 som sa s prerosovanými prestávkami asi každé 2-3 hodinky čo som sa išiel s vodičom osviežiť na wc. Mal som klapky na očiach počas tých cca 7 hodín a snažil sa spať. Ušlo mi to rýchlo čiže som asi aj pospal.",
   "mood": null,
   "soreness": 2,
   "fatigue": 4,
   "stress": 3,
   "source": "intervals_api",
-  "syncedAt": "2026-07-16T20:40:46.986Z"
+  "syncedAt": "2026-07-16T20:50:46.234Z"
  },
  {
   "id": "2026-07-14",
@@ -208,7 +208,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-16T20:40:46.986Z"
+  "syncedAt": "2026-07-16T20:50:46.234Z"
  },
  {
   "id": "2026-07-15",
@@ -229,7 +229,7 @@
   "fatigue": 2,
   "stress": 1,
   "source": "intervals_api",
-  "syncedAt": "2026-07-16T20:40:46.986Z"
+  "syncedAt": "2026-07-16T20:50:46.234Z"
  },
  {
   "id": "2026-07-16",
@@ -250,6 +250,6 @@
   "fatigue": 2,
   "stress": 1,
   "source": "intervals_api",
-  "syncedAt": "2026-07-16T20:40:46.986Z"
+  "syncedAt": "2026-07-16T20:50:46.234Z"
  }
 ]
