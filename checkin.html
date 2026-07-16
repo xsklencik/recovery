@@ -24,9 +24,7 @@
 
   <div class="chart-card" style="padding:14px 16px;margin-top:16px;">
     <div style="color:var(--text-faint);font-size:0.78rem;margin-bottom:12px;">
-      Vyplň hneď po zobudení, <b>predtým</b> než sa pozrieš na HRV/recovery na dashboarde — inak si podvedome
-      "dorovnáš" pocit podľa čísla a strácaš objektívny signál. Zapíše sa priamo na Intervals.icu
-      (potrebný uložený API key).
+      Vyplň hneď po zobudení, ešte pred pohľadom na recovery skóre na dashboarde.
     </div>
 
     <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;align-items:flex-end;">
@@ -40,42 +38,42 @@
     <div style="font-weight:600;margin-bottom:10px;">Subjektívne hodnotenie (1-4)</div>
     <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
       <div>
-        <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Nálada — celkové rozpoloženie, nemysli na tréning</div>
+        <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Nálada</div>
         <select id="icu-w-mood" style="padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);width:100%;">
           <option value="">—</option>
-          <option value="1">1 - zlá, podráždený/otrávený</option>
+          <option value="1">1 - zlá</option>
           <option value="2">2 - skôr horšia</option>
-          <option value="3">3 - dobrá, normálna</option>
-          <option value="4">4 - výborná, natešený</option>
+          <option value="3">3 - dobrá</option>
+          <option value="4">4 - výborná</option>
         </select>
       </div>
       <div>
-        <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Bolestivosť svalov — skutočná DOMS pri prvom pohybe</div>
+        <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Bolestivosť svalov</div>
         <select id="icu-w-soreness" style="padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);width:100%;">
           <option value="">—</option>
           <option value="1">1 - žiadna</option>
           <option value="2">2 - mierna</option>
           <option value="3">3 - výrazná</option>
-          <option value="4">4 - extrémna, obmedzuje pohyb</option>
+          <option value="4">4 - extrémna</option>
         </select>
       </div>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
       <div>
-        <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Vnímaná únava — pocitovo, nie z čísel</div>
+        <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Vnímaná únava</div>
         <select id="icu-w-fatigue" style="padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);width:100%;">
           <option value="">—</option>
-          <option value="1">1 - svieži, plný energie</option>
+          <option value="1">1 - svieži</option>
           <option value="2">2 - mierne unavený</option>
           <option value="3">3 - výrazne unavený</option>
           <option value="4">4 - vyčerpaný</option>
         </select>
       </div>
       <div>
-        <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Stres — škola/práca/vzťahy, nie tréning</div>
+        <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Stres</div>
         <select id="icu-w-stress" style="padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);width:100%;">
           <option value="">—</option>
-          <option value="1">1 - žiadny, v pohode</option>
+          <option value="1">1 - žiadny</option>
           <option value="2">2 - mierny</option>
           <option value="3">3 - výrazný</option>
           <option value="4">4 - extrémny</option>
@@ -95,17 +93,13 @@
       </div>
     </div>
 
-    <div style="font-weight:600;margin-bottom:6px;">Ručná úprava dĺžky spánku (voliteľné)</div>
-    <div style="color:var(--text-faint);font-size:0.74rem;margin-bottom:10px;">
-      Použi len keď hodinky spánok nezachytili správne (napr. cestovanie, spánok mimo postele) — inak nechaj prázdne, automat z hodiniek je presnejší.
-    </div>
+    <div style="font-weight:600;margin-bottom:6px;">Ručná dĺžka spánku (voliteľné)</div>
     <div style="margin-bottom:14px;">
-      <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Odhadovaná dĺžka spánku (hodiny)</div>
-      <input type="number" step="0.25" id="icu-w-sleephours" placeholder="napr. 5.5" style="width:130px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);">
+      <input type="number" step="0.25" id="icu-w-sleephours" placeholder="hodiny, len ak hodinky zlyhali" style="width:210px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);">
     </div>
 
     <div style="margin-bottom:14px;">
-      <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Komentár k dňu (kontext — napr. "cestoval som, spánok v aute s prestávkami")</div>
+      <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Komentár k dňu</div>
       <textarea id="icu-w-comment" rows="2" style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);font-family:inherit;"></textarea>
     </div>
 
@@ -119,10 +113,7 @@
 <div class="modal-backdrop" id="icu-key-modal">
   <div class="modal">
     <h3>Intervals.icu API key</h3>
-    <p>
-      Nájdeš na intervals.icu → Settings → Developer Settings. Ukladá sa len v tomto prehliadači
-      (localStorage), posiela sa iba na intervals.icu.
-    </p>
+    <p>Nájdeš na intervals.icu → Settings → Developer Settings. Ukladá sa len v tomto prehliadači.</p>
     <input type="password" id="icu-key-input" placeholder="tvoj Intervals.icu API key">
     <div class="modal-actions">
       <button class="cancel" id="icu-key-cancel">Zrušiť</button>
@@ -130,6 +121,12 @@
     </div>
   </div>
 </div>
+
+<nav class="bottom-nav">
+  <a href="index.html"><span class="bn-icon">📊</span>Dashboard</a>
+  <a href="history.html"><span class="bn-icon">🗓</span>História</a>
+  <a href="checkin.html" class="active"><span class="bn-icon">📝</span>Check-in</a>
+</nav>
 
 <script src="app-common.js"></script>
 <script>

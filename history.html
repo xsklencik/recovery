@@ -15,7 +15,6 @@
     <div>
       <div class="brand">
         <h1>Celá história</h1>
-        <span class="brand-tag">Adam · Čadca–Žilina</span>
       </div>
       <div class="sub">Všetky dni, vrátane komentárov k jednotlivým dňom</div>
       <a class="nav-link" href="index.html">← späť na dashboard</a>
@@ -49,7 +48,7 @@
       <input type="text" id="history-filter" placeholder="filter podľa dátumu, napr. 2026-03">
     </div>
     <div class="chart-card" style="padding:0; overflow-x:auto;">
-      <table id="history-table-full"></table>
+      <div class="table-scroll"><table id="history-table-full"></table></div>
     </div>
     <div class="history-count" id="history-count"></div>
   </div>
@@ -66,6 +65,12 @@
     <!-- vyplnene dynamicky cez JS -->
   </div>
 </div>
+
+<nav class="bottom-nav">
+  <a href="index.html"><span class="bn-icon">📊</span>Dashboard</a>
+  <a href="history.html" class="active"><span class="bn-icon">🗓</span>História</a>
+  <a href="checkin.html"><span class="bn-icon">📝</span>Check-in</a>
+</nav>
 
 <script src="app-common.js"></script>
 <script>

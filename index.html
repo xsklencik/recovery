@@ -15,7 +15,6 @@
     <div>
       <div class="brand">
         <h1>Recovery / Strain</h1>
-        <span class="brand-tag">Adam · Čadca–Žilina</span>
       </div>
       <div class="sub">Zotavenie sa počíta ráno a zostáva fixné · záťaž rastie počas dňa</div>
       <div class="sync-info" id="sync-info">načítavam…</div>
@@ -143,7 +142,7 @@
 
     <div class="section-head"><div class="section-title">História</div></div>
     <div class="chart-card" style="padding:0; overflow-x:auto;">
-      <table id="history-table"></table>
+      <div class="table-scroll"><table id="history-table"></table></div>
     </div>
     <div id="history-note" style="color:var(--text-faint);font-size:0.72rem;font-family:var(--mono);margin-top:8px;">
       Zobrazených posledných 30 dní · klikni na riadok pre detail dňa (vrátane komentára) · <a class="nav-link" href="history.html">zobraziť celú históriu →</a>
@@ -181,11 +180,7 @@
 <div class="modal-backdrop" id="icu-key-modal">
   <div class="modal">
     <h3>Intervals.icu API key</h3>
-    <p>
-      Nájdeš na intervals.icu → Settings → Developer Settings. Používa sa na priamy zápis
-      (wellness, premenovanie/zmazanie aktivity) z tejto stránky. Ukladá sa len v tomto prehliadači
-      (localStorage), posiela sa iba na intervals.icu (endpointy /api/v1/, ktoré podporujú CORS).
-    </p>
+    <p>Nájdeš na intervals.icu → Settings → Developer Settings. Ukladá sa len v tomto prehliadači.</p>
     <input type="password" id="icu-key-input" placeholder="tvoj Intervals.icu API key">
     <div class="modal-actions">
       <button class="cancel" id="icu-key-cancel">Zrušiť</button>
@@ -205,6 +200,12 @@
     <!-- vyplnene dynamicky cez JS -->
   </div>
 </div>
+
+<nav class="bottom-nav">
+  <a href="index.html" class="active"><span class="bn-icon">📊</span>Dashboard</a>
+  <a href="history.html"><span class="bn-icon">🗓</span>História</a>
+  <a href="checkin.html"><span class="bn-icon">📝</span>Check-in</a>
+</nav>
 
 <script src="app-common.js"></script>
 <script>

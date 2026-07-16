@@ -55,7 +55,18 @@ async function icuRequest(path, method, body){
   return res.json().catch(()=>null);
 }
 // athlete/0 = "prihlásený athlete podľa API key" - nemusíme poznať/posielať skutočné ID.
-function icuPutWellness(date, payload){ return icuRequest(`/athlete/0/wellness/${date}`, 'PUT', payload); }
+function icuGetWellness(date){ return icuRequest(`/athlete/0/wellness/${date}`, 'GET'); }
+// Nie je isté, či Intervals.icu PUT robí čiastočný merge alebo prepíše celý záznam - preto si
+// najprv vždy vytiahneme existujúci záznam pre daný deň a odošleme ho SPOJENÝ s novými hodnotami.
+// Takto sa nič, čo si tam mal predtým zapísané (napr. komentár, nálada), nikdy neprepíše na prázdno
+// len preto, že si teraz vyplnil iné pole.
+async function icuPutWellness(date, payload){
+  let existing = null;
+  try{ existing = await icuGetWellness(date); }catch(e){ /* pre daný deň zatiaľ nič neexistuje - OK */ }
+  const merged = Object.assign({}, existing || {}, payload);
+  delete merged.id; // id sa posiela cez URL, nie v tele
+  return icuRequest(`/athlete/0/wellness/${date}`, 'PUT', merged);
+}
 function icuUpdateActivity(id, payload){ return icuRequest(`/activity/${id}`, 'PUT', payload); }
 function icuDeleteActivity(id){ return icuRequest(`/activity/${id}`, 'DELETE'); }
 
