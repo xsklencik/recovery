@@ -156,5 +156,27 @@
   "hr_z3_secs": 168,
   "hr_z4_secs": 0,
   "hr_z5_secs": 0
+ },
+ {
+  "id": "i166812014",
+  "date": "2026-07-18",
+  "start_date_local": "2026-07-18T09:07:01",
+  "name": "Morning Open Water Swim",
+  "type": "OpenWaterSwim",
+  "comments": null,
+  "moving_time": 939,
+  "distance": 664,
+  "average_heartrate": 130,
+  "max_heartrate": 148,
+  "icu_training_load": 8,
+  "icu_ctl": 37.536274,
+  "icu_atl": 26.798246,
+  "icu_intensity": 55.38134,
+  "icu_rpe": null,
+  "hr_z1_secs": 154,
+  "hr_z2_secs": 791,
+  "hr_z3_secs": 0,
+  "hr_z4_secs": 0,
+  "hr_z5_secs": 0
  }
 ]
