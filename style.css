@@ -92,6 +92,17 @@ h1{font-size:1.1rem;font-weight:700;margin:0;letter-spacing:-0.01em;}
 .metric-val{font-family:var(--mono);font-size:1.15rem;font-weight:600;}
 .metric-sub{font-family:var(--mono);font-size:0.62rem;color:var(--text-faint);margin-top:4px;}
 
+/* ---------- AI súhrn dňa (Gemini) ---------- */
+.ai-card{
+  background:var(--surface); border:1px solid var(--line); border-radius:16px;
+  padding:18px 20px; margin-top:14px;
+}
+.ai-card-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.ai-card-icon{color:var(--accent);font-size:0.95rem;line-height:1;}
+.ai-card-title{font-family:var(--mono);font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--text-dim);}
+.ai-card-date{margin-left:auto;font-family:var(--mono);font-size:0.68rem;color:var(--text-faint);}
+.ai-card-text{color:var(--text);font-size:0.9rem;line-height:1.6;}
+
 /* ---------- Sections ---------- */
 .section-head{display:flex;justify-content:space-between;align-items:baseline;margin:38px 0 14px;flex-wrap:wrap;gap:10px;}
 .section-title{font-size:0.78rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.09em;font-family:var(--mono);}

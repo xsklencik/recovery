@@ -70,6 +70,15 @@
     <div class="metrics-row" id="metrics-row"></div>
     <div class="history-count" id="baseline-note">Farba hodnoty = odchýlka od tvojho 60-dňového priemeru (od {NEW_METHOD_CUTOFF} pre HRV a spánkovú TF, kvôli zmene metódy merania).</div>
 
+    <div class="ai-card" id="ai-card" style="display:none;">
+      <div class="ai-card-head">
+        <span class="ai-card-icon">✦</span>
+        <span class="ai-card-title" id="ai-card-title">Zhrnutie dňa</span>
+        <span class="ai-card-date" id="ai-card-date"></span>
+      </div>
+      <div class="ai-card-text" id="ai-card-text"></div>
+    </div>
+
     <div class="section-head">
       <div class="section-title">Dnešné aktivity</div>
     </div>
@@ -402,9 +411,9 @@ let LATEST_BASELINE = {};
 let STEPS_BASELINE_BY_DATE = new Map();
 
 async function main(){
-  const [history, daily, sync, actHistory, actDaily] = await Promise.all([
+  const [history, daily, sync, actHistory, actDaily, aiSummary] = await Promise.all([
     loadJson(HISTORY_URL), loadJson(DAILY_URL), loadJson(SYNC_URL),
-    loadJson(ACT_HISTORY_URL), loadJson(ACT_DAILY_URL)
+    loadJson(ACT_HISTORY_URL), loadJson(ACT_DAILY_URL), loadJson(AI_SUMMARY_URL)
   ]);
 
   if(!history && !daily){
@@ -433,10 +442,24 @@ async function main(){
   STRAIN_BY_DATE = strainByDate;
   LATEST_BASELINE = latestBaseline;
   STEPS_BASELINE_BY_DATE = stepsBaselineByDate;
-  render(results, activities);
+  render(results, activities, aiSummary);
 }
 
-function render(results, activities){
+// AI súhrn dňa (Gemini, generovaný v sync.js) - textContent (nie innerHTML), takže nepotrebuje
+// escapovanie. Ak súbor ešte neexistuje (napr. GEMINI_API_KEY zatiaľ nenastavený), karta sa
+// jednoducho skryje - nič sa "nerozbije". Ak existuje, ale je z iného dňa než dnešok (napr. Gemini
+// dnes zlyhal), zobrazí sa aj tak, len s poznámkou že je staršia.
+function renderAiSummary(aiSummary, todayDate){
+  const card = document.getElementById('ai-card');
+  if(!aiSummary || !aiSummary.summary){ card.style.display='none'; return; }
+  card.style.display='block';
+  const isStale = aiSummary.date !== todayDate;
+  document.getElementById('ai-card-title').textContent = isStale ? 'Zhrnutie dňa (staršie)' : 'Zhrnutie dňa';
+  document.getElementById('ai-card-date').textContent = aiSummary.date;
+  document.getElementById('ai-card-text').textContent = aiSummary.summary;
+}
+
+function render(results, activities, aiSummary){
   ALL_RESULTS = results;
   document.getElementById('app').style.display='block';
 
@@ -456,6 +479,7 @@ function render(results, activities){
   fillR.style.width = (today.recovery!==null ? pct : 0) + '%';
 
   const todayDate = todayISO();
+  renderAiSummary(aiSummary, todayDate);
   const todayStrain = STRAIN_BY_DATE.has(todayDate) ? STRAIN_BY_DATE.get(todayDate) : 0;
   const sv = strainVerdict(todayStrain);
   document.getElementById('strain-val').textContent = todayStrain.toFixed(1);

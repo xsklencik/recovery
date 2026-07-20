@@ -62,6 +62,150 @@ function mergeById(existing, incoming, idField) {
   return Array.from(map.values());
 }
 
+// ============================================================
+// AI denný súhrn (Gemini) — voliteľný krok, nesmie nikdy zhodiť sync.
+// ============================================================
+
+// Rovnaká hranica ako v app-common.js effectiveHrv() - od tohto dátumu sa HRV zapisuje
+// manuálne ako SDNN (pole hrvSDNN), staršie dni zostávajú na rMSSD (pole hrv).
+// POZOR: ak zmeníš tento dátum v app-common.js, zmeň ho aj tu.
+const AI_HRV_SDNN_MANUAL_CUTOFF = '2026-07-09';
+const AI_NEW_METHOD_CUTOFF = '2026-06-07';
+const AI_HRV_BASELINE_BOUNDARY = AI_HRV_SDNN_MANUAL_CUTOFF > AI_NEW_METHOD_CUTOFF ? AI_HRV_SDNN_MANUAL_CUTOFF : AI_NEW_METHOD_CUTOFF;
+function aiEffectiveHrv(r) {
+  if (r.date >= AI_HRV_SDNN_MANUAL_CUTOFF) return (r.hrvSDNN != null ? r.hrvSDNN : r.hrv);
+  return r.hrv;
+}
+
+// Priemer/smerodajná odchýlka poľa za posledných max. 60 dní PRED dneškom (dnešný záznam sa
+// do baseline nikdy nepočíta). Rovnaká metodika ako rollingStats() v app-common.js (populačný
+// rozptyl, min. 5 hodnôt), len zjednodušená len na "posledný deň", lebo to je jediné, čo AI súhrn
+// potrebuje - nepočíta sa celá séria pre každý deň v histórii.
+function aiTrailingBaseline(recsAsc, field, cutoffDate) {
+  const today = recsAsc[recsAsc.length - 1];
+  let pool = recsAsc.slice(0, -1);
+  if (cutoffDate && today && today.date >= cutoffDate) {
+    pool = pool.filter(r => r.date >= cutoffDate);
+  }
+  pool = pool.slice(-60);
+  const vals = pool.map(r => r[field]).filter(v => v != null && !isNaN(v));
+  if (vals.length < 5) return null;
+  const m = vals.reduce((a, b) => a + b, 0) / vals.length;
+  const variance = vals.reduce((a, b) => a + (b - m) ** 2, 0) / vals.length;
+  return { mean: m, std: Math.sqrt(variance) || 1 };
+}
+
+// Zostaví textový kontext pre Gemini z KOMPLETNEJ zlúčenej histórie (wellnessMerged/activitiesMerged
+// v main() už obsahujú celú históriu, nielen posledný SYNC_DAYS okno). Zámerne NEpočíta oficiálne
+// Recovery %/Strain skóre appky (to je zložitejší vážený model v app-common.js, ktorý sa počíta
+// v prehliadači) - AI dostáva surové metriky + odchýlky od vlastného priemeru a text opisuje stav
+// slovami, nie prekvapivým číslom, ktoré by sa mohlo rozchádzať s tým, čo appka reálne zobrazuje.
+function buildAiPrompt(wellnessMerged, activitiesMerged) {
+  const recs = wellnessMerged
+    .slice()
+    .sort((a, b) => (a.date < b.date ? -1 : 1))
+    .map(r => ({ ...r, hrv: aiEffectiveHrv(r) }));
+  if (recs.length === 0) return null;
+
+  const today = recs[recs.length - 1];
+  const last7 = recs.slice(-7);
+
+  const hrvBL = aiTrailingBaseline(recs, 'hrv', AI_HRV_BASELINE_BOUNDARY);
+  const rhrBL = aiTrailingBaseline(recs, 'restingHR', null);
+  const sleepHrBL = aiTrailingBaseline(recs, 'avgSleepingHR', AI_NEW_METHOD_CUTOFF);
+  const sleepScoreBL = aiTrailingBaseline(recs, 'sleepScore', null);
+
+  function devLine(label, value, bl, unit) {
+    if (value == null || !bl) return null;
+    const diff = value - bl.mean;
+    return `- ${label}: ${value}${unit || ''} (priemer ${bl.mean.toFixed(1)}${unit || ''}, ${diff >= 0 ? '+' : ''}${diff.toFixed(1)})`;
+  }
+
+  const sevenDaysAgo = last7[0].date;
+  const recentActs = (activitiesMerged || [])
+    .filter(a => a.date >= sevenDaysAgo)
+    .sort((a, b) => (a.start_date_local || a.date) < (b.start_date_local || b.date) ? -1 : 1);
+
+  const lines = [];
+  lines.push(
+    'Si osobný asistent pre regeneráciu cyklistu/bežca. Na základe dát nižšie napíš KRÁTKY ' +
+    'súhrn (3-5 viet, po slovensky) v tóne appiek ako Whoop/Bevel: vecný, konkrétny, s číslami, ' +
+    'bez emoji a bez nadpisov. NEHÁDAJ presné percento "recovery" - popíš stav slovami (napr. ' +
+    '"dobre zregenerovaný", "zvýšená únava") na základe HRV/pokojovej a spánkovej TF/spánku voči ' +
+    'jeho vlastnému priemeru a nedávnej tréningovej záťaže. Na konci pridaj jednu vetu odporúčania ' +
+    'pre dnešný tréning.'
+  );
+  lines.push('');
+  lines.push(`Dátum: ${today.date}`);
+  lines.push('Dnešné ranné dáta oproti jeho vlastnému priemeru (posledných ~60 dní):');
+  [
+    devLine('HRV', today.hrv, hrvBL, ' ms'),
+    devLine('Pokojová TF', today.restingHR, rhrBL, ' bpm'),
+    devLine('Spánková TF', today.avgSleepingHR, sleepHrBL, ' bpm'),
+    devLine('Sleep score', today.sleepScore, sleepScoreBL, ''),
+  ].filter(Boolean).forEach(l => lines.push(l));
+  if (today.sleepSecs) lines.push(`- Dĺžka spánku: ${(today.sleepSecs / 3600).toFixed(1)} h`);
+  if (today.comments) lines.push(`- Komentár k dnešku: "${today.comments}"`);
+  if (today.mood != null || today.soreness != null || today.fatigue != null || today.stress != null) {
+    lines.push(`- Subjektívne (1-4): nálada ${today.mood ?? '—'}, bolestivosť ${today.soreness ?? '—'}, únava ${today.fatigue ?? '—'}, stres ${today.stress ?? '—'}`);
+  }
+  lines.push('');
+  lines.push('Posledných 7 dní (dátum: HRV / pokojová TF / spánok / kroky):');
+  last7.forEach(r => {
+    lines.push(`- ${r.date}: HRV ${r.hrv ?? '—'}, TF ${r.restingHR ?? '—'}, spánok ${r.sleepSecs ? (r.sleepSecs / 3600).toFixed(1) + 'h' : '—'}, kroky ${r.steps ?? '—'}`);
+  });
+  lines.push('');
+  if (recentActs.length) {
+    lines.push('Aktivity za posledných 7 dní:');
+    recentActs.forEach(a => {
+      const mins = a.moving_time ? Math.round(a.moving_time / 60) : null;
+      lines.push(`- ${a.date} "${a.name || a.type}"${mins ? ', ' + mins + ' min' : ''}${a.icu_training_load ? ', load ' + Math.round(a.icu_training_load) : ''}`);
+    });
+  } else {
+    lines.push('Žiadne zaznamenané aktivity za posledných 7 dní.');
+  }
+
+  return { prompt: lines.join('\n'), date: today.date };
+}
+
+// Voláme cez natívny fetch (Node 20 ho má globálne, netreba žiadnu závislosť).
+// Free tier Gemini API (Flash / Flash-Lite modely, cez Google AI Studio kľúč) je k júlu 2026
+// naozaj bez poplatku a bez karty - limit je rádovo stovky requestov/deň, čo pri 1x denne
+// (prípadne pár manuálnych refreshoch) ani zďaleka nevyčerpáme. Jediný kompromis free tieru:
+// Google si vyhradzuje právo použiť obsah promptu na zlepšovanie svojich modelov.
+async function callGemini(prompt) {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) {
+    console.log('ℹ️ GEMINI_API_KEY nie je nastavený - preskakujem AI súhrn dňa.');
+    return null;
+  }
+  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 300 },
+      }),
+    });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      console.warn(`⚠️ Gemini API ${res.status}: ${txt.slice(0, 300)}`);
+      return null;
+    }
+    const data = await res.json();
+    const text = data && data.candidates && data.candidates[0] && data.candidates[0].content
+      && data.candidates[0].content.parts && data.candidates[0].content.parts[0]
+      && data.candidates[0].content.parts[0].text;
+    return text ? text.trim() : null;
+  } catch (e) {
+    console.warn('⚠️ Chyba pri volaní Gemini API:', e.message);
+    return null;
+  }
+}
+
 async function main() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 
@@ -160,6 +304,37 @@ async function main() {
   );
 
   console.log(`✅ Hotovo. wellness_daily.json: ${wellnessMerged.length} dní, activities_daily.json: ${activitiesMerged.length} aktivít.`);
+
+  // AI súhrn dňa - úmyselne AŽ TU, po úspešnom zápise wellness/activities, a úmyselne v samostatnom
+  // try/catch mimo hlavného reťazca chýb: ak Gemini API zlyhá alebo chýba kľúč, sync Intervals.icu
+  // dát (to podstatné) je už bezpečne hotový a uložený bez ohľadu na to, čo sa stane ďalej.
+  try {
+    console.log('Generujem AI súhrn dňa (Gemini)...');
+    // wellness_daily.json samo osebe má len pár týždňov (rolling okno) - pre poriadny 60-dňový
+    // baseline treba dotiahnuť aj wellness_history.json (veľký statický archív), presne ako to
+    // pre výpočty v prehliadači robí index.html/history.html. Číta sa len na výpočet (do
+    // wellness_daily.json/wellness_history.json sa nič nedopisuje, tie riadi len časť vyššie).
+    const wellnessHistoryFile = path.join(DATA_DIR, 'wellness_history.json');
+    const wellnessForAi = mergeById(loadJsonSafe(wellnessHistoryFile), wellnessMerged, 'id');
+    const aiCtx = buildAiPrompt(wellnessForAi, activitiesMerged);
+    const aiText = aiCtx ? await callGemini(aiCtx.prompt) : null;
+    if (aiText) {
+      fs.writeFileSync(
+        path.join(DATA_DIR, 'ai_summary_daily.json'),
+        JSON.stringify({
+          date: aiCtx.date,
+          generatedAt: new Date().toISOString(),
+          model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+          summary: aiText,
+        }, null, 1)
+      );
+      console.log('✅ AI súhrn dňa uložený.');
+    } else {
+      console.log('ℹ️ AI súhrn dňa sa tentokrát nevygeneroval (chýba kľúč alebo chyba API) - ostatné dáta sú v poriadku.');
+    }
+  } catch (e) {
+    console.warn('⚠️ AI súhrn dňa zlyhal, ale zvyšok syncu je v poriadku:', e.message);
+  }
 }
 
 main().catch(err => {

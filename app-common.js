@@ -28,6 +28,8 @@ const DAILY_URL = 'data/wellness_daily.json';
 const SYNC_URL = 'data/last_sync.json';
 const ACT_HISTORY_URL = 'data/activities_history.json';
 const ACT_DAILY_URL = 'data/activities_daily.json';
+// Denný AI súhrn (Gemini) generovaný v sync.js počas GitHub Actions behu - pozri tam.
+const AI_SUMMARY_URL = 'data/ai_summary_daily.json';
 
 // ---------- Zápis do Intervals.icu z prehliadača ----------
 // /api/v1/ endpointy Intervals.icu podporujú CORS (na rozdiel od starších /api/ bez v1), takže
