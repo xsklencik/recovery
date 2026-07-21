@@ -2,6 +2,31 @@
 // app-common.js — zdieľaná logika pre index.html a history.html
 // ============================================================
 
+// Jediný zdroj pravdy pre farby použité priamo v JS (SVG grafy, pill/hex+alpha triky, kde CSS
+// premenné nejdú použiť napr. kvôli reťazeniu "farba22" pre priehľadnosť). Musí zostať v súlade
+// s :root premennými v style.css - ak zmeníš jedno, zmeň aj druhé.
+const PALETTE = {
+  bg: '#EEF1F5',
+  surface: '#FFFFFF',
+  surface2: '#F6F7F9',
+  surface3: '#EDEFF3',
+  line: '#E3E6EB',
+  lineSoft: '#ECEEF2',
+  text: '#171A1F',
+  textDim: '#666D78',
+  textFaint: '#9199A6',
+  accent: '#FF6A3D',
+  data: '#2F7BE0',
+  good: '#1E9E6B',
+  warn: '#C97A17',
+  bad: '#E0392C',
+  neutral: '#8A909B',
+  purple: '#7C5CFA',
+  avgLine: '#ADB3BD',
+  chartGrid: '#E7E9ED',
+  chartCrosshair: '#B9BFC8',
+};
+
 const NEW_METHOD_CUTOFF = '2026-06-07'; // zmena meracej metódy/senzora HRV a spánkovej TF
 
 // Od 9.7.2026 hodinky niekedy pri ďalšom auto-syncu (každých 10 min) prepíšu ráno ručne zadanú
@@ -267,25 +292,25 @@ function zToScore(z){
   return clamp(raw, 0, 100);
 }
 function verdictFor(rec){
-  if(rec.recovery===null) return {label:'Nedostatok dát', color:'#7a7f89', detail:'Chýbajú HRV/RHR/spánok dáta.'};
-  if(rec.recovery>=67) return {label:'Pripravený na intenzitu', color:'#3ddc97', detail:'Telo je zotavené. Priestor na kvalitný tréning.'};
-  if(rec.recovery>=34) return {label:'Udržiavaj Z1/Z2', color:'#f0b429', detail:'Čiastočné zotavenie. Žiadne tvrdé intervaly.'};
-  return {label:'Regeneruj', color:'#f0553f', detail:'Nízke zotavenie. Odporúčaný odpočinok.'};
+  if(rec.recovery===null) return {label:'Nedostatok dát', color:PALETTE.neutral, detail:'Chýbajú HRV/RHR/spánok dáta.'};
+  if(rec.recovery>=67) return {label:'Pripravený na intenzitu', color:PALETTE.good, detail:'Telo je zotavené. Priestor na kvalitný tréning.'};
+  if(rec.recovery>=34) return {label:'Udržiavaj Z1/Z2', color:PALETTE.warn, detail:'Čiastočné zotavenie. Žiadne tvrdé intervaly.'};
+  return {label:'Regeneruj', color:PALETTE.bad, detail:'Nízke zotavenie. Odporúčaný odpočinok.'};
 }
 function pillColor(rec){
-  if(rec===null||rec===undefined) return '#7a7f89';
-  if(rec>=67) return '#3ddc97';
-  if(rec>=34) return '#f0b429';
-  return '#f0553f';
+  if(rec===null||rec===undefined) return PALETTE.neutral;
+  if(rec>=67) return PALETTE.good;
+  if(rec>=34) return PALETTE.warn;
+  return PALETTE.bad;
 }
 
 // ---------- Forma (TSB) zóny — hranice odčítané z referenčného grafu (20 / 5 / -10 / -30) ----------
 const FORMA_ZONES = [
-  {min:20,   max:Infinity, label:'Prechod',       color:'#f0b429'},
-  {min:5,    max:20,       label:'Svieži',        color:'#4a9eff'},
-  {min:-10,  max:5,        label:'Sivá zóna',     color:'#7a7f89'},
-  {min:-30,  max:-10,      label:'Optimálne',     color:'#3ddc97'},
-  {min:-Infinity, max:-30, label:'Vysoké riziko', color:'#f0553f'},
+  {min:20,   max:Infinity, label:'Prechod',       color:PALETTE.warn},
+  {min:5,    max:20,       label:'Svieži',        color:PALETTE.data},
+  {min:-10,  max:5,        label:'Sivá zóna',     color:PALETTE.neutral},
+  {min:-30,  max:-10,      label:'Optimálne',     color:PALETTE.good},
+  {min:-Infinity, max:-30, label:'Vysoké riziko', color:PALETTE.bad},
 ];
 function formaZoneFor(tsb){
   if(tsb===null || tsb===undefined || isNaN(tsb)) return null;
@@ -296,11 +321,11 @@ function formaZoneFor(tsb){
 // ---------- Tréningová únava (Fatigue Score / kapacita) zóny ----------
 // pomer = 1.0 znamená "presne na hranici udržateľnej záťaže pri tvojom aktuálnom CTL".
 const FATIGUE_RATIO_ZONES = [
-  {min:-Infinity, max:0.75, label:'Svieži, veľký priestor',  color:'#3ddc97'},
-  {min:0.75,       max:1.15, label:'V norme',                 color:'#4a9eff'},
-  {min:1.15,       max:1.6,  label:'Zvýšená únava',           color:'#f0b429'},
-  {min:1.6,        max:2.1,  label:'Vysoká únava',            color:'#f0553f'},
-  {min:2.1,        max:Infinity, label:'Extrémna únava',      color:'#f0553f'},
+  {min:-Infinity, max:0.75, label:'Svieži, veľký priestor',  color:PALETTE.good},
+  {min:0.75,       max:1.15, label:'V norme',                 color:PALETTE.data},
+  {min:1.15,       max:1.6,  label:'Zvýšená únava',           color:PALETTE.warn},
+  {min:1.6,        max:2.1,  label:'Vysoká únava',            color:PALETTE.bad},
+  {min:2.1,        max:Infinity, label:'Extrémna únava',      color:PALETTE.bad},
 ];
 function fatigueRatioZoneFor(ratio){
   if(ratio===null || ratio===undefined || isNaN(ratio)) return null;
@@ -328,10 +353,10 @@ function renderFatigueLegend(containerId){
 function baselineColor(z, direction){
   if(z===null || z===undefined || isNaN(z)) return null;
   const dz = direction * z;
-  if(dz >= 0.6) return '#3ddc97';   // lepšie než zvyčajne
+  if(dz >= 0.6) return PALETTE.good;   // lepšie než zvyčajne
   if(dz >= -0.6) return null;       // v norme -> necha sa default farba textu
-  if(dz >= -1.5) return '#f0b429';  // mierne horšie
-  return '#f0553f';                 // výrazne horšie
+  if(dz >= -1.5) return PALETTE.warn;  // mierne horšie
+  return PALETTE.bad;                 // výrazne horšie
 }
 
 // ---------- Tag parser: vyčíta kľúčové slová z názvu aktivity a wellness komentárov ----------
@@ -455,11 +480,11 @@ function computeDailyStrain(activities, wellnessByDate, stepsBaselineByDate){
   return strainByDate;
 }
 function strainVerdict(strain){
-  if(strain===undefined || strain===null) return {label:'Bez dát', color:'#7a7f89', detail:'Žiadna aktivita ani kroky zaznamenané.'};
-  if(strain < 8) return {label:'Ľahký deň', color:'#3ddc97', detail:'Nízka záťaž. Priestor na ďalší tréning zajtra.'};
-  if(strain < 14) return {label:'Stredná záťaž', color:'#f0b429', detail:'Bežný tréningový deň.'};
-  if(strain < 18) return {label:'Vysoká záťaž', color:'#f0553f', detail:'Náročný deň — daj pozor na regeneráciu.'};
-  return {label:'Extrémna záťaž', color:'#f0553f', detail:'Veľmi náročný deň. Zajtra pravdepodobne nižšie recovery.'};
+  if(strain===undefined || strain===null) return {label:'Bez dát', color:PALETTE.neutral, detail:'Žiadna aktivita ani kroky zaznamenané.'};
+  if(strain < 8) return {label:'Ľahký deň', color:PALETTE.good, detail:'Nízka záťaž. Priestor na ďalší tréning zajtra.'};
+  if(strain < 14) return {label:'Stredná záťaž', color:PALETTE.warn, detail:'Bežný tréningový deň.'};
+  if(strain < 18) return {label:'Vysoká záťaž', color:PALETTE.bad, detail:'Náročný deň — daj pozor na regeneráciu.'};
+  return {label:'Extrémna záťaž', color:PALETTE.bad, detail:'Veľmi náročný deň. Zajtra pravdepodobne nižšie recovery.'};
 }
 
 // ---------- Rolling baseline (60-dňové kĺzavé okno) ----------
@@ -575,6 +600,46 @@ function computeResults(recs, activities){
 // ---------- Unified chart renderer: auto-scaled line chart s crosshair/tooltip + voliteľné farebné pásma ----------
 // series: [{field, color, label, width?, dash?, hideDots?}]
 // opts: {fixedMin,fixedMax,gridValues,minAtZero,hideDots,dotColorFn,yFormat,tooltipFormat,bands:[{min,max,color}],height}
+// Kruhový gauge (prstenec, plynule od 12. hodiny v smere hodinových ručičiek) + jemné rysky
+// po obvode v kroku 25 % - "prístrojový" motív namiesto hladkého wellness-app prstenca.
+// value/min/max: dátový rozsah, z ktorého sa odvodí percento vyplnenia (orezané na [0,1]).
+function renderRingGauge(svgId, value, min, max, color){
+  const svg = document.getElementById(svgId);
+  if(!svg) return;
+  const size = 160, cx = size/2, cy = size/2, r = 64, trackW = 13;
+  const pct = (value==null || isNaN(value)) ? 0 : Math.max(0, Math.min(1, (value-min)/(max-min)));
+  const circumference = 2*Math.PI*r;
+  svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+  svg.innerHTML = '';
+
+  const ticks = document.createElementNS('http://www.w3.org/2000/svg','g');
+  for(let i=0;i<=4;i++){
+    const a = (-90 + i*90) * Math.PI/180;
+    const rOuter = r + trackW/2 + 6, rInner = r + trackW/2 + 2;
+    const tick = document.createElementNS('http://www.w3.org/2000/svg','line');
+    tick.setAttribute('x1', cx + rInner*Math.cos(a)); tick.setAttribute('y1', cy + rInner*Math.sin(a));
+    tick.setAttribute('x2', cx + rOuter*Math.cos(a)); tick.setAttribute('y2', cy + rOuter*Math.sin(a));
+    tick.setAttribute('stroke', PALETTE.line); tick.setAttribute('stroke-width','2'); tick.setAttribute('stroke-linecap','round');
+    ticks.appendChild(tick);
+  }
+  svg.appendChild(ticks);
+
+  const track = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  track.setAttribute('cx',cx); track.setAttribute('cy',cy); track.setAttribute('r',r);
+  track.setAttribute('fill','none'); track.setAttribute('stroke', PALETTE.surface3); track.setAttribute('stroke-width', trackW);
+  svg.appendChild(track);
+
+  if(pct > 0){
+    const arc = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    arc.setAttribute('cx',cx); arc.setAttribute('cy',cy); arc.setAttribute('r',r);
+    arc.setAttribute('fill','none'); arc.setAttribute('stroke', color || PALETTE.accent);
+    arc.setAttribute('stroke-width', trackW); arc.setAttribute('stroke-linecap','round');
+    arc.setAttribute('stroke-dasharray', `${circumference*pct} ${circumference}`);
+    arc.setAttribute('transform', `rotate(-90 ${cx} ${cy})`);
+    svg.appendChild(arc);
+  }
+}
+
 function drawChart(svgId, data, series, opts){
   opts = opts || {};
   const svg = document.getElementById(svgId);
@@ -589,7 +654,7 @@ function drawChart(svgId, data, series, opts){
 
   const anyValid = series.some(s => data.filter(d=>d[s.field]!=null && !isNaN(d[s.field])).length >= 2);
   if(n < 2 || !anyValid){
-    svg.innerHTML = `<text x="${W/2}" y="${H/2}" fill="#7a7f89" font-size="12" text-anchor="middle">Nedostatok dát</text>`;
+    svg.innerHTML = `<text x="${W/2}" y="${H/2}" fill="${PALETTE.textFaint}" font-size="12" text-anchor="middle">Nedostatok dát</text>`;
     return;
   }
 
@@ -629,11 +694,11 @@ function drawChart(svgId, data, series, opts){
     const line = document.createElementNS('http://www.w3.org/2000/svg','line');
     line.setAttribute('x1',pad.l); line.setAttribute('x2',W-pad.r);
     line.setAttribute('y1',y); line.setAttribute('y2',y);
-    line.setAttribute('stroke','#24282f'); line.setAttribute('stroke-width','1');
+    line.setAttribute('stroke',PALETTE.chartGrid); line.setAttribute('stroke-width','1');
     gridGroup.appendChild(line);
     const t = document.createElementNS('http://www.w3.org/2000/svg','text');
     t.setAttribute('x',6); t.setAttribute('y',y+3);
-    t.setAttribute('fill','#7a7f89'); t.setAttribute('font-size','9.5');
+    t.setAttribute('fill',PALETTE.textFaint); t.setAttribute('font-size','9.5');
     t.textContent = opts.yFormat ? opts.yFormat(val) : Math.round(val*10)/10;
     gridGroup.appendChild(t);
   });
@@ -687,7 +752,7 @@ function drawChart(svgId, data, series, opts){
     const x = xFor(i);
     const t = document.createElementNS('http://www.w3.org/2000/svg','text');
     t.setAttribute('x',x); t.setAttribute('y', H-6);
-    t.setAttribute('fill','#7a7f89'); t.setAttribute('font-size','9');
+    t.setAttribute('fill',PALETTE.textFaint); t.setAttribute('font-size','9');
     t.setAttribute('text-anchor','middle');
     t.textContent = d.date.slice(5);
     svg.appendChild(t);
@@ -696,7 +761,7 @@ function drawChart(svgId, data, series, opts){
   // ---------- Crosshair + tooltip (mouse + touch) ----------
   const crosshairLine = document.createElementNS('http://www.w3.org/2000/svg','line');
   crosshairLine.setAttribute('y1', pad.t); crosshairLine.setAttribute('y2', H-pad.b);
-  crosshairLine.setAttribute('stroke', '#4a4f58'); crosshairLine.setAttribute('stroke-width','1');
+  crosshairLine.setAttribute('stroke', PALETTE.chartCrosshair); crosshairLine.setAttribute('stroke-width','1');
   crosshairLine.setAttribute('stroke-dasharray','3,3');
   crosshairLine.style.display = 'none';
   svg.appendChild(crosshairLine);
@@ -704,7 +769,7 @@ function drawChart(svgId, data, series, opts){
   const crosshairDots = series.map(s=>{
     const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
     c.setAttribute('r','4.5'); c.setAttribute('fill', s.color);
-    c.setAttribute('stroke', '#0a0b0d'); c.setAttribute('stroke-width','1.5');
+    c.setAttribute('stroke', PALETTE.surface); c.setAttribute('stroke-width','1.5');
     c.style.display = 'none';
     svg.appendChild(c);
     return c;
@@ -853,7 +918,7 @@ function openActivityModal(a){
     ${activityDetailHtml(a)}
     <div id="act-modal-status" style="font-size:0.76rem;color:var(--text-faint);margin-top:10px;min-height:1.2em;"></div>
     <div class="modal-actions" style="margin-top:10px;">
-      <button class="cancel" id="act-delete-btn" style="color:#f0553f;">Zmazať z Intervals</button>
+      <button class="cancel" id="act-delete-btn" style="color:var(--bad);">Zmazať z Intervals</button>
       <button class="save" id="act-rename-btn">Uložiť názov do Intervals</button>
     </div>
   `;

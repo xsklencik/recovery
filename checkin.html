@@ -22,24 +22,22 @@
     </div>
   </div>
 
-  <div class="chart-card" style="padding:14px 16px;margin-top:16px;">
-    <div style="color:var(--text-faint);font-size:0.78rem;margin-bottom:12px;">
-      Vyplň hneď po zobudení, ešte pred pohľadom na recovery skóre na dashboarde.
-    </div>
+  <div class="form-card" style="margin-top:4px;">
+    <div class="form-hint">Vyplň hneď po zobudení, ešte pred pohľadom na recovery skóre na dashboarde.</div>
 
-    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;align-items:flex-end;">
-      <div>
-        <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Dátum</div>
-        <input type="date" id="icu-w-date" style="padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);">
+    <div class="field-row" style="margin-bottom:16px;align-items:flex-end;">
+      <div class="field">
+        <span class="field-label">Dátum</span>
+        <input type="date" id="icu-w-date">
       </div>
       <button class="btn" id="btn-icu-key" style="height:38px;"><span class="btn-icon">🔑</span> Intervals kľúč</button>
     </div>
 
-    <div style="font-weight:600;margin-bottom:10px;">Subjektívne hodnotenie (1-4)</div>
-    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
-      <div>
-        <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Nálada</div>
-        <select id="icu-w-mood" style="padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);width:100%;">
+    <div class="form-section-label">Subjektívne hodnotenie (1-4)</div>
+    <div class="field-row" style="margin-bottom:12px;">
+      <div class="field">
+        <span class="field-label">Nálada</span>
+        <select id="icu-w-mood">
           <option value="">—</option>
           <option value="1">1 - zlá</option>
           <option value="2">2 - skôr horšia</option>
@@ -47,9 +45,9 @@
           <option value="4">4 - výborná</option>
         </select>
       </div>
-      <div>
-        <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Bolestivosť svalov</div>
-        <select id="icu-w-soreness" style="padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);width:100%;">
+      <div class="field">
+        <span class="field-label">Bolestivosť svalov</span>
+        <select id="icu-w-soreness">
           <option value="">—</option>
           <option value="1">1 - žiadna</option>
           <option value="2">2 - mierna</option>
@@ -58,10 +56,10 @@
         </select>
       </div>
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
-      <div>
-        <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Vnímaná únava</div>
-        <select id="icu-w-fatigue" style="padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);width:100%;">
+    <div class="field-row" style="margin-bottom:16px;">
+      <div class="field">
+        <span class="field-label">Vnímaná únava</span>
+        <select id="icu-w-fatigue">
           <option value="">—</option>
           <option value="1">1 - svieži</option>
           <option value="2">2 - mierne unavený</option>
@@ -69,9 +67,9 @@
           <option value="4">4 - vyčerpaný</option>
         </select>
       </div>
-      <div>
-        <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Stres</div>
-        <select id="icu-w-stress" style="padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);width:100%;">
+      <div class="field">
+        <span class="field-label">Stres</span>
+        <select id="icu-w-stress">
           <option value="">—</option>
           <option value="1">1 - žiadny</option>
           <option value="2">2 - mierny</option>
@@ -81,31 +79,31 @@
       </div>
     </div>
 
-    <div style="font-weight:600;margin-bottom:10px;border-top:1px solid var(--line);padding-top:14px;">Namerané (voliteľné)</div>
-    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
-      <div>
-        <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Nočná TF (avgSleepingHR)</div>
-        <input type="number" id="icu-w-hr" placeholder="napr. 54" style="width:130px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);">
+    <div class="form-section-label bordered">Namerané (voliteľné)</div>
+    <div class="field-row" style="margin-bottom:16px;">
+      <div class="field">
+        <span class="field-label">Nočná TF (avgSleepingHR)</span>
+        <input type="number" id="icu-w-hr" placeholder="napr. 54" style="width:130px;">
       </div>
-      <div>
-        <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">HRV do SDNN (avg počas spánku)</div>
-        <input type="number" step="0.1" id="icu-w-hrv" placeholder="napr. 60" style="width:130px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);">
+      <div class="field">
+        <span class="field-label">HRV do SDNN (avg počas spánku)</span>
+        <input type="number" step="0.1" id="icu-w-hrv" placeholder="napr. 60" style="width:130px;">
       </div>
     </div>
 
-    <div style="font-weight:600;margin-bottom:6px;">Ručná dĺžka spánku (voliteľné)</div>
-    <div style="margin-bottom:14px;">
-      <input type="number" step="0.25" id="icu-w-sleephours" placeholder="hodiny, len ak hodinky zlyhali" style="width:210px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);">
+    <div class="field" style="margin-bottom:16px;">
+      <span class="field-label">Ručná dĺžka spánku (voliteľné, len ak hodinky zlyhali)</span>
+      <input type="number" step="0.25" id="icu-w-sleephours" placeholder="hodiny" style="width:210px;">
     </div>
 
-    <div style="margin-bottom:14px;">
-      <div style="font-size:0.7rem;color:var(--text-faint);margin-bottom:4px;">Komentár k dňu</div>
-      <textarea id="icu-w-comment" rows="2" style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-3);color:var(--text);font-family:inherit;"></textarea>
+    <div class="field" style="margin-bottom:16px;">
+      <span class="field-label">Komentár k dňu</span>
+      <textarea id="icu-w-comment" rows="2" style="width:100%;"></textarea>
     </div>
 
     <div style="display:flex;align-items:center;gap:10px;">
       <button class="btn primary" id="btn-icu-wellness-save">Uložiť do Intervals.icu</button>
-      <span id="icu-w-status" style="font-size:0.76rem;color:var(--text-faint);"></span>
+      <span id="icu-w-status" class="form-status"></span>
     </div>
   </div>
 </div>

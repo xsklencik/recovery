@@ -31,39 +31,33 @@
   <div class="err" id="err"></div>
 
   <div id="app" style="display:none;">
-    <div class="gauge-row">
-      <div class="gauge-card" style="--gauge-accent:var(--accent);">
-        <div class="gauge-top">
-          <span class="gauge-label">Recovery</span>
-          <span class="gauge-scale-label">0–100</span>
+    <div class="ring-row">
+      <div class="ring-card">
+        <div class="ring-card-top">
+          <span class="ring-card-label">Recovery</span>
+          <span class="ring-card-scale">0–100</span>
         </div>
-        <div class="gauge-value-row">
-          <div><span class="gauge-value" id="recovery-pct">—</span><span class="gauge-value-unit">%</span></div>
-          <div class="gauge-verdict">
-            <div class="gauge-verdict-label" id="recovery-verdict"></div>
-            <div class="gauge-verdict-detail" id="recovery-detail"></div>
-          </div>
+        <div class="ring-wrap">
+          <svg id="gauge-recovery" class="ring-svg"></svg>
+          <div class="ring-center"><span class="ring-value" id="recovery-pct">—</span><span class="ring-unit">%</span></div>
         </div>
-        <div class="gauge-track"><div class="gauge-fill" id="fill-recovery" style="width:0%;background:var(--accent);"></div></div>
-        <div class="gauge-ticks"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
-        <div class="gauge-date" id="recovery-date"></div>
+        <div class="ring-verdict" id="recovery-verdict"></div>
+        <div class="ring-detail" id="recovery-detail"></div>
+        <div class="ring-date" id="recovery-date"></div>
       </div>
 
-      <div class="gauge-card" style="--gauge-accent:var(--data);">
-        <div class="gauge-top">
-          <span class="gauge-label">Strain dnes</span>
-          <span class="gauge-scale-label">0–21</span>
+      <div class="ring-card">
+        <div class="ring-card-top">
+          <span class="ring-card-label">Strain dnes</span>
+          <span class="ring-card-scale">0–21</span>
         </div>
-        <div class="gauge-value-row">
-          <div><span class="gauge-value" id="strain-val">—</span></div>
-          <div class="gauge-verdict">
-            <div class="gauge-verdict-label" id="strain-verdict"></div>
-            <div class="gauge-verdict-detail" id="strain-detail"></div>
-          </div>
+        <div class="ring-wrap">
+          <svg id="gauge-strain" class="ring-svg"></svg>
+          <div class="ring-center"><span class="ring-value" id="strain-val">—</span></div>
         </div>
-        <div class="gauge-track"><div class="gauge-fill" id="fill-strain" style="width:0%;background:var(--data);"></div></div>
-        <div class="gauge-ticks"><span>0</span><span>5.25</span><span>10.5</span><span>15.75</span><span>21</span></div>
-        <div class="gauge-date">dnešná kumulatívna záťaž</div>
+        <div class="ring-verdict" id="strain-verdict"></div>
+        <div class="ring-detail" id="strain-detail"></div>
+        <div class="ring-date">dnešná kumulatívna záťaž</div>
       </div>
     </div>
 
@@ -474,9 +468,7 @@ function render(results, activities, aiSummary){
 
   const pct = today.recovery ?? 0;
   document.getElementById('recovery-pct').textContent = today.recovery!==null ? pct : '—';
-  const fillR = document.getElementById('fill-recovery');
-  fillR.style.background = v.color;
-  fillR.style.width = (today.recovery!==null ? pct : 0) + '%';
+  renderRingGauge('gauge-recovery', today.recovery, 0, 100, v.color);
 
   const todayDate = todayISO();
   renderAiSummary(aiSummary, todayDate);
@@ -486,9 +478,7 @@ function render(results, activities, aiSummary){
   document.getElementById('strain-verdict').textContent = sv.label;
   document.getElementById('strain-verdict').style.color = sv.color;
   document.getElementById('strain-detail').textContent = sv.detail;
-  const fillS = document.getElementById('fill-strain');
-  fillS.style.background = sv.color;
-  fillS.style.width = (clamp(todayStrain,0,21)/21*100) + '%';
+  renderRingGauge('gauge-strain', todayStrain, 0, 21, sv.color);
 
   // ---- Bannery: farba = odchýlka od 60-dňového baseline ----
   function devInfo(value, bl, direction){
@@ -531,19 +521,19 @@ function render(results, activities, aiSummary){
   renderFormaLegend('forma-legend');
 
   function renderRecovery(range){
-    drawChart('chart-recovery', results.slice(-range), [{field:'recovery', color:'#ff6a3d', label:'Recovery'}],
+    drawChart('chart-recovery', results.slice(-range), [{field:'recovery', color:PALETTE.accent, label:'Recovery'}],
       {fixedMin:0, fixedMax:100, gridValues:[0,25,50,75,100], dotColorFn: pillColor,
        tooltipFormat:(f,v)=>v+'%'});
   }
   function renderStrain(range){
-    drawChart('chart-strain', results.slice(-range), [{field:'strain', color:'#4a9eff', label:'Strain'}],
+    drawChart('chart-strain', results.slice(-range), [{field:'strain', color:PALETTE.data, label:'Strain'}],
       {fixedMin:0, fixedMax:21, gridValues:[0,7,14,21],
        tooltipFormat:(f,v)=>v.toFixed(1)});
   }
   function renderForma(range){
-    drawChart('chart-forma', results.slice(-range), [{field:'tsb', color:'#7a7f89', label:'TSB'}],
+    drawChart('chart-forma', results.slice(-range), [{field:'tsb', color:PALETTE.neutral, label:'TSB'}],
       {fixedMin:-40, fixedMax:25, gridValues:[20,5,-10,-30],
-       dotColorFn: v => { const z = formaZoneFor(v); return z ? z.color : '#7a7f89'; },
+       dotColorFn: v => { const z = formaZoneFor(v); return z ? z.color : PALETTE.neutral; },
        bands: FORMA_ZONES.map(z=>({min: Math.max(z.min,-40), max: Math.min(z.max,25), color: hexToRgba(z.color, 0.14)})),
        tooltipFormat:(f,v)=>v.toFixed(1)});
   }
@@ -558,26 +548,26 @@ function render(results, activities, aiSummary){
 
     drawChart('chart-hrv', hrvDataWithAvg,
       [
-        {field:'hrv', color:'#3ddc97', label:'HRV'},
-        {field:'hrvAvgLine', color:'#4a4f58', label:'Priemer ('+range+'D)', dash:true, hideDots:true, width:1.5},
+        {field:'hrv', color:PALETTE.good, label:'HRV'},
+        {field:'hrvAvgLine', color:PALETTE.avgLine, label:'Priemer ('+range+'D)', dash:true, hideDots:true, width:1.5},
       ],
       {minAtZero:true, tooltipFormat:(f,v)=>v.toFixed(1)});
     drawChart('chart-rhr', hrvDataWithAvg,
       [
-        {field:'restingHR', color:'#f0b429', label:'RHR'},
-        {field:'rhrAvgLine', color:'#4a4f58', label:'Priemer ('+range+'D)', dash:true, hideDots:true, width:1.5},
+        {field:'restingHR', color:PALETTE.warn, label:'RHR'},
+        {field:'rhrAvgLine', color:PALETTE.avgLine, label:'Priemer ('+range+'D)', dash:true, hideDots:true, width:1.5},
       ],
       {minAtZero:true, tooltipFormat:(f,v)=>Math.round(v)+' bpm'});
     drawChart('chart-sleephr', hrvDataWithAvg,
       [
-        {field:'avgSleepingHR', color:'#a78bfa', label:'Spánk. TF'},
-        {field:'sleepAvgLine', color:'#4a4f58', label:'Priemer ('+range+'D)', dash:true, hideDots:true, width:1.5},
+        {field:'avgSleepingHR', color:PALETTE.purple, label:'Spánk. TF'},
+        {field:'sleepAvgLine', color:PALETTE.avgLine, label:'Priemer ('+range+'D)', dash:true, hideDots:true, width:1.5},
       ],
       {minAtZero:true, tooltipFormat:(f,v)=>Math.round(v)+' bpm'});
   }
   function renderLoad(range){
     drawChart('chart-load', results.slice(-range),
-      [{field:'ctl', color:'#4a9eff', label:'CTL'}, {field:'atl', color:'#f0553f', label:'ATL'}],
+      [{field:'ctl', color:PALETTE.data, label:'CTL'}, {field:'atl', color:PALETTE.bad, label:'ATL'}],
       {minAtZero:true, hideDots:true, tooltipFormat:(f,v)=>v.toFixed(1)});
   }
 
