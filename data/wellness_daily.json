@@ -355,7 +355,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-22T09:01:02.475Z"
+  "syncedAt": "2026-07-22T09:05:16.339Z"
  },
  {
   "id": "2026-07-22",
@@ -376,6 +376,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-22T09:01:02.475Z"
+  "syncedAt": "2026-07-22T09:05:16.339Z"
  }
 ]
