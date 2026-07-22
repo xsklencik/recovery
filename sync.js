@@ -56,6 +56,12 @@ function loadJsonSafe(file) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); }
   catch { return []; }
 }
+// Ako loadJsonSafe, ale pre súbor, ktorý je objekt (nie pole) - vráti null namiesto [].
+function loadJsonObjectSafe(file) {
+  if (!fs.existsSync(file)) return null;
+  try { return JSON.parse(fs.readFileSync(file, 'utf8')); }
+  catch { return null; }
+}
 function mergeById(existing, incoming, idField) {
   const map = new Map(existing.map(r => [r[idField], r]));
   for (const r of incoming) map.set(r[idField], r);
@@ -100,7 +106,12 @@ function aiTrailingBaseline(recsAsc, field, cutoffDate) {
 // Recovery %/Strain skóre appky (to je zložitejší vážený model v app-common.js, ktorý sa počíta
 // v prehliadači) - AI dostáva surové metriky + odchýlky od vlastného priemeru a text opisuje stav
 // slovami, nie prekvapivým číslom, ktoré by sa mohlo rozchádzať s tým, čo appka reálne zobrazuje.
-function buildAiPrompt(wellnessMerged, activitiesMerged) {
+//
+// pastSummaries: posledných pár vlastných AI súhrnov (z data/ai_memory.json) - toto je "pamäť"
+// pre AI naprieč dňami, keďže samotné volanie Gemini je bezstavové a nič si nepamätá samo od seba.
+// status: obsah data/status.json (Activity Status - Aktívny/Chorý/Zranený/Pauza), zapisuje sa
+// priamo z prehliadača cez GitHub Contents API (pozri index.html), sync.js ho len ČÍTA.
+function buildAiPrompt(wellnessMerged, activitiesMerged, pastSummaries, status) {
   const recs = wellnessMerged
     .slice()
     .sort((a, b) => (a.date < b.date ? -1 : 1))
@@ -111,7 +122,7 @@ function buildAiPrompt(wellnessMerged, activitiesMerged) {
   const last7 = recs.slice(-7);
 
   const hrvBL = aiTrailingBaseline(recs, 'hrv', AI_HRV_BASELINE_BOUNDARY);
-  const rhrBL = aiTrailingBaseline(recs, 'restingHR', null);
+  const rhrBL = aiTrailingBaseline(recs, 'restingHR', AI_NEW_METHOD_CUTOFF);
   const sleepHrBL = aiTrailingBaseline(recs, 'avgSleepingHR', AI_NEW_METHOD_CUTOFF);
   const sleepScoreBL = aiTrailingBaseline(recs, 'sleepScore', null);
 
@@ -133,10 +144,16 @@ function buildAiPrompt(wellnessMerged, activitiesMerged) {
     'bez emoji a bez nadpisov. NEHÁDAJ presné percento "recovery" - popíš stav slovami (napr. ' +
     '"dobre zregenerovaný", "zvýšená únava") na základe HRV/pokojovej a spánkovej TF/spánku voči ' +
     'jeho vlastnému priemeru a nedávnej tréningovej záťaže. Na konci pridaj jednu vetu odporúčania ' +
-    'pre dnešný tréning.'
+    'pre dnešný tréning. Ak v histórii tvojich vlastných predchádzajúcich súhrnov nižšie vidíš ' +
+    'opakujúci sa vzor (napr. viac dní po sebe znížené HRV, alebo opakovane zmieňovaná únava), ' +
+    'môžeš naň v jednej vete upozorniť - inak ich len tichým kontextom, neopakuj ich doslovne.'
   );
   lines.push('');
   lines.push(`Dátum: ${today.date}`);
+  if (status && status.status && status.status !== 'active') {
+    const statusLabels = { sick: 'Chorý', injured: 'Zranený', break: 'Pauza (dobrovoľné voľno)' };
+    lines.push(`Aktuálny stav: ${statusLabels[status.status] || status.status} (nastavené ${status.updatedAt ? status.updatedAt.slice(0, 10) : '?'}) - zohľadni to v odporúčaní, netlač na tréning.`);
+  }
   lines.push('Dnešné ranné dáta oproti jeho vlastnému priemeru (posledných ~60 dní):');
   [
     devLine('HRV', today.hrv, hrvBL, ' ms'),
@@ -163,6 +180,11 @@ function buildAiPrompt(wellnessMerged, activitiesMerged) {
     });
   } else {
     lines.push('Žiadne zaznamenané aktivity za posledných 7 dní.');
+  }
+  if (pastSummaries && pastSummaries.length) {
+    lines.push('');
+    lines.push(`Tvoje vlastné AI súhrny za posledných ${pastSummaries.length} dní (pamäť pre kontinuitu, len na kontext):`);
+    pastSummaries.forEach(p => lines.push(`- ${p.date}: ${p.summary}`));
   }
 
   return { prompt: lines.join('\n'), date: today.date };
@@ -205,6 +227,12 @@ async function callGemini(prompt) {
     return null;
   }
 }
+
+// Koľko dní vlastných AI súhrnov sa posiela SPÄŤ do promptu (kontext/kontinuita) a koľko sa
+// ich maximálne drží v samotnom súbore (dlhšia história pre prípadné budúce použitie/analýzu,
+// aj keď sa do promptu naráz posiela len posledných AI_MEMORY_PROMPT_DAYS).
+const AI_MEMORY_PROMPT_DAYS = 14;
+const AI_MEMORY_FILE_DAYS = 180;
 
 async function main() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -309,28 +337,54 @@ async function main() {
   // try/catch mimo hlavného reťazca chýb: ak Gemini API zlyhá alebo chýba kľúč, sync Intervals.icu
   // dát (to podstatné) je už bezpečne hotový a uložený bez ohľadu na to, čo sa stane ďalej.
   try {
-    console.log('Generujem AI súhrn dňa (Gemini)...');
+    const aiSummaryFile = path.join(DATA_DIR, 'ai_summary_daily.json');
+    const aiMemoryFile = path.join(DATA_DIR, 'ai_memory.json');
     // wellness_daily.json samo osebe má len pár týždňov (rolling okno) - pre poriadny 60-dňový
     // baseline treba dotiahnuť aj wellness_history.json (veľký statický archív), presne ako to
     // pre výpočty v prehliadači robí index.html/history.html. Číta sa len na výpočet (do
     // wellness_daily.json/wellness_history.json sa nič nedopisuje, tie riadi len časť vyššie).
     const wellnessHistoryFile = path.join(DATA_DIR, 'wellness_history.json');
     const wellnessForAi = mergeById(loadJsonSafe(wellnessHistoryFile), wellnessMerged, 'id');
-    const aiCtx = buildAiPrompt(wellnessForAi, activitiesMerged);
-    const aiText = aiCtx ? await callGemini(aiCtx.prompt) : null;
-    if (aiText) {
-      fs.writeFileSync(
-        path.join(DATA_DIR, 'ai_summary_daily.json'),
-        JSON.stringify({
-          date: aiCtx.date,
-          generatedAt: new Date().toISOString(),
-          model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
-          summary: aiText,
-        }, null, 1)
-      );
-      console.log('✅ AI súhrn dňa uložený.');
+    // "Pamäť" pre AI naprieč dňami - posledných pár vlastných súhrnov sa posiela späť do promptu,
+    // aby Gemini mohol nadviazať na vzory naprieč dňami (samotné volanie je inak bezstavové).
+    const aiMemoryAll = loadJsonSafe(aiMemoryFile);
+    const pastSummaries = aiMemoryAll.slice(-AI_MEMORY_PROMPT_DAYS);
+    // status.json zapisuje priamo prehliadač cez GitHub Contents API (Activity Status karta),
+    // sync.js ho tu len číta ako ďalší kus kontextu pre Gemini.
+    const status = loadJsonObjectSafe(path.join(DATA_DIR, 'status.json'));
+    const aiCtx = buildAiPrompt(wellnessForAi, activitiesMerged, pastSummaries, status);
+
+    // DÔLEŽITÉ: tento sync beh sa u teba nespúšťa raz denne cez natívny GitHub Actions
+    // "schedule:" (ten sa nepodarilo spoľahlivo rozbehať), ale externe cez cron-job.org,
+    // ktorý volá workflow_dispatch cca každých 10 minút. Bez tejto poistky by sa Gemini
+    // volalo ~144x denne namiesto raz - zbytočné (rovnaké ranné dáta) aj plytvajúce limit.
+    const existingAi = loadJsonObjectSafe(aiSummaryFile);
+    const forceAi = String(process.env.FORCE_AI || '').toLowerCase() === 'true';
+    if (existingAi && aiCtx && existingAi.date === aiCtx.date && !forceAi) {
+      console.log(`ℹ️ AI súhrn pre ${aiCtx.date} už existuje - preskakujem Gemini (sync beží často, netreba generovať znova). Vynúť cez tlačidlo na stránke, ak chceš nový.`);
     } else {
-      console.log('ℹ️ AI súhrn dňa sa tentokrát nevygeneroval (chýba kľúč alebo chyba API) - ostatné dáta sú v poriadku.');
+      console.log('Generujem AI súhrn dňa (Gemini)...');
+      const aiText = aiCtx ? await callGemini(aiCtx.prompt) : null;
+      if (aiText) {
+        fs.writeFileSync(
+          aiSummaryFile,
+          JSON.stringify({
+            date: aiCtx.date,
+            generatedAt: new Date().toISOString(),
+            model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+            summary: aiText,
+          }, null, 1)
+        );
+        // Zápis do trvalej AI pamäte - upsert podľa dátumu (id), zoradené, orezané na posledných
+        // AI_MEMORY_FILE_DAYS záznamov, aby súbor nerástol donekonečna.
+        const updatedMemory = mergeById(aiMemoryAll, [{ id: aiCtx.date, date: aiCtx.date, summary: aiText }], 'id')
+          .sort((a, b) => (a.date < b.date ? -1 : 1))
+          .slice(-AI_MEMORY_FILE_DAYS);
+        fs.writeFileSync(aiMemoryFile, JSON.stringify(updatedMemory, null, 1));
+        console.log('✅ AI súhrn dňa uložený (a pripísaný do ai_memory.json).');
+      } else {
+        console.log('ℹ️ AI súhrn dňa sa tentokrát nevygeneroval (chýba kľúč alebo chyba API) - ostatné dáta sú v poriadku.');
+      }
     }
   } catch (e) {
     console.warn('⚠️ AI súhrn dňa zlyhal, ale zvyšok syncu je v poriadku:', e.message);

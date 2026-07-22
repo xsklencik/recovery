@@ -291,17 +291,60 @@ function zToScore(z){
   const raw = z>=0 ? SCORE_CENTER + z*SCORE_UP_SCALE : SCORE_CENTER + z*SCORE_DOWN_SCALE;
   return clamp(raw, 0, 100);
 }
+// ---------- Plynulý farebný prechod (namiesto skokových 3-pásmových farieb) ----------
+// stops musí byť zoradené vzostupne podľa .at. Medzi susednými zastávkami sa farba lineárne
+// interpoluje v RGB priestore, takže napr. hodnota 69 a 70 vyzerajú takmer identicky namiesto
+// skoku cez hranicu pásma.
+function hexToRgbTriplet(hex){
+  const h = hex.replace('#','');
+  return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+}
+function lerpColor(hexA, hexB, t){
+  const a = hexToRgbTriplet(hexA), b = hexToRgbTriplet(hexB);
+  const r = Math.round(a[0]+(b[0]-a[0])*t);
+  const g = Math.round(a[1]+(b[1]-a[1])*t);
+  const bl = Math.round(a[2]+(b[2]-a[2])*t);
+  return `rgb(${r},${g},${bl})`;
+}
+function gradientColor(value, stops){
+  if(value==null || isNaN(value)) return PALETTE.neutral;
+  if(value<=stops[0].at) return stops[0].color;
+  if(value>=stops[stops.length-1].at) return stops[stops.length-1].color;
+  for(let i=0;i<stops.length-1;i++){
+    const s0=stops[i], s1=stops[i+1];
+    if(value>=s0.at && value<=s1.at){
+      return lerpColor(s0.color, s1.color, (value-s0.at)/(s1.at-s0.at));
+    }
+  }
+  return stops[stops.length-1].color;
+}
+// Recovery 0-100: červená -> jantárová (na starej hranici 34) -> zelená (na starej hranici 67) ->
+// sýtejšia zelená pri 100, aby aj v hornom pásme bolo vidno postupný, nie plochý, prechod.
+const RECOVERY_GRADIENT = [
+  {at:0,   color:PALETTE.bad},
+  {at:34,  color:PALETTE.warn},
+  {at:67,  color:PALETTE.good},
+  {at:100, color:'#0F7A4F'},
+];
+// Strain 0-21: opačný smer (nízke = dobré).
+const STRAIN_GRADIENT = [
+  {at:0,  color:PALETTE.good},
+  {at:8,  color:PALETTE.good},
+  {at:14, color:PALETTE.warn},
+  {at:18, color:PALETTE.bad},
+  {at:21, color:'#B32A1F'},
+];
+
 function verdictFor(rec){
   if(rec.recovery===null) return {label:'Nedostatok dát', color:PALETTE.neutral, detail:'Chýbajú HRV/RHR/spánok dáta.'};
-  if(rec.recovery>=67) return {label:'Pripravený na intenzitu', color:PALETTE.good, detail:'Telo je zotavené. Priestor na kvalitný tréning.'};
-  if(rec.recovery>=34) return {label:'Udržiavaj Z1/Z2', color:PALETTE.warn, detail:'Čiastočné zotavenie. Žiadne tvrdé intervaly.'};
-  return {label:'Regeneruj', color:PALETTE.bad, detail:'Nízke zotavenie. Odporúčaný odpočinok.'};
+  const color = gradientColor(rec.recovery, RECOVERY_GRADIENT);
+  if(rec.recovery>=67) return {label:'Pripravený na intenzitu', color, detail:'Telo je zotavené. Priestor na kvalitný tréning.'};
+  if(rec.recovery>=34) return {label:'Udržiavaj Z1/Z2', color, detail:'Čiastočné zotavenie. Žiadne tvrdé intervaly.'};
+  return {label:'Regeneruj', color, detail:'Nízke zotavenie. Odporúčaný odpočinok.'};
 }
 function pillColor(rec){
   if(rec===null||rec===undefined) return PALETTE.neutral;
-  if(rec>=67) return PALETTE.good;
-  if(rec>=34) return PALETTE.warn;
-  return PALETTE.bad;
+  return gradientColor(rec, RECOVERY_GRADIENT);
 }
 
 // ---------- Forma (TSB) zóny — hranice odčítané z referenčného grafu (20 / 5 / -10 / -30) ----------
@@ -481,10 +524,11 @@ function computeDailyStrain(activities, wellnessByDate, stepsBaselineByDate){
 }
 function strainVerdict(strain){
   if(strain===undefined || strain===null) return {label:'Bez dát', color:PALETTE.neutral, detail:'Žiadna aktivita ani kroky zaznamenané.'};
-  if(strain < 8) return {label:'Ľahký deň', color:PALETTE.good, detail:'Nízka záťaž. Priestor na ďalší tréning zajtra.'};
-  if(strain < 14) return {label:'Stredná záťaž', color:PALETTE.warn, detail:'Bežný tréningový deň.'};
-  if(strain < 18) return {label:'Vysoká záťaž', color:PALETTE.bad, detail:'Náročný deň — daj pozor na regeneráciu.'};
-  return {label:'Extrémna záťaž', color:PALETTE.bad, detail:'Veľmi náročný deň. Zajtra pravdepodobne nižšie recovery.'};
+  const color = gradientColor(strain, STRAIN_GRADIENT);
+  if(strain < 8) return {label:'Ľahký deň', color, detail:'Nízka záťaž. Priestor na ďalší tréning zajtra.'};
+  if(strain < 14) return {label:'Stredná záťaž', color, detail:'Bežný tréningový deň.'};
+  if(strain < 18) return {label:'Vysoká záťaž', color, detail:'Náročný deň — daj pozor na regeneráciu.'};
+  return {label:'Extrémna záťaž', color, detail:'Veľmi náročný deň. Zajtra pravdepodobne nižšie recovery.'};
 }
 
 // ---------- Rolling baseline (60-dňové kĺzavé okno) ----------
@@ -511,7 +555,7 @@ function computeResults(recs, activities){
   // karty, AI kontext) používa už len toto zjednotené pole r.hrv.
   recs = recs.map(r => ({...r, hrv: effectiveHrv(r)}));
   const hrvStats = rollingStats(recs, 'hrv', HRV_BASELINE_BOUNDARY);
-  const rhrStats = rollingStats(recs, 'restingHR', null);
+  const rhrStats = rollingStats(recs, 'restingHR', NEW_METHOD_CUTOFF);
   const sleepHrStats = rollingStats(recs, 'avgSleepingHR', NEW_METHOD_CUTOFF);
   const sleepScoreStats = rollingStats(recs, 'sleepScore', null);
   const stepsStats = rollingStats(recs, 'steps', null);
@@ -640,6 +684,24 @@ function renderRingGauge(svgId, value, min, max, color){
   }
 }
 
+// Hladká krivka cez body (Catmull-Rom -> kubické Bezier segmenty), namiesto lomenej čiary -
+// vizuálne bližšie k modernému "wellness app" štýlu grafov (napr. Bevel).
+function smoothPathD(points){
+  if(points.length < 2) return '';
+  if(points.length === 2) return `M${points[0].x.toFixed(1)},${points[0].y.toFixed(1)} L${points[1].x.toFixed(1)},${points[1].y.toFixed(1)}`;
+  let d = `M${points[0].x.toFixed(1)},${points[0].y.toFixed(1)} `;
+  for(let i=0;i<points.length-1;i++){
+    const p0 = points[i-1] || points[i];
+    const p1 = points[i];
+    const p2 = points[i+1];
+    const p3 = points[i+2] || p2;
+    const cp1x = p1.x + (p2.x - p0.x)/6, cp1y = p1.y + (p2.y - p0.y)/6;
+    const cp2x = p2.x - (p3.x - p1.x)/6, cp2y = p2.y - (p3.y - p1.y)/6;
+    d += `C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)} `;
+  }
+  return d;
+}
+
 function drawChart(svgId, data, series, opts){
   opts = opts || {};
   const svg = document.getElementById(svgId);
@@ -708,14 +770,12 @@ function drawChart(svgId, data, series, opts){
   series.forEach(s=>{
     const valid = data.map((d,i)=>({...d,i})).filter(d=>d[s.field]!=null && !isNaN(d[s.field]));
     if(valid.length < 2) return;
-    let path='';
-    valid.forEach((d,idx)=>{
-      const x=xFor(d.i), y=yFor(d[s.field]);
-      path += (idx===0?'M':'L')+x.toFixed(1)+','+y.toFixed(1)+' ';
-    });
+    const pts = valid.map(d=>({x:xFor(d.i), y:yFor(d[s.field])}));
     const pathEl = document.createElementNS('http://www.w3.org/2000/svg','path');
-    pathEl.setAttribute('d',path); pathEl.setAttribute('fill','none');
-    pathEl.setAttribute('stroke',s.color); pathEl.setAttribute('stroke-width', s.width || 2.2);
+    pathEl.setAttribute('d', s.straight ? pts.map((p,idx)=>(idx===0?'M':'L')+p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ') : smoothPathD(pts));
+    pathEl.setAttribute('fill','none');
+    pathEl.setAttribute('stroke',s.color); pathEl.setAttribute('stroke-width', s.width || 2.4);
+    pathEl.setAttribute('stroke-linecap','round'); pathEl.setAttribute('stroke-linejoin','round');
     if(s.dash) pathEl.setAttribute('stroke-dasharray', typeof s.dash === 'string' ? s.dash : '5,4');
     svg.appendChild(pathEl);
 
@@ -724,8 +784,9 @@ function drawChart(svgId, data, series, opts){
       valid.forEach(d=>{
         const x=xFor(d.i), y=yFor(d[s.field]);
         const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
-        c.setAttribute('cx',x); c.setAttribute('cy',y); c.setAttribute('r', n<=10?4:2.5);
+        c.setAttribute('cx',x); c.setAttribute('cy',y); c.setAttribute('r', n<=10?4.5:2.5);
         c.setAttribute('fill', opts.dotColorFn ? opts.dotColorFn(d[s.field]) : s.color);
+        c.setAttribute('stroke', PALETTE.surface); c.setAttribute('stroke-width', n<=10?1.8:0);
         c.setAttribute('class','chart-dot');
         svg.appendChild(c);
       });

@@ -16,13 +16,13 @@
       <div class="brand">
         <h1>Recovery / Strain</h1>
       </div>
-      <div class="sub">Zotavenie sa počíta ráno a zostáva fixné · záťaž rastie počas dňa</div>
       <div class="sync-info" id="sync-info">načítavam…</div>
     </div>
     <div class="btn-group">
       <button class="btn" id="btn-copy-ai"><span class="btn-icon">⧉</span> Copy pre AI</button>
       <button class="btn" id="btn-token"><span class="btn-icon">⚙</span> Token</button>
       <button class="btn" id="btn-icu-key"><span class="btn-icon">🔑</span> Intervals kľúč</button>
+      <button class="btn" id="btn-ai-summary"><span class="btn-icon">🧠</span> AI súhrn</button>
       <button class="btn primary" id="btn-refresh"><span class="btn-icon">↻</span> Aktualizovať</button>
     </div>
   </div>
@@ -73,6 +73,19 @@
       <div class="ai-card-text" id="ai-card-text"></div>
     </div>
 
+    <div class="status-card">
+      <div class="status-card-head">
+        <span class="status-card-title">Stav</span>
+        <span class="status-card-note" id="status-card-note"></span>
+      </div>
+      <div class="status-options">
+        <button class="status-opt" data-status="active"><span class="status-opt-icon" style="background:var(--good);">🏃</span><span class="status-opt-label">Aktívny</span></button>
+        <button class="status-opt" data-status="sick"><span class="status-opt-icon" style="background:var(--warn);">🤒</span><span class="status-opt-label">Chorý</span></button>
+        <button class="status-opt" data-status="injured"><span class="status-opt-icon" style="background:var(--bad);">🤕</span><span class="status-opt-label">Zranený</span></button>
+        <button class="status-opt" data-status="break"><span class="status-opt-icon" style="background:var(--data);">🧘</span><span class="status-opt-label">Pauza</span></button>
+      </div>
+    </div>
+
     <div class="section-head">
       <div class="section-title">Dnešné aktivity</div>
     </div>
@@ -107,6 +120,20 @@
     <div class="chart-card"><svg id="chart-strain"></svg></div>
 
     <div class="section-head">
+      <div class="section-title">HRV · pokojová TF · spánková TF</div>
+      <div class="chart-tabs">
+        <button class="tab-btn active" data-chart="physio" data-range="7">7D</button>
+        <button class="tab-btn" data-chart="physio" data-range="30">30D</button>
+        <button class="tab-btn" data-chart="physio" data-range="90">90D</button>
+      </div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-card"><div class="chart-card-title">HRV</div><svg id="chart-hrv"></svg></div>
+      <div class="chart-card"><div class="chart-card-title">Pokojová TF</div><svg id="chart-rhr"></svg></div>
+      <div class="chart-card"><div class="chart-card-title">Spánková TF</div><svg id="chart-sleephr"></svg></div>
+    </div>
+
+    <div class="section-head">
       <div class="section-title">Forma (TSB = CTL − ATL)</div>
       <div class="chart-tabs">
         <button class="tab-btn" data-chart="forma" data-range="30">30D</button>
@@ -117,20 +144,6 @@
     <div class="chart-with-legend">
       <div class="chart-card"><svg id="chart-forma"></svg></div>
       <div class="forma-legend" id="forma-legend"></div>
-    </div>
-
-    <div class="section-head">
-      <div class="section-title">HRV · pokojová TF · spánková TF</div>
-      <div class="chart-tabs">
-        <button class="tab-btn" data-chart="physio" data-range="7">7D</button>
-        <button class="tab-btn active" data-chart="physio" data-range="30">30D</button>
-        <button class="tab-btn" data-chart="physio" data-range="90">90D</button>
-      </div>
-    </div>
-    <div class="chart-grid">
-      <div class="chart-card"><div class="chart-card-title">HRV (prerušovaná čiara = priemer za zvolené obdobie)</div><svg id="chart-hrv"></svg></div>
-      <div class="chart-card"><div class="chart-card-title">Pokojová TF (prerušovaná čiara = priemer za zvolené obdobie)</div><svg id="chart-rhr"></svg></div>
-      <div class="chart-card"><div class="chart-card-title">Spánková TF (prerušovaná čiara = priemer za zvolené obdobie)</div><svg id="chart-sleephr"></svg></div>
     </div>
 
     <div class="section-head">
@@ -397,6 +410,126 @@ document.getElementById('btn-refresh').addEventListener('click', async ()=>{
   }
 });
 
+// ---------- AI súhrn tlačidlo: rovnaký princíp ako refresh, len s force_ai:'true' ----------
+// (sync.js bez tohto vynútenia AI súhrn cez deň už len raz vygeneruje a potom preskakuje,
+// pozri NAVOD.md - toto tlačidlo je práve na to obísť pri manuálnom kliku).
+document.getElementById('btn-ai-summary').addEventListener('click', async ()=>{
+  const btn = document.getElementById('btn-ai-summary');
+  const token = getToken();
+  if(!token){
+    document.getElementById('token-modal').classList.add('show');
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = '⏳ Generujem…';
+  document.getElementById('err').textContent = '';
+  try{
+    const dispatchRes = await fetch(
+      `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${WORKFLOW_FILE}/dispatches`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
+        body: JSON.stringify({ ref: 'main', inputs: { days: '1', force_ai: 'true' } }),
+      }
+    );
+    if(!dispatchRes.ok){
+      const txt = await dispatchRes.text();
+      throw new Error(`GitHub API ${dispatchRes.status}: ${txt.slice(0,200)}`);
+    }
+    btn.textContent = '⏳ Čakám na Gemini…';
+    const before = await loadJson(AI_SUMMARY_URL);
+    const beforeTs = before && before.generatedAt ? before.generatedAt : null;
+    let done = false;
+    for(let i=0;i<15;i++){
+      await new Promise(r=>setTimeout(r, 5000));
+      const check = await loadJson(AI_SUMMARY_URL);
+      if(check && check.generatedAt && check.generatedAt !== beforeTs){
+        done = true;
+        break;
+      }
+      btn.textContent = `⏳ Čakám na Gemini… (${(i+1)*5}s)`;
+    }
+    if(done){
+      btn.textContent = '✅ Hotovo';
+      await main();
+      setTimeout(()=>{ btn.textContent='🧠 AI súhrn'; }, 2500);
+    } else {
+      btn.textContent = '⚠️ Trvá to dlhšie, skús znova o chvíľu';
+      setTimeout(()=>{ btn.textContent='🧠 AI súhrn'; }, 4000);
+    }
+  }catch(err){
+    document.getElementById('err').textContent = 'Chyba pri generovaní AI súhrnu: ' + err.message;
+    btn.textContent = '🧠 AI súhrn';
+  }finally{
+    btn.disabled = false;
+  }
+});
+
+// ---------- Stav (Activity Status): zapisuje sa PRIAMO z prehliadača cez GitHub Contents API,
+// bez potreby GitHub Actions behu - je to len jeden malý JSON súbor, žiadny sync netreba.
+// sync.js si data/status.json pri ďalšom behu prečíta a pridá ako kontext do AI promptu. ----------
+const STATUS_URL = 'data/status.json';
+
+async function saveActivityStatus(status, token){
+  const apiPath = 'data/status.json';
+  const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${apiPath}`;
+  let sha = null;
+  const getRes = await fetch(apiUrl + '?t=' + Date.now(), {
+    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' },
+  });
+  if(getRes.ok){ const j = await getRes.json(); sha = j.sha; }
+  const content = JSON.stringify({ status, updatedAt: new Date().toISOString() }, null, 1);
+  const b64 = btoa(unescape(encodeURIComponent(content)));
+  const putRes = await fetch(apiUrl, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+    body: JSON.stringify({ message: `Update activity status: ${status}`, content: b64, sha: sha || undefined, branch: 'main' }),
+  });
+  if(!putRes.ok){
+    const txt = await putRes.text();
+    throw new Error(`GitHub API ${putRes.status}: ${txt.slice(0,150)}`);
+  }
+}
+
+function renderActivityStatus(s){
+  const status = (s && s.status) || 'active';
+  document.querySelectorAll('.status-opt').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.status === status);
+  });
+  const note = document.getElementById('status-card-note');
+  note.textContent = (s && s.updatedAt) ? ('od ' + s.updatedAt.slice(0,16).replace('T',' ')) : 'predvolené';
+}
+
+document.querySelectorAll('.status-opt').forEach(btn=>{
+  btn.addEventListener('click', async ()=>{
+    const token = getToken();
+    if(!token){
+      document.getElementById('token-modal').classList.add('show');
+      return;
+    }
+    const status = btn.dataset.status;
+    document.querySelectorAll('.status-opt').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const note = document.getElementById('status-card-note');
+    note.textContent = 'ukladám…';
+    try{
+      await saveActivityStatus(status, token);
+      note.textContent = 'uložené ✓';
+    }catch(e){
+      note.textContent = '⚠️ ' + e.message;
+    }
+  });
+});
+
+loadJson(STATUS_URL).then(renderActivityStatus);
+
 // ---------- Main ----------
 let ALL_RESULTS = [];
 let ALL_ACTIVITIES = [];
@@ -540,30 +673,38 @@ function render(results, activities, aiSummary){
   function renderPhysio(range){
     // Prerušovaná čiara = ROVNÁ vodorovná čiara = priemer za práve zobrazené obdobie (7D → 7-dňový
     // priemer, 30D → 30-dňový priemer, 90D → 90-dňový priemer) - nie kĺzavý priemer bod po bode.
+    // Tieňované pásmo okolo = "normálny rozsah" (priemer ± 1 smerodajná odchýlka za rovnaké obdobie),
+    // v duchu grafov ako Bevel Cardio Load.
     const hrvData = results.filter(r => r.date >= NEW_METHOD_CUTOFF).slice(-range);
-    const hrvAvg = meanOf(hrvData, 'hrv');
-    const rhrAvg = meanOf(hrvData, 'restingHR');
-    const sleepAvg = meanOf(hrvData, 'avgSleepingHR');
+    const hrvVals = hrvData.map(r=>r.hrv).filter(v=>v!=null && !isNaN(v));
+    const rhrVals = hrvData.map(r=>r.restingHR).filter(v=>v!=null && !isNaN(v));
+    const sleepVals = hrvData.map(r=>r.avgSleepingHR).filter(v=>v!=null && !isNaN(v));
+    const hrvAvg = meanOf(hrvData, 'hrv'), hrvStd = hrvVals.length>1 ? stdev(hrvVals) : 0;
+    const rhrAvg = meanOf(hrvData, 'restingHR'), rhrStd = rhrVals.length>1 ? stdev(rhrVals) : 0;
+    const sleepAvg = meanOf(hrvData, 'avgSleepingHR'), sleepStd = sleepVals.length>1 ? stdev(sleepVals) : 0;
     const hrvDataWithAvg = hrvData.map(r=>({...r, hrvAvgLine: hrvAvg, rhrAvgLine: rhrAvg, sleepAvgLine: sleepAvg}));
 
     drawChart('chart-hrv', hrvDataWithAvg,
       [
         {field:'hrv', color:PALETTE.good, label:'HRV'},
-        {field:'hrvAvgLine', color:PALETTE.avgLine, label:'Priemer ('+range+'D)', dash:true, hideDots:true, width:1.5},
+        {field:'hrvAvgLine', color:PALETTE.avgLine, label:'Priemer ('+range+'D)', dash:true, hideDots:true, width:1.5, straight:true},
       ],
-      {minAtZero:true, tooltipFormat:(f,v)=>v.toFixed(1)});
+      {minAtZero:true, tooltipFormat:(f,v)=>v.toFixed(1),
+       bands: hrvStd>0 ? [{min:hrvAvg-hrvStd, max:hrvAvg+hrvStd, color:hexToRgba(PALETTE.good,0.10)}] : []});
     drawChart('chart-rhr', hrvDataWithAvg,
       [
         {field:'restingHR', color:PALETTE.warn, label:'RHR'},
-        {field:'rhrAvgLine', color:PALETTE.avgLine, label:'Priemer ('+range+'D)', dash:true, hideDots:true, width:1.5},
+        {field:'rhrAvgLine', color:PALETTE.avgLine, label:'Priemer ('+range+'D)', dash:true, hideDots:true, width:1.5, straight:true},
       ],
-      {minAtZero:true, tooltipFormat:(f,v)=>Math.round(v)+' bpm'});
+      {minAtZero:true, tooltipFormat:(f,v)=>Math.round(v)+' bpm',
+       bands: rhrStd>0 ? [{min:rhrAvg-rhrStd, max:rhrAvg+rhrStd, color:hexToRgba(PALETTE.warn,0.10)}] : []});
     drawChart('chart-sleephr', hrvDataWithAvg,
       [
         {field:'avgSleepingHR', color:PALETTE.purple, label:'Spánk. TF'},
-        {field:'sleepAvgLine', color:PALETTE.avgLine, label:'Priemer ('+range+'D)', dash:true, hideDots:true, width:1.5},
+        {field:'sleepAvgLine', color:PALETTE.avgLine, label:'Priemer ('+range+'D)', dash:true, hideDots:true, width:1.5, straight:true},
       ],
-      {minAtZero:true, tooltipFormat:(f,v)=>Math.round(v)+' bpm'});
+      {minAtZero:true, tooltipFormat:(f,v)=>Math.round(v)+' bpm',
+       bands: sleepStd>0 ? [{min:sleepAvg-sleepStd, max:sleepAvg+sleepStd, color:hexToRgba(PALETTE.purple,0.10)}] : []});
   }
   function renderLoad(range){
     drawChart('chart-load', results.slice(-range),
@@ -574,7 +715,7 @@ function render(results, activities, aiSummary){
   renderRecovery(7);
   renderStrain(7);
   renderForma(90);
-  renderPhysio(30);
+  renderPhysio(7);
   renderLoad(90);
   drawTable('history-table', results.slice().reverse().slice(0,30), activities);
 
