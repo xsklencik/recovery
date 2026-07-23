@@ -376,13 +376,13 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-23T04:30:47.921Z"
+  "syncedAt": "2026-07-23T04:32:17.919Z"
  },
  {
   "id": "2026-07-23",
   "date": "2026-07-23",
   "restingHR": null,
-  "hrv": null,
+  "hrv": 53.64516,
   "hrvSDNN": 52,
   "avgSleepingHR": 60,
   "sleepScore": 83,
@@ -397,6 +397,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-23T04:30:47.921Z"
+  "syncedAt": "2026-07-23T04:32:17.919Z"
  }
 ]
