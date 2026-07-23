@@ -64,13 +64,13 @@
     <div class="metrics-row" id="metrics-row"></div>
     <div class="history-count" id="baseline-note">Farba hodnoty = odchýlka od tvojho 60-dňového priemeru (od {NEW_METHOD_CUTOFF} pre HRV a spánkovú TF, kvôli zmene metódy merania).</div>
 
-    <div class="ai-card" id="ai-card" style="display:none;">
+    <div class="ai-card" id="ai-card">
       <div class="ai-card-head">
         <span class="ai-card-icon">✦</span>
         <span class="ai-card-title" id="ai-card-title">Zhrnutie dňa</span>
         <span class="ai-card-date" id="ai-card-date"></span>
       </div>
-      <div class="ai-card-text" id="ai-card-text"></div>
+      <div class="ai-card-text" id="ai-card-text">Zatiaľ nevygenerované. Klikni "🧠 AI súhrn" hore, alebo počkaj na ranný cron beh.</div>
     </div>
 
     <div class="status-card">
@@ -424,9 +424,15 @@ document.getElementById('btn-ai-summary').addEventListener('click', async ()=>{
     document.getElementById('token-modal').classList.add('show');
     return;
   }
+  const cardTitle = document.getElementById('ai-card-title');
+  const cardDate = document.getElementById('ai-card-date');
+  const cardText = document.getElementById('ai-card-text');
   btn.disabled = true;
   btn.textContent = '⏳ Generujem…';
   document.getElementById('err').textContent = '';
+  cardTitle.textContent = 'Zhrnutie dňa';
+  cardDate.textContent = '';
+  cardText.textContent = '⏳ Spúšťam GitHub Actions beh…';
   try{
     const dispatchRes = await fetch(
       `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${WORKFLOW_FILE}/dispatches`,
@@ -444,31 +450,35 @@ document.getElementById('btn-ai-summary').addEventListener('click', async ()=>{
       const txt = await dispatchRes.text();
       throw new Error(`GitHub API ${dispatchRes.status}: ${txt.slice(0,200)}`);
     }
-    btn.textContent = '⏳ Čakám na Gemini…';
+    // Beh je odoslaný - odtiaľto je vidieť priebeh PRIAMO v karte nižšie (nielen v texte tlačidla),
+    // aby bolo jasné, že sa niečo deje, aj keby si medzitým odišiel od telefónu a vrátil sa neskôr.
     const before = await loadJson(AI_SUMMARY_URL);
     const beforeTs = before && before.generatedAt ? before.generatedAt : null;
     let done = false;
-    // Rovnaký dôvod ako pri refresh tlačidle: GitHub Actions queue + celý sync.js beh (nie len
-    // Gemini) + GitHub Pages propagácia po pushi vie spolu trvať 2-4 min, nie len pár sekúnd.
+    // GitHub Actions queue + celý sync.js beh (nie len Gemini) + GitHub Pages propagácia po
+    // pushi vie spolu trvať 2-4 min, nie len pár sekúnd - preto 30x po 8s (4 min).
     for(let i=0;i<30;i++){
+      const elapsed = (i+1)*8;
+      cardText.textContent = `⏳ Beh prebieha na GitHube (queue + sync + Gemini + GitHub Pages)… ${elapsed}s. Toto okno môžeš zavrieť, beh doběhne aj bez neho - stačí sa neskôr vrátiť a obnoviť stránku.`;
+      btn.textContent = `⏳ ${elapsed}s…`;
       await new Promise(r=>setTimeout(r, 8000));
       const check = await loadJson(AI_SUMMARY_URL);
       if(check && check.generatedAt && check.generatedAt !== beforeTs){
         done = true;
         break;
       }
-      btn.textContent = `⏳ Čakám na Gemini… (${(i+1)*8}s)`;
     }
     if(done){
       btn.textContent = '✅ Hotovo';
       await main();
       setTimeout(()=>{ btn.textContent='🧠 AI súhrn'; }, 2500);
     } else {
-      btn.textContent = '⚠️ Ešte to beží, skús o minútu obnoviť stránku';
-      setTimeout(()=>{ btn.textContent='🧠 AI súhrn'; }, 4000);
+      btn.textContent = '🧠 AI súhrn';
+      cardText.textContent = '⚠️ Po 4 minútach sa nový súhrn ešte neobjavil. Skontroluj GitHub → Actions → posledný beh "sync.yml": ak tam vôbec nie je nový beh z posledných pár minút, dispatch pravdepodobne zlyhal (skús Token tlačidlo, možno vypršal). Ak beh tam je, otvor jeho log a hľadaj riadky s "AI súhrn" - tam uvidíš presný dôvod (chýba GEMINI_API_KEY / chyba Gemini API / iné). Repo → data/ai_summary_daily.json vieš tiež skontrolovať priamo na GitHube, či reálne existuje.';
     }
   }catch(err){
     document.getElementById('err').textContent = 'Chyba pri generovaní AI súhrnu: ' + err.message;
+    cardText.textContent = '⚠️ Chyba pri spúšťaní: ' + err.message;
     btn.textContent = '🧠 AI súhrn';
   }finally{
     btn.disabled = false;
@@ -579,17 +589,23 @@ async function main(){
 }
 
 // AI súhrn dňa (Gemini, generovaný v sync.js) - textContent (nie innerHTML), takže nepotrebuje
-// escapovanie. Ak súbor ešte neexistuje (napr. GEMINI_API_KEY zatiaľ nenastavený), karta sa
-// jednoducho skryje - nič sa "nerozbije". Ak existuje, ale je z iného dňa než dnešok (napr. Gemini
-// dnes zlyhal), zobrazí sa aj tak, len s poznámkou že je staršia.
+// escapovanie. Karta je VŽDY viditeľná (predtým sa pri chýbajúcich dátach skrývala úplne, čo
+// vyzeralo ako "nič sa nedeje" a nedalo sa poznať, či AI súhrn vôbec bol/nebol vygenerovaný) -
+// namiesto skrývania teraz ukazuje jasný stav: nič zatiaľ / staršie / dnešné.
 function renderAiSummary(aiSummary, todayDate){
-  const card = document.getElementById('ai-card');
-  if(!aiSummary || !aiSummary.summary){ card.style.display='none'; return; }
-  card.style.display='block';
+  const title = document.getElementById('ai-card-title');
+  const date = document.getElementById('ai-card-date');
+  const text = document.getElementById('ai-card-text');
+  if(!aiSummary || !aiSummary.summary){
+    title.textContent = 'Zhrnutie dňa';
+    date.textContent = '';
+    text.textContent = 'Zatiaľ nevygenerované. Klikni "🧠 AI súhrn" hore, alebo počkaj na ranný cron beh. Ak sa to opakuje dlhšie, over si v GitHub → Actions logu posledného behu riadky s "AI súhrn" a či máš nastavený GEMINI_API_KEY secret (pozri NAVOD.md).';
+    return;
+  }
   const isStale = aiSummary.date !== todayDate;
-  document.getElementById('ai-card-title').textContent = isStale ? 'Zhrnutie dňa (staršie)' : 'Zhrnutie dňa';
-  document.getElementById('ai-card-date').textContent = aiSummary.date;
-  document.getElementById('ai-card-text').textContent = aiSummary.summary;
+  title.textContent = isStale ? 'Zhrnutie dňa (staršie)' : 'Zhrnutie dňa';
+  date.textContent = aiSummary.date;
+  text.textContent = aiSummary.summary;
 }
 
 function render(results, activities, aiSummary){
