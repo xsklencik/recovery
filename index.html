@@ -39,7 +39,7 @@
         </div>
         <div class="ring-wrap">
           <svg id="gauge-recovery" class="ring-svg"></svg>
-          <div class="ring-center"><span class="ring-value" id="recovery-pct">—</span><span class="ring-unit">%</span></div>
+          <div class="ring-center"><div class="ring-number"><span class="ring-value" id="recovery-pct">—</span><span class="ring-unit">%</span></div></div>
         </div>
         <div class="ring-verdict" id="recovery-verdict"></div>
         <div class="ring-detail" id="recovery-detail"></div>
@@ -385,21 +385,25 @@ document.getElementById('btn-refresh').addEventListener('click', async ()=>{
     const before = await loadJson(SYNC_URL);
     const beforeTs = before && before.lastSync ? before.lastSync : null;
     let done = false;
-    for(let i=0;i<15;i++){
-      await new Promise(r=>setTimeout(r, 5000));
+    // GitHub Actions vie čakať v queue aj desiatky sekúnd pred štartom, plus sync.js beh
+    // (Intervals.icu + git commit) + GitHub Pages potrebuje po pushi ešte prebuildnúť/rozšíriť
+    // statický súbor, kým ho tento fetch reálne uvidí. 75 s bolo príliš málo - reálne to vie
+    // trvať 2-4 min. Polling teraz beží až 4 minúty (30x po 8s).
+    for(let i=0;i<30;i++){
+      await new Promise(r=>setTimeout(r, 8000));
       const check = await loadJson(SYNC_URL);
       if(check && check.lastSync && check.lastSync !== beforeTs){
         done = true;
         break;
       }
-      btn.textContent = `⏳ Čakám na dokončenie… (${(i+1)*5}s)`;
+      btn.textContent = `⏳ Čakám na dokončenie… (${(i+1)*8}s)`;
     }
     if(done){
       btn.textContent = '✅ Hotovo, načítavam…';
       await main();
     } else {
-      btn.textContent = '⚠️ Trvá to dlhšie, skús znova o chvíľu';
-      setTimeout(()=>{ btn.textContent='🔄 Aktualizovať'; }, 4000);
+      btn.textContent = '⚠️ Ešte to beží, skús o minútu obnoviť stránku';
+      setTimeout(()=>{ btn.textContent='🔄 Aktualizovať'; }, 6000);
     }
   }catch(err){
     document.getElementById('err').textContent = 'Chyba pri spúšťaní syncu: ' + err.message;
@@ -444,21 +448,23 @@ document.getElementById('btn-ai-summary').addEventListener('click', async ()=>{
     const before = await loadJson(AI_SUMMARY_URL);
     const beforeTs = before && before.generatedAt ? before.generatedAt : null;
     let done = false;
-    for(let i=0;i<15;i++){
-      await new Promise(r=>setTimeout(r, 5000));
+    // Rovnaký dôvod ako pri refresh tlačidle: GitHub Actions queue + celý sync.js beh (nie len
+    // Gemini) + GitHub Pages propagácia po pushi vie spolu trvať 2-4 min, nie len pár sekúnd.
+    for(let i=0;i<30;i++){
+      await new Promise(r=>setTimeout(r, 8000));
       const check = await loadJson(AI_SUMMARY_URL);
       if(check && check.generatedAt && check.generatedAt !== beforeTs){
         done = true;
         break;
       }
-      btn.textContent = `⏳ Čakám na Gemini… (${(i+1)*5}s)`;
+      btn.textContent = `⏳ Čakám na Gemini… (${(i+1)*8}s)`;
     }
     if(done){
       btn.textContent = '✅ Hotovo';
       await main();
       setTimeout(()=>{ btn.textContent='🧠 AI súhrn'; }, 2500);
     } else {
-      btn.textContent = '⚠️ Trvá to dlhšie, skús znova o chvíľu';
+      btn.textContent = '⚠️ Ešte to beží, skús o minútu obnoviť stránku';
       setTimeout(()=>{ btn.textContent='🧠 AI súhrn'; }, 4000);
     }
   }catch(err){
