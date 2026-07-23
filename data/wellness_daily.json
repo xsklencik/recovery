@@ -334,7 +334,7 @@
   "fatigue": 2,
   "stress": 1,
   "source": "intervals_api",
-  "syncedAt": "2026-07-23T04:20:40.603Z"
+  "syncedAt": "2026-07-23T04:30:47.921Z"
  },
  {
   "id": "2026-07-21",
@@ -355,7 +355,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-23T04:20:40.603Z"
+  "syncedAt": "2026-07-23T04:30:47.921Z"
  },
  {
   "id": "2026-07-22",
@@ -366,7 +366,7 @@
   "avgSleepingHR": 61,
   "sleepScore": 82,
   "sleepSecs": 26100,
-  "steps": 9355,
+  "steps": 9391,
   "ctl": 34.379143,
   "atl": 16.415802,
   "weight": null,
@@ -376,27 +376,27 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-23T04:20:40.603Z"
+  "syncedAt": "2026-07-23T04:30:47.921Z"
  },
  {
   "id": "2026-07-23",
   "date": "2026-07-23",
   "restingHR": null,
   "hrv": null,
-  "hrvSDNN": null,
-  "avgSleepingHR": null,
+  "hrvSDNN": 52,
+  "avgSleepingHR": 60,
   "sleepScore": 83,
   "sleepSecs": 26220,
   "steps": null,
   "ctl": 33.57026,
   "atl": 14.230496,
   "weight": null,
-  "comments": null,
+  "comments": "Dnes o 8 vyrážame na 20 hodinovú cestu",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-23T04:20:40.603Z"
+  "syncedAt": "2026-07-23T04:30:47.921Z"
  }
 ]
