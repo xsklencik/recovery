@@ -1,0 +1,23 @@
+name: Test Gemini API
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: 'Model na otestovanie (prázdne = default z test-gemini.js)'
+        required: false
+        default: ''
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Test Gemini API kľúč a model
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ github.event.inputs.model }}
+        run: node test-gemini.js
