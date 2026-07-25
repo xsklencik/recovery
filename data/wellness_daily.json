@@ -376,7 +376,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-25T05:50:44.751Z"
+  "syncedAt": "2026-07-25T06:00:56.809Z"
  },
  {
   "id": "2026-07-23",
@@ -397,36 +397,36 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-25T05:50:44.751Z"
+  "syncedAt": "2026-07-25T06:00:56.809Z"
  },
  {
   "id": "2026-07-24",
   "date": "2026-07-24",
   "restingHR": 55,
   "hrv": 54.24138,
-  "hrvSDNN": null,
-  "avgSleepingHR": null,
+  "hrvSDNN": 58,
+  "avgSleepingHR": 59,
   "sleepScore": 57,
-  "sleepSecs": 12780,
+  "sleepSecs": 16200,
   "steps": 13534,
   "ctl": 32.968636,
   "atl": 13.401079,
-  "weight": null,
-  "comments": null,
+  "weight": 59.8,
+  "comments": "O 10 sme prišli. 25 hodín v aute. Od 11:00 do 15:45 spánok, plus v aute tak max hodinu.",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-25T05:50:44.751Z"
+  "syncedAt": "2026-07-25T06:00:56.809Z"
  },
  {
   "id": "2026-07-25",
   "date": "2026-07-25",
   "restingHR": 60,
   "hrv": null,
-  "hrvSDNN": null,
-  "avgSleepingHR": null,
+  "hrvSDNN": 57,
+  "avgSleepingHR": 60,
   "sleepScore": 85,
   "sleepSecs": 29520,
   "steps": null,
@@ -434,11 +434,11 @@
   "atl": 11.6171,
   "weight": null,
   "comments": null,
-  "mood": null,
-  "soreness": null,
-  "fatigue": null,
-  "stress": null,
+  "mood": 3,
+  "soreness": 2,
+  "fatigue": 2,
+  "stress": 1,
   "source": "intervals_api",
-  "syncedAt": "2026-07-25T05:50:44.751Z"
+  "syncedAt": "2026-07-25T06:00:56.809Z"
  }
 ]
