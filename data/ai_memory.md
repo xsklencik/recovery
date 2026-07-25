@@ -1,0 +1,2 @@
+## 2026-07-25
+Dnes vykazuješ dobrú hodnotu HRV na úrovni 57 ms a kvalitný nočný spánok v trvaní 8,2 hodiny, avšak mierne zvýšená pokojová tepová frekvencia 60 bpm signalizuje doznievajúcu celkovú záťaž z nedávneho dlhého cestovania. Subjektívne pociťuješ miernu únavu a svalovú bolestivosť po dlhom pobyte v aute z predošlých dní. Vzhľadom na ukončenú dovolenku a návrat do bežného režimu je telo pripravené na návrat k aktivitám, ale potrebuje opatrnejší rozbeh.
