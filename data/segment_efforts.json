@@ -1,0 +1,20 @@
+[
+ {
+  "id": 1784969871702,
+  "date": "2026-07-25",
+  "segment": "Valy",
+  "bike": "CTM Rein 1.0",
+  "distanceKm": 0.87,
+  "elevationM": 122,
+  "timeSec": 475,
+  "riderKg": 60,
+  "bikeKg": 16,
+  "crr": 0.0065,
+  "pressureBar": null,
+  "powerW": 202,
+  "wPerKg": 3.36,
+  "vo2max": 43.3,
+  "ftpW": 182,
+  "ftpWPerKg": 3.03
+ }
+]
