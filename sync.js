@@ -62,6 +62,30 @@ function loadJsonObjectSafe(file) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); }
   catch { return null; }
 }
+
+// ---------- AI pamäť ako .md namiesto .json ----------
+// Dôvod prechodu: obsah je čistá próza (denné AI súhrny), takže .md sa dobre číta priamo na
+// GitHube (nadpisy + text), zatiaľ čo .json s vnoreným dlhým textom v úvodzovkách je na manuálne
+// prezretie nepríjemný. Formát je jednoduchý a plne pod našou kontrolou (píše aj číta ho len tento
+// skript), takže parsovanie je spoľahlivé - "## YYYY-MM-DD" nadpis, za ním text až po ďalší nadpis.
+function parseAiMemoryMd(content) {
+  if (!content) return [];
+  const entries = [];
+  const re = /^## (\d{4}-\d{2}-\d{2})\s*\n([\s\S]*?)(?=\n## \d{4}-\d{2}-\d{2}|\s*$)/gm;
+  let m;
+  while ((m = re.exec(content)) !== null) {
+    entries.push({ date: m[1], summary: m[2].trim() });
+  }
+  return entries;
+}
+function serializeAiMemoryMd(entries) {
+  return entries.map(e => `## ${e.date}\n${e.summary}`).join('\n\n') + '\n';
+}
+function loadAiMemoryMd(file) {
+  if (!fs.existsSync(file)) return [];
+  try { return parseAiMemoryMd(fs.readFileSync(file, 'utf8')); }
+  catch { return []; }
+}
 function mergeById(existing, incoming, idField) {
   const map = new Map(existing.map(r => [r[idField], r]));
   for (const r of incoming) map.set(r[idField], r);
@@ -132,21 +156,36 @@ function buildAiPrompt(wellnessMerged, activitiesMerged, pastSummaries, status) 
     return `- ${label}: ${value}${unit || ''} (priemer ${bl.mean.toFixed(1)}${unit || ''}, ${diff >= 0 ? '+' : ''}${diff.toFixed(1)})`;
   }
 
-  const sevenDaysAgo = last7[0].date;
+  // Aktivity za posledné 2 TÝŽDNE (nie len 7 dní) - podrobný tréningový plán potrebuje dlhší
+  // pohľad dozadu na to, čo už bolo odtrénované, než len posledný týždeň.
+  const fourteenDaysAgo = recs.length >= 14 ? recs[recs.length - 14].date : recs[0].date;
   const recentActs = (activitiesMerged || [])
-    .filter(a => a.date >= sevenDaysAgo)
+    .filter(a => a.date >= fourteenDaysAgo)
     .sort((a, b) => (a.start_date_local || a.date) < (b.start_date_local || b.date) ? -1 : 1);
 
   const lines = [];
   lines.push(
-    'Si osobný asistent pre regeneráciu cyklistu/bežca. Na základe dát nižšie napíš KRÁTKY ' +
-    'súhrn (3-5 viet, po slovensky) v tóne appiek ako Whoop/Bevel: vecný, konkrétny, s číslami, ' +
-    'bez emoji a bez nadpisov. NEHÁDAJ presné percento "recovery" - popíš stav slovami (napr. ' +
-    '"dobre zregenerovaný", "zvýšená únava") na základe HRV/pokojovej a spánkovej TF/spánku voči ' +
-    'jeho vlastnému priemeru a nedávnej tréningovej záťaže. Na konci pridaj jednu vetu odporúčania ' +
-    'pre dnešný tréning. Ak v histórii tvojich vlastných predchádzajúcich súhrnov nižšie vidíš ' +
-    'opakujúci sa vzor (napr. viac dní po sebe znížené HRV, alebo opakovane zmieňovaná únava), ' +
-    'môžeš naň v jednej vete upozorniť - inak ich len tichým kontextom, neopakuj ich doslovne.'
+    'Si osobný asistent pre regeneráciu a tréning cyklistu/bežca. Na základe dát nižšie odpovedz ' +
+    'IBA validným JSON objektom (žiadny markdown, žiadne ```, žiadny text mimo JSON) v tvare ' +
+    '{"kratky": "...", "podrobny": "..."} - obe hodnoty sú texty v slovenčine.'
+  );
+  lines.push('');
+  lines.push(
+    '"kratky": 3-5 vety v tóne appiek ako Whoop/Bevel - vecný, konkrétny, s číslami, bez emoji a ' +
+    'bez nadpisov. NEHÁDAJ presné percento "recovery" - popíš stav slovami (napr. "dobre ' +
+    'zregenerovaný", "zvýšená únava") na základe HRV/pokojovej a spánkovej TF/spánku voči jeho ' +
+    'vlastnému priemeru a nedávnej tréningovej záťaži. Ak v histórii jeho vlastných ' +
+    'predchádzajúcich súhrnov nižšie vidíš opakujúci sa vzor (napr. viac dní po sebe znížené HRV), ' +
+    'môžeš naň v jednej vete upozorniť.'
+  );
+  lines.push(
+    '"podrobny": dlhší podrobný tréningový plán na DNES (5-10 viet). Zohľadni dnešné dáta, ' +
+    'posledných 14 dní aktivít/záťaže nižšie, a AKÝKOĽVEK komentár v posledných dňoch, kde ' +
+    'spomína plány dopredu (napr. "zajtra chcem voľno", "v piatok mám preteky") - ak niečo také ' +
+    'nájdeš pri dátume blízko dneška, zohľadni to ako jeho vlastnú požiadavku, nie len ako dáta. ' +
+    'Daj 2-3 konkrétne alternatívy pre dnešok podľa rôznych scenárov (napr. "ak chceš intenzitu: ' +
+    '...", "ak radšej pokojnejšie: ...", "ak máš málo času: ..."), s konkrétnymi odporúčaniami ' +
+    '(zóny, orientačná dĺžka/objem) - nie len všeobecné rady.'
   );
   lines.push('');
   lines.push(`Dátum: ${today.date}`);
@@ -162,24 +201,26 @@ function buildAiPrompt(wellnessMerged, activitiesMerged, pastSummaries, status) 
     devLine('Sleep score', today.sleepScore, sleepScoreBL, ''),
   ].filter(Boolean).forEach(l => lines.push(l));
   if (today.sleepSecs) lines.push(`- Dĺžka spánku: ${(today.sleepSecs / 3600).toFixed(1)} h`);
-  if (today.comments) lines.push(`- Komentár k dnešku: "${today.comments}"`);
   if (today.mood != null || today.soreness != null || today.fatigue != null || today.stress != null) {
     lines.push(`- Subjektívne (1-4): nálada ${today.mood ?? '—'}, bolestivosť ${today.soreness ?? '—'}, únava ${today.fatigue ?? '—'}, stres ${today.stress ?? '—'}`);
   }
   lines.push('');
-  lines.push('Posledných 7 dní (dátum: HRV / pokojová TF / spánok / kroky):');
+  // Komentáre sa posielajú za CELÉ okno (nie len dnešok) - napr. včerajší komentár "zajtra chcem
+  // voľno" musí byť viditeľný v DNEŠNOM prompte, inak sa taká poznámka dopredu nikdy nezohľadní.
+  lines.push('Posledných 7 dní (dátum: HRV / pokojová TF / spánok / kroky / komentár):');
   last7.forEach(r => {
-    lines.push(`- ${r.date}: HRV ${r.hrv ?? '—'}, TF ${r.restingHR ?? '—'}, spánok ${r.sleepSecs ? (r.sleepSecs / 3600).toFixed(1) + 'h' : '—'}, kroky ${r.steps ?? '—'}`);
+    const commentPart = r.comments ? ` / komentár: "${r.comments}"` : '';
+    lines.push(`- ${r.date}: HRV ${r.hrv ?? '—'}, TF ${r.restingHR ?? '—'}, spánok ${r.sleepSecs ? (r.sleepSecs / 3600).toFixed(1) + 'h' : '—'}, kroky ${r.steps ?? '—'}${commentPart}`);
   });
   lines.push('');
   if (recentActs.length) {
-    lines.push('Aktivity za posledných 7 dní:');
+    lines.push('Aktivity za posledných 14 dní:');
     recentActs.forEach(a => {
       const mins = a.moving_time ? Math.round(a.moving_time / 60) : null;
       lines.push(`- ${a.date} "${a.name || a.type}"${mins ? ', ' + mins + ' min' : ''}${a.icu_training_load ? ', load ' + Math.round(a.icu_training_load) : ''}`);
     });
   } else {
-    lines.push('Žiadne zaznamenané aktivity za posledných 7 dní.');
+    lines.push('Žiadne zaznamenané aktivity za posledných 14 dní.');
   }
   if (pastSummaries && pastSummaries.length) {
     lines.push('');
@@ -192,29 +233,45 @@ function buildAiPrompt(wellnessMerged, activitiesMerged, pastSummaries, status) 
 
 // Voláme cez natívny fetch (Node 20 ho má globálne, netreba žiadnu závislosť).
 // Free tier Gemini API (Flash / Flash-Lite modely, cez Google AI Studio kľúč) je k júlu 2026
+// Voláme cez natívny fetch (Node 20 ho má globálne, netreba žiadnu závislosť).
+// Free tier Gemini API (Flash / Flash-Lite modely, cez Google AI Studio kľúč) je k júlu 2026
 // naozaj bez poplatku a bez karty - limit je rádovo stovky requestov/deň, čo pri 1x denne
 // (prípadne pár manuálnych refreshoch) ani zďaleka nevyčerpáme. Jediný kompromis free tieru:
 // Google si vyhradzuje právo použiť obsah promptu na zlepšovanie svojich modelov.
-async function callGemini(prompt) {
+//
+// POZOR - toto sa už raz stalo (21.7.2026): Google modely v Gemini API menia/rušia OVEĽA
+// rýchlejšie než by človek čakal - `gemini-2.5-flash` bol vyradený a začal vracať 404 mesiace
+// pred pôvodne oznámeným dátumom vypnutia. Ak raz uvidíš v logu "404" z Gemini API, najprv skús
+// zistiť aktuálny názov modelu (napr. cez aistudio.google.com/models) a nastav ho ako GitHub
+// secret/variable GEMINI_MODEL - kód sa nemusí meniť, len táto jedna hodnota. Aktuálny default
+// (gemini-3.5-flash-lite) je k 23.7.2026 potvrdený ako stabilný, GA, free-tier model.
+const DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash-lite';
+
+async function callGemini(prompt, opts) {
+  opts = opts || {};
   const key = process.env.GEMINI_API_KEY;
   if (!key) {
     console.log('ℹ️ GEMINI_API_KEY nie je nastavený - preskakujem AI súhrn dňa.');
     return null;
   }
-  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const model = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
   try {
+    const generationConfig = { temperature: 0.7, maxOutputTokens: opts.maxOutputTokens || 900 };
+    if (opts.json) generationConfig.responseMimeType = 'application/json';
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 300 },
+        generationConfig,
       }),
     });
     if (!res.ok) {
       const txt = await res.text().catch(() => '');
-      console.warn(`⚠️ Gemini API ${res.status}: ${txt.slice(0, 300)}`);
+      // Celá chybová správa (nie orezaná) - Google tu zvyčajne napíše presný dôvod (napr. "model
+      // not found", konkrétny quota limit a pod.), takže sa dá diagnostikovať priamo z logu.
+      console.warn(`⚠️ Gemini API ${res.status} (model=${model}): ${txt}`);
       return null;
     }
     const data = await res.json();
@@ -338,7 +395,7 @@ async function main() {
   // dát (to podstatné) je už bezpečne hotový a uložený bez ohľadu na to, čo sa stane ďalej.
   try {
     const aiSummaryFile = path.join(DATA_DIR, 'ai_summary_daily.json');
-    const aiMemoryFile = path.join(DATA_DIR, 'ai_memory.json');
+    const aiMemoryFile = path.join(DATA_DIR, 'ai_memory.md');
     // wellness_daily.json samo osebe má len pár týždňov (rolling okno) - pre poriadny 60-dňový
     // baseline treba dotiahnuť aj wellness_history.json (veľký statický archív), presne ako to
     // pre výpočty v prehliadači robí index.html/history.html. Číta sa len na výpočet (do
@@ -347,7 +404,7 @@ async function main() {
     const wellnessForAi = mergeById(loadJsonSafe(wellnessHistoryFile), wellnessMerged, 'id');
     // "Pamäť" pre AI naprieč dňami - posledných pár vlastných súhrnov sa posiela späť do promptu,
     // aby Gemini mohol nadviazať na vzory naprieč dňami (samotné volanie je inak bezstavové).
-    const aiMemoryAll = loadJsonSafe(aiMemoryFile);
+    const aiMemoryAll = loadAiMemoryMd(aiMemoryFile);
     const pastSummaries = aiMemoryAll.slice(-AI_MEMORY_PROMPT_DAYS);
     // status.json zapisuje priamo prehliadač cez GitHub Contents API (Activity Status karta),
     // sync.js ho tu len číta ako ďalší kus kontextu pre Gemini.
@@ -364,26 +421,43 @@ async function main() {
       console.log(`ℹ️ AI súhrn pre ${aiCtx.date} už existuje - preskakujem Gemini (sync beží často, netreba generovať znova). Vynúť cez tlačidlo na stránke, ak chceš nový.`);
     } else {
       console.log('Generujem AI súhrn dňa (Gemini)...');
-      const aiText = aiCtx ? await callGemini(aiCtx.prompt) : null;
-      if (aiText) {
+      const raw = aiCtx ? await callGemini(aiCtx.prompt, { json: true, maxOutputTokens: 900 }) : null;
+      // Model má prísny pokyn odpovedať čistým JSON-om {"kratky":..,"podrobny":..}, ale keby náhodou
+      // vrátil niečo iné (napr. markdown code fence okolo), skús to vytiahnuť namiesto tvrdého zlyhania.
+      let kratky = null, podrobny = null;
+      if (raw) {
+        let jsonStr = raw.trim();
+        const fenceMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (fenceMatch) jsonStr = fenceMatch[1].trim();
+        try {
+          const parsed = JSON.parse(jsonStr);
+          kratky = parsed.kratky || null;
+          podrobny = parsed.podrobny || null;
+        } catch (e) {
+          console.warn('⚠️ Odpoveď z Gemini sa nedala naparsovať ako JSON, ukladám ako krátky súhrn bez podrobného plánu:', e.message);
+          kratky = raw;
+        }
+      }
+      if (kratky) {
         fs.writeFileSync(
           aiSummaryFile,
           JSON.stringify({
             date: aiCtx.date,
             generatedAt: new Date().toISOString(),
-            model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
-            summary: aiText,
+            model: process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL,
+            summary: kratky,
+            plan: podrobny || '',
           }, null, 1)
         );
-        // Zápis do trvalej AI pamäte - upsert podľa dátumu (id), zoradené, orezané na posledných
-        // AI_MEMORY_FILE_DAYS záznamov, aby súbor nerástol donekonečna.
-        const updatedMemory = mergeById(aiMemoryAll, [{ id: aiCtx.date, date: aiCtx.date, summary: aiText }], 'id')
-          .sort((a, b) => (a.date < b.date ? -1 : 1))
-          .slice(-AI_MEMORY_FILE_DAYS);
-        fs.writeFileSync(aiMemoryFile, JSON.stringify(updatedMemory, null, 1));
-        console.log('✅ AI súhrn dňa uložený (a pripísaný do ai_memory.json).');
+        // Do pamäte ide len krátky súhrn (podrobný plán je "pre dnešok", nie dlhodobo zaujímavý
+        // kontext) - upsert podľa dátumu, orezané na posledných AI_MEMORY_FILE_DAYS záznamov.
+        const updatedMemory = mergeById(
+          aiMemoryAll.map(e => ({ ...e, id: e.date })), [{ id: aiCtx.date, date: aiCtx.date, summary: kratky }], 'id'
+        ).sort((a, b) => (a.date < b.date ? -1 : 1)).slice(-AI_MEMORY_FILE_DAYS);
+        fs.writeFileSync(aiMemoryFile, serializeAiMemoryMd(updatedMemory));
+        console.log('✅ AI súhrn dňa uložený (a pripísaný do ai_memory.md).');
       } else {
-        console.log('ℹ️ AI súhrn dňa sa tentokrát nevygeneroval (chýba kľúč alebo chyba API) - ostatné dáta sú v poriadku.');
+        console.log('ℹ️ AI súhrn dňa sa tentokrát nevygeneroval (chýba kľúč, chyba API, alebo sa odpoveď nedala spracovať) - ostatné dáta sú v poriadku.');
       }
     }
   } catch (e) {

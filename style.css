@@ -105,6 +105,23 @@ h1{font-size:1.3rem;font-weight:800;margin:0;letter-spacing:-0.02em;}
 .ai-card-title{font-family:var(--mono);font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--text-dim);}
 .ai-card-date{margin-left:auto;font-family:var(--mono);font-size:0.68rem;color:var(--text-faint);}
 .ai-card-text{color:var(--text);font-size:0.9rem;line-height:1.6;}
+.ai-plan-toggle{
+  margin-top:10px;background:none;border:none;color:var(--accent);font-weight:600;
+  font-size:0.8rem;cursor:pointer;padding:0;font-family:var(--sans);
+}
+.ai-plan-text{
+  margin-top:10px;padding-top:12px;border-top:1px solid var(--line-soft);
+  color:var(--text);font-size:0.87rem;line-height:1.6;white-space:pre-wrap;
+}
+
+/* ---------- Banner pre Stav (keď nie je "aktívny") ---------- */
+.status-banner{
+  display:flex;align-items:center;gap:10px;border-radius:14px;padding:11px 16px;
+  margin-top:10px;font-size:0.85rem;font-weight:600;
+}
+.status-banner.sick{background:#FBF0DD;color:#8A5A0F;}
+.status-banner.injured{background:#FBE4E1;color:#A32B1F;}
+.status-banner.break{background:#E3EDFC;color:#1E5AA8;}
 
 /* ---------- Stav (Activity Status) ---------- */
 .status-card{background:var(--surface);border-radius:20px;box-shadow:var(--shadow-card);padding:18px 20px;margin-top:10px;}
@@ -124,6 +141,21 @@ h1{font-size:1.3rem;font-weight:800;margin:0;letter-spacing:-0.02em;}
 }
 .status-opt-label{font-size:0.72rem;color:var(--text-dim);font-weight:600;}
 .status-opt.active .status-opt-label{color:var(--text);}
+
+/* ---------- Výkon / VO2max / FTP kalkulačka ---------- */
+.power-result{background:var(--surface);border-radius:20px;box-shadow:var(--shadow-card);padding:20px 22px;margin-top:16px;}
+.power-result-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px;}
+.power-stat{background:var(--surface-2);border-radius:14px;padding:14px 16px;}
+.power-stat-label{font-family:var(--mono);font-size:0.66rem;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.power-stat-val{font-family:var(--mono);font-size:1.35rem;font-weight:700;}
+.power-stat-sub{font-family:var(--mono);font-size:0.68rem;color:var(--text-faint);margin-top:3px;}
+.power-breakdown{margin-top:14px;padding-top:14px;border-top:1px solid var(--line-soft);font-size:0.8rem;color:var(--text-dim);line-height:1.7;}
+.power-slider-row{display:flex;align-items:center;gap:12px;margin:6px 0 4px;}
+.power-slider-row input[type="range"]{flex:1;accent-color:var(--accent);}
+.power-slider-val{font-family:var(--mono);font-weight:700;min-width:64px;text-align:right;}
+.power-history-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface);border-radius:12px;box-shadow:var(--shadow-card);margin-bottom:8px;font-size:0.83rem;}
+.power-history-date{font-family:var(--mono);color:var(--text-faint);font-size:0.72rem;}
+.power-note{font-size:0.78rem;color:var(--text-faint);line-height:1.55;margin-top:10px;}
 
 /* ---------- Sections ---------- */
 .section-head{display:flex;justify-content:space-between;align-items:baseline;margin:36px 0 14px;flex-wrap:wrap;gap:10px;}

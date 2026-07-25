@@ -64,6 +64,8 @@
     <div class="metrics-row" id="metrics-row"></div>
     <div class="history-count" id="baseline-note">Farba hodnoty = odchýlka od tvojho 60-dňového priemeru (od {NEW_METHOD_CUTOFF} pre HRV a spánkovú TF, kvôli zmene metódy merania).</div>
 
+    <div class="status-banner" id="status-banner" style="display:none;"></div>
+
     <div class="ai-card" id="ai-card">
       <div class="ai-card-head">
         <span class="ai-card-icon">✦</span>
@@ -71,6 +73,8 @@
         <span class="ai-card-date" id="ai-card-date"></span>
       </div>
       <div class="ai-card-text" id="ai-card-text">Zatiaľ nevygenerované. Klikni "🧠 AI súhrn" hore, alebo počkaj na ranný cron beh.</div>
+      <button class="ai-plan-toggle" id="ai-plan-toggle" style="display:none;">Zobraziť podrobný plán na dnes ↓</button>
+      <div class="ai-plan-text" id="ai-plan-text" style="display:none;"></div>
     </div>
 
     <div class="status-card">
@@ -221,6 +225,7 @@
   <a href="index.html" class="active"><span class="bn-icon">📊</span>Dashboard</a>
   <a href="history.html"><span class="bn-icon">🗓</span>História</a>
   <a href="checkin.html"><span class="bn-icon">📝</span>Check-in</a>
+  <a href="power.html"><span class="bn-icon">⚡</span>Výkon</a>
 </nav>
 
 <script src="app-common.js"></script>
@@ -521,6 +526,22 @@ function renderActivityStatus(s){
   });
   const note = document.getElementById('status-card-note');
   note.textContent = (s && s.updatedAt) ? ('od ' + s.updatedAt.slice(0,16).replace('T',' ')) : 'predvolené';
+
+  // Viditeľný banner pri hornej časti stránky, nielen skrytý kontext pre AI - "stav" má takto
+  // reálny efekt na to, čo vidno na dashboarde, nielen na to, čo si AI text napíše.
+  const banner = document.getElementById('status-banner');
+  const bannerText = {
+    sick: '🤒 Nastavený stav: Chorý' + (s && s.updatedAt ? ' (od ' + s.updatedAt.slice(0,10) + ')' : ''),
+    injured: '🤕 Nastavený stav: Zranený' + (s && s.updatedAt ? ' (od ' + s.updatedAt.slice(0,10) + ')' : ''),
+    break: '🧘 Nastavený stav: Pauza' + (s && s.updatedAt ? ' (od ' + s.updatedAt.slice(0,10) + ')' : ''),
+  };
+  if(bannerText[status]){
+    banner.className = 'status-banner ' + status;
+    banner.textContent = bannerText[status];
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
 }
 
 document.querySelectorAll('.status-opt').forEach(btn=>{
@@ -596,17 +617,37 @@ function renderAiSummary(aiSummary, todayDate){
   const title = document.getElementById('ai-card-title');
   const date = document.getElementById('ai-card-date');
   const text = document.getElementById('ai-card-text');
+  const planToggle = document.getElementById('ai-plan-toggle');
+  const planText = document.getElementById('ai-plan-text');
   if(!aiSummary || !aiSummary.summary){
     title.textContent = 'Zhrnutie dňa';
     date.textContent = '';
     text.textContent = 'Zatiaľ nevygenerované. Klikni "🧠 AI súhrn" hore, alebo počkaj na ranný cron beh. Ak sa to opakuje dlhšie, over si v GitHub → Actions logu posledného behu riadky s "AI súhrn" a či máš nastavený GEMINI_API_KEY secret (pozri NAVOD.md).';
+    planToggle.style.display = 'none';
+    planText.style.display = 'none';
     return;
   }
   const isStale = aiSummary.date !== todayDate;
   title.textContent = isStale ? 'Zhrnutie dňa (staršie)' : 'Zhrnutie dňa';
   date.textContent = aiSummary.date;
   text.textContent = aiSummary.summary;
+  if(aiSummary.plan){
+    planToggle.style.display = 'inline';
+    planToggle.textContent = 'Zobraziť podrobný plán na dnes ↓';
+    planText.style.display = 'none';
+    planText.textContent = aiSummary.plan;
+  } else {
+    planToggle.style.display = 'none';
+    planText.style.display = 'none';
+  }
 }
+document.getElementById('ai-plan-toggle').addEventListener('click', ()=>{
+  const planText = document.getElementById('ai-plan-text');
+  const toggle = document.getElementById('ai-plan-toggle');
+  const showing = planText.style.display !== 'none';
+  planText.style.display = showing ? 'none' : 'block';
+  toggle.textContent = showing ? 'Zobraziť podrobný plán na dnes ↓' : 'Skryť podrobný plán ↑';
+});
 
 function render(results, activities, aiSummary){
   ALL_RESULTS = results;

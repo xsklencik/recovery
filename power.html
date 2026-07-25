@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Výkon / VO2max / FTP — Adam</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap" style="max-width:640px;">
+  <div class="top-row">
+    <div>
+      <div class="brand">
+        <h1>Výkon / VO2max / FTP</h1>
+      </div>
+      <div class="sub" style="color:var(--text-dim);font-size:0.85rem;margin-top:4px;">
+        Odhad z jazdy do kopca na konkrétnom segmente - na porovnanie v čase, nie lab-presné meranie.
+      </div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-section-label">Segment</div>
+    <div class="field-row" style="margin-bottom:14px;">
+      <div class="field" style="flex:1;">
+        <span class="field-label">Segment</span>
+        <select id="segment-select"></select>
+      </div>
+    </div>
+    <div class="field-row" style="margin-bottom:14px;">
+      <div class="field">
+        <span class="field-label">Vzdialenosť (km)</span>
+        <input type="number" step="0.01" id="in-distance" style="width:110px;">
+      </div>
+      <div class="field">
+        <span class="field-label">Prevýšenie (m)</span>
+        <input type="number" step="1" id="in-elevation" style="width:110px;">
+      </div>
+    </div>
+
+    <div class="form-section-label bordered">Čas na segmente</div>
+    <div class="power-slider-row">
+      <input type="range" id="time-slider" min="60" max="1800" step="1" value="328">
+      <span class="power-slider-val" id="time-slider-val">5:28</span>
+    </div>
+    <div class="form-hint" style="margin-bottom:0;">Presný čas môžeš zadať aj priamo: <input type="text" id="time-text" value="5:28" style="width:70px;padding:4px 8px;font-family:var(--mono);"> (mm:ss)</div>
+
+    <div class="form-section-label bordered">Bicykel a jazdec</div>
+    <div class="field-row" style="margin-bottom:14px;">
+      <div class="field" style="flex:1;">
+        <span class="field-label">Bicykel</span>
+        <select id="bike-select"></select>
+      </div>
+    </div>
+    <div class="field-row" style="margin-bottom:14px;">
+      <div class="field">
+        <span class="field-label">Váha jazdca (kg)</span>
+        <input type="number" step="0.1" id="in-rider-kg" value="60" style="width:100px;">
+      </div>
+      <div class="field">
+        <span class="field-label">Váha bicykla (kg)</span>
+        <input type="number" step="0.1" id="in-bike-kg" style="width:100px;">
+      </div>
+    </div>
+
+    <div class="form-section-label bordered">Plášte (voliteľné, spresní odhad)</div>
+    <div class="field-row" style="margin-bottom:14px;">
+      <div class="field" style="flex:1;">
+        <span class="field-label">Typ povrchu / plášťov</span>
+        <select id="crr-select"></select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <span class="field-label">Tlak (bar, voliteľné - len sa uloží k pokusu)</span>
+        <input type="number" step="0.1" id="in-pressure" placeholder="napr. 2.5" style="width:120px;">
+      </div>
+    </div>
+    <div class="form-hint">
+      Crr pre Tufo Gravel Thundero HD 40C je z laboratórnych testov (bicyclerollingresistance.com),
+      mierne navýšený pre reálny terén (nie hladký bubon). 36C verziu priamo netestovali, ale mala
+      by byť veľmi podobná. Presnejšie tlaky, ktoré bežne používaš, mi pošli a doladím.
+    </div>
+  </div>
+
+  <div class="power-result" id="power-result">
+    <div class="power-result-grid">
+      <div class="power-stat">
+        <div class="power-stat-label">Výkon</div>
+        <div class="power-stat-val" id="out-power">—</div>
+        <div class="power-stat-sub" id="out-power-wkg">— W/kg</div>
+      </div>
+      <div class="power-stat">
+        <div class="power-stat-label">VO2max (odhad)</div>
+        <div class="power-stat-val" id="out-vo2max">—</div>
+        <div class="power-stat-sub">mL/kg/min</div>
+      </div>
+      <div class="power-stat">
+        <div class="power-stat-label">FTP (odhad)</div>
+        <div class="power-stat-val" id="out-ftp">—</div>
+        <div class="power-stat-sub" id="out-ftp-wkg">— W/kg</div>
+      </div>
+      <div class="power-stat">
+        <div class="power-stat-label">Rýchlosť</div>
+        <div class="power-stat-val" id="out-speed">—</div>
+        <div class="power-stat-sub">km/h</div>
+      </div>
+    </div>
+    <div class="power-breakdown" id="power-breakdown"></div>
+    <div class="power-note">
+      Metodika: výkon = gravitačná zložka (hmotnosť×g×prevýšenie/čas) + valivý odpor (Crr) + aero odpor
+      (odhadovaná CdA 0.4 m² v sede do kopca). VO2max ≈ 10.8 × W/kg + 7 (ACSM/cyklistická aproximácia
+      z výkonu blízko VO2max). FTP ≈ podiel výkonu podľa dĺžky úsilia (kratšie úsilie → väčší odstup
+      od FTP). Toto sú odhady z jedného terénneho úsilia, nie laboratórne meranie - berieme ich hlavne
+      na porovnanie oproti sebe samému v čase, nie ako absolútnu pravdu.
+    </div>
+    <div style="margin-top:14px;">
+      <button class="btn primary" id="btn-save-effort">💾 Uložiť tento pokus</button>
+      <span id="save-status" class="form-status" style="margin-left:8px;"></span>
+    </div>
+  </div>
+
+  <div class="section-head">
+    <div class="section-title">História pokusov na tomto segmente</div>
+  </div>
+  <div id="history-list"><div class="loading">Načítavam…</div></div>
+
+  <div class="section-head">
+    <div class="section-title">Predikcia času (podľa aktuálnej formy)</div>
+  </div>
+  <div class="power-result" id="prediction-card">
+    <div class="loading" id="prediction-loading">Načítavam…</div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <a href="index.html"><span class="bn-icon">📊</span>Dashboard</a>
+  <a href="history.html"><span class="bn-icon">🗓</span>História</a>
+  <a href="checkin.html"><span class="bn-icon">📝</span>Check-in</a>
+  <a href="power.html" class="active"><span class="bn-icon">⚡</span>Výkon</a>
+</nav>
+
+<script src="app-common.js"></script>
+<script>
+const REPO_OWNER = 'xsklencik';
+const REPO_NAME = 'recovery';
+function getToken(){ return localStorage.getItem('gh_pat') || ''; }
+const EFFORTS_URL = 'data/segment_efforts.json';
+
+// Presety - Husárik má teraz reálne dáta (2.90 km / 266 m, segment "Husárik 9% Steep" zo Stravy).
+const SEGMENTS = {
+  valy:    { name: 'Valy',    distanceKm: 0.87, elevationM: 122 },
+  husarik: { name: 'Husárik', distanceKm: 2.90, elevationM: 266 },
+  custom:  { name: 'Vlastný segment', distanceKm: null, elevationM: null },
+};
+// Váha CTM Rein je z tvojich dát (16 kg, jazda 4.9.2025). Marin Gestalt potvrdené na 12 kg.
+const BIKES = {
+  rein:   { name: 'CTM Rein 1.0',    weightKg: 16 },
+  marin:  { name: 'Marin Gestalt',   weightKg: 12 },
+  custom: { name: 'Iný bicykel',     weightKg: null },
+};
+// Crr hodnoty: všeobecné presety + tvoj konkrétny plášť (Tufo Gravel Thundero HD 700x40C).
+// Tufo Thundero HD 40 laboratórne testovaný Crr ~0.0057 (bicyclerollingresistance.com, 42.5 kg
+// záťaž/koleso, 28.8 km/h na hladkom bubne) - na reálnom kamenistom/nerovnom kopcovitom teréne
+// (nie hladká dráha) je skutočný valivý odpor vyšší, preto je tu hodnota mierne navýšená.
+const CRR_PRESETS = {
+  road:         { label: 'Cesta, hladký asfalt (Crr ~0.004)', crr: 0.004 },
+  tufo_thundero:{ label: 'Tufo Gravel Thundero HD 40C, tvrdý povrch (Crr ~0.0065)', crr: 0.0065 },
+  gravel_hard:  { label: 'Gravel, tvrdý udusaný povrch (Crr ~0.006)', crr: 0.006 },
+  gravel_loose: { label: 'Gravel, sypký / štrk (Crr ~0.008)', crr: 0.008 },
+  mtb:          { label: 'MTB terén (Crr ~0.012)', crr: 0.012 },
+};
+
+function fillSelect(sel, obj, labelFn){
+  sel.innerHTML = '';
+  Object.keys(obj).forEach(key=>{
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = labelFn(obj[key], key);
+    sel.appendChild(opt);
+  });
+}
+fillSelect(document.getElementById('segment-select'), SEGMENTS, s=>s.name);
+fillSelect(document.getElementById('bike-select'), BIKES, b=>b.name);
+fillSelect(document.getElementById('crr-select'), CRR_PRESETS, c=>c.label);
+
+function fmtTime(sec){
+  const m = Math.floor(sec/60), s = Math.round(sec%60);
+  return m + ':' + String(s).padStart(2,'0');
+}
+function parseTime(str){
+  const parts = str.split(':').map(Number);
+  if(parts.length===2 && !isNaN(parts[0]) && !isNaN(parts[1])) return parts[0]*60+parts[1];
+  const n = Number(str);
+  return isNaN(n) ? null : n;
+}
+
+const segSel = document.getElementById('segment-select');
+const bikeSel = document.getElementById('bike-select');
+const crrSel = document.getElementById('crr-select');
+const distIn = document.getElementById('in-distance');
+const elevIn = document.getElementById('in-elevation');
+const riderIn = document.getElementById('in-rider-kg');
+const bikeKgIn = document.getElementById('in-bike-kg');
+const slider = document.getElementById('time-slider');
+const timeText = document.getElementById('time-text');
+const sliderVal = document.getElementById('time-slider-val');
+
+segSel.value = 'valy';
+bikeSel.value = 'rein';
+crrSel.value = 'tufo_thundero';
+distIn.value = SEGMENTS.valy.distanceKm;
+elevIn.value = SEGMENTS.valy.elevationM;
+bikeKgIn.value = BIKES.rein.weightKg;
+
+segSel.addEventListener('change', ()=>{
+  const s = SEGMENTS[segSel.value];
+  if(s.distanceKm!=null) distIn.value = s.distanceKm;
+  if(s.elevationM!=null) elevIn.value = s.elevationM;
+  compute();
+});
+bikeSel.addEventListener('change', ()=>{
+  const b = BIKES[bikeSel.value];
+  if(b.weightKg!=null) bikeKgIn.value = b.weightKg;
+  compute();
+});
+slider.addEventListener('input', ()=>{
+  timeText.value = fmtTime(Number(slider.value));
+  sliderVal.textContent = fmtTime(Number(slider.value));
+  compute();
+});
+timeText.addEventListener('change', ()=>{
+  const t = parseTime(timeText.value);
+  if(t!=null){ slider.value = Math.max(60, Math.min(1800, t)); sliderVal.textContent = fmtTime(t); }
+  compute();
+});
+[distIn, elevIn, riderIn, bikeKgIn, crrSel].forEach(el=>el.addEventListener('input', compute));
+
+// ---------- Fyzika + odhady ----------
+function computeSegmentPower({distanceKm, elevationM, timeSec, riderKg, bikeKg, crr}){
+  const g = 9.81;
+  const totalMass = riderKg + bikeKg;
+  const distanceM = distanceKm * 1000;
+  const speedMs = distanceM / timeSec;
+  const gravityW = (totalMass * g * elevationM) / timeSec;
+  const rollingW = totalMass * g * crr * speedMs;
+  const CdA = 0.4, airDensity = 1.225;
+  const aeroW = 0.5 * airDensity * CdA * Math.pow(speedMs, 3);
+  return { totalPowerW: gravityW + rollingW + aeroW, gravityW, rollingW, aeroW, speedMs };
+}
+function estimateVO2max(wPerKg){ return 10.8 * wPerKg + 7; }
+function estimateFtpRatio(timeSec){
+  if(timeSec <= 240) return 0.80;
+  if(timeSec <= 420) return 0.83;
+  if(timeSec <= 900) return 0.90;
+  return 0.95;
+}
+
+let lastResult = null;
+
+function compute(){
+  const distanceKm = Number(distIn.value), elevationM = Number(elevIn.value);
+  const timeSec = parseTime(timeText.value) || Number(slider.value);
+  const riderKg = Number(riderIn.value), bikeKg = Number(bikeKgIn.value);
+  const crr = CRR_PRESETS[crrSel.value].crr;
+  if(!distanceKm || !elevationM || !timeSec || !riderKg || !bikeKg){
+    document.getElementById('out-power').textContent = '—';
+    lastResult = null;
+    return;
+  }
+  const r = computeSegmentPower({distanceKm, elevationM, timeSec, riderKg, bikeKg, crr});
+  const wPerKg = r.totalPowerW / riderKg;
+  const vo2max = estimateVO2max(wPerKg);
+  const ftpW = r.totalPowerW * estimateFtpRatio(timeSec);
+  const ftpWPerKg = ftpW / riderKg;
+
+  document.getElementById('out-power').textContent = Math.round(r.totalPowerW) + ' W';
+  document.getElementById('out-power-wkg').textContent = wPerKg.toFixed(2) + ' W/kg';
+  document.getElementById('out-vo2max').textContent = vo2max.toFixed(1);
+  document.getElementById('out-ftp').textContent = Math.round(ftpW) + ' W';
+  document.getElementById('out-ftp-wkg').textContent = ftpWPerKg.toFixed(2) + ' W/kg';
+  document.getElementById('out-speed').textContent = (r.speedMs*3.6).toFixed(1);
+  document.getElementById('power-breakdown').innerHTML =
+    `Rozpad výkonu: gravitácia ${Math.round(r.gravityW)} W · valivý odpor ${r.rollingW.toFixed(1)} W · aero ${r.aeroW.toFixed(1)} W`;
+
+  lastResult = {
+    date: todayISO(), segment: SEGMENTS[segSel.value].name, bike: BIKES[bikeSel.value].name,
+    distanceKm, elevationM, timeSec, riderKg, bikeKg, crr,
+    pressureBar: document.getElementById('in-pressure').value ? Number(document.getElementById('in-pressure').value) : null,
+    powerW: Math.round(r.totalPowerW), wPerKg: +wPerKg.toFixed(2),
+    vo2max: +vo2max.toFixed(1), ftpW: Math.round(ftpW), ftpWPerKg: +ftpWPerKg.toFixed(2),
+  };
+}
+compute();
+
+// ---------- Uloženie pokusu + história (GitHub Contents API, rovnaký princíp ako status.json) ----------
+async function saveEffort(effort){
+  const token = getToken();
+  if(!token) throw new Error('Chýba GitHub token (Token tlačidlo na Dashboarde).');
+  const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/data/segment_efforts.json`;
+  let sha = null, existing = [];
+  const getRes = await fetch(apiUrl + '?t=' + Date.now(), {
+    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' },
+  });
+  if(getRes.ok){
+    const j = await getRes.json();
+    sha = j.sha;
+    try{ existing = JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g,''))))); }catch(e){ existing = []; }
+  }
+  existing.push({ id: Date.now(), ...effort });
+  const content = JSON.stringify(existing, null, 1);
+  const b64 = btoa(unescape(encodeURIComponent(content)));
+  const putRes = await fetch(apiUrl, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+    body: JSON.stringify({ message: `Add segment effort: ${effort.segment} ${effort.date}`, content: b64, sha: sha || undefined, branch: 'main' }),
+  });
+  if(!putRes.ok){
+    const txt = await putRes.text();
+    throw new Error(`GitHub API ${putRes.status}: ${txt.slice(0,150)}`);
+  }
+  return existing;
+}
+
+document.getElementById('btn-save-effort').addEventListener('click', async ()=>{
+  const status = document.getElementById('save-status');
+  if(!lastResult){ status.textContent = 'Najprv vyplň všetky polia.'; return; }
+  status.textContent = 'Ukladám…';
+  try{
+    const all = await saveEffort(lastResult);
+    status.textContent = '✅ Uložené.';
+    renderHistory(all);
+  }catch(e){
+    status.textContent = '⚠️ ' + e.message;
+  }
+});
+
+function renderHistory(all){
+  const list = document.getElementById('history-list');
+  const segName = SEGMENTS[segSel.value].name;
+  const rows = (all||[]).filter(e=>e.segment===segName).sort((a,b)=> a.date < b.date ? 1 : -1);
+  if(!rows.length){
+    list.innerHTML = '<div class="activity-empty">Zatiaľ žiadne uložené pokusy na "'+segName+'".</div>';
+    return;
+  }
+  list.innerHTML = rows.map(e=>`
+    <div class="power-history-row">
+      <div>
+        <div class="power-history-date">${e.date} · ${e.bike}</div>
+        <div>${fmtTime(e.timeSec)} · ${e.powerW} W (${e.wPerKg} W/kg)</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-family:var(--mono);font-weight:700;">VO2max ${e.vo2max}</div>
+        <div style="font-family:var(--mono);font-size:0.72rem;color:var(--text-faint);">FTP ${e.ftpW} W</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+loadJson(EFFORTS_URL).then(all=>renderHistory(all||[]));
+segSel.addEventListener('change', ()=> loadJson(EFFORTS_URL).then(all=>renderHistory(all||[])));
+
+// ---------- Predikcia času podľa aktuálnej formy (CTL) ----------
+// Princíp: z uložených pokusov na danom segmente vezmeme dvojice (CTL v deň pokusu, dosiahnuté
+// W/kg), preložíme cez ne priamku (najmenšie štvorce, funguje aj len pre 2 body - vtedy je to
+// doslova spojnica dvoch bodov, žiadna štatistika, len orientačný odhad). Do priamky dosadíme
+// TVOJE DNEŠNÉ CTL a dostaneme predikované W/kg -> výkon -> a numerickým hľadaním (bisekcia)
+// nájdeme čas, pri ktorom fyzikálny model segmentu dá presne tento výkon.
+function linearFit(points){
+  const n = points.length;
+  if(n < 2) return null;
+  const sumX = points.reduce((a,p)=>a+p.x,0), sumY = points.reduce((a,p)=>a+p.y,0);
+  const sumXY = points.reduce((a,p)=>a+p.x*p.y,0), sumXX = points.reduce((a,p)=>a+p.x*p.x,0);
+  const denom = n*sumXX - sumX*sumX;
+  if(Math.abs(denom) < 1e-9) return null; // všetky CTL rovnaké - priamku nevieme určiť
+  const slope = (n*sumXY - sumX*sumY) / denom;
+  const intercept = (sumY - slope*sumX) / n;
+  return { slope, intercept };
+}
+function timeForTargetPower(targetPowerW, {distanceKm, elevationM, riderKg, bikeKg, crr}){
+  let lo = 20, hi = 3600;
+  for(let i=0;i<60;i++){
+    const mid = (lo+hi)/2;
+    const p = computeSegmentPower({distanceKm, elevationM, timeSec:mid, riderKg, bikeKg, crr}).totalPowerW;
+    if(p > targetPowerW) lo = mid; else hi = mid;
+  }
+  return (lo+hi)/2;
+}
+
+async function renderPrediction(){
+  const card = document.getElementById('prediction-card');
+  const segName = SEGMENTS[segSel.value].name;
+  const [efforts, wHist, wDaily] = await Promise.all([
+    loadJson(EFFORTS_URL), loadJson('data/wellness_history.json'), loadJson('data/wellness_daily.json'),
+  ]);
+  const wellness = mergeById(wHist||[], wDaily||[]);
+  if(!wellness.length){
+    card.innerHTML = '<div class="power-note">Chýbajú wellness dáta (wellness_history.json/wellness_daily.json) - predikcia nejde spočítať.</div>';
+    return;
+  }
+  const ctlByDate = new Map(wellness.map(r=>[r.date, r.ctl]));
+  const segEfforts = (efforts||[]).filter(e=>e.segment===segName && ctlByDate.has(e.date));
+  const points = segEfforts.map(e=>({ x: ctlByDate.get(e.date), y: e.wPerKg, date: e.date }));
+
+  if(points.length < 2){
+    card.innerHTML = `<div class="power-note">Zatiaľ ${points.length} uložený pokus s dostupným CTL pre "${segName}" - na predikciu treba aspoň 2 (ideálne 4+, inak je to len spojnica dvoch bodov, nie skutočný trend). Uklad(aj) ďalšie pokusy cez "💾 Uložiť tento pokus" vyššie.</div>`;
+    return;
+  }
+  const fit = linearFit(points);
+  if(!fit){
+    card.innerHTML = '<div class="power-note">CTL bolo pri všetkých uložených pokusoch rovnaké - nedá sa preložiť priamka.</div>';
+    return;
+  }
+  const sortedWellness = wellness.slice().sort((a,b)=> a.date<b.date?-1:1);
+  const todayCtl = sortedWellness[sortedWellness.length-1].ctl;
+  const predictedWPerKg = Math.max(0.5, fit.slope*todayCtl + fit.intercept);
+  const riderKg = Number(riderIn.value), bikeKg = Number(bikeKgIn.value);
+  const crr = CRR_PRESETS[crrSel.value].crr;
+  const distanceKm = Number(distIn.value), elevationM = Number(elevIn.value);
+  const predictedPowerW = predictedWPerKg * riderKg;
+  const predictedTimeSec = timeForTargetPower(predictedPowerW, {distanceKm, elevationM, riderKg, bikeKg, crr});
+
+  const lowConfidence = points.length < 4;
+  card.innerHTML = `
+    <div class="power-result-grid">
+      <div class="power-stat">
+        <div class="power-stat-label">Predikovaný čas dnes</div>
+        <div class="power-stat-val">${fmtTime(predictedTimeSec)}</div>
+        <div class="power-stat-sub">pri aktuálnom bicykli/plášťoch vyššie</div>
+      </div>
+      <div class="power-stat">
+        <div class="power-stat-label">Predikovaný výkon</div>
+        <div class="power-stat-val">${Math.round(predictedPowerW)} W</div>
+        <div class="power-stat-sub">${predictedWPerKg.toFixed(2)} W/kg</div>
+      </div>
+    </div>
+    <div class="power-breakdown">
+      Z ${points.length} uložených pokusov (CTL vs. W/kg): ${points.map(p=>`${p.date} CTL ${p.x.toFixed(1)} → ${p.y.toFixed(2)} W/kg`).join(' · ')}<br>
+      Dnešné CTL: ${todayCtl.toFixed(1)}
+    </div>
+    <div class="power-note">
+      ${lowConfidence ? '⚠️ Len ' + points.length + ' body - toto je doslova spojnica pár bodov, nie spoľahlivý trend. Čím viac pokusov uložíš (rôzne CTL úrovne cez leto), tým zmysluplnejšia bude táto predikcia. ' : ''}
+      Model predpokladá, že W/kg na segmente rastie/klesá lineárne s CTL - realita je hlučnejšia
+      (denná forma, taktika, počasie), takže toto ber ako orientačný trend, nie presné číslo.
+    </div>
+  `;
+}
+renderPrediction();
+segSel.addEventListener('change', renderPrediction);
+[riderIn, bikeKgIn, crrSel, distIn, elevIn].forEach(el=>el.addEventListener('change', renderPrediction));
+document.getElementById('btn-save-effort').addEventListener('click', ()=> setTimeout(renderPrediction, 500));
+</script>
+</body>
+</html>

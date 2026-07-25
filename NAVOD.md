@@ -120,10 +120,26 @@ tesne po tom, čo prvá úloha stihne pretiahnuť ranné wellness dáta):
 Toto spustí plný sync (neškodí, len 1x navyše denne) a navyše vynúti nový AI
 súhrn aj keby už dnešný existoval z skoršieho automatického behu.
 
-**Free tier:** k júlu 2026 sú modely `gemini-2.5-flash` / `flash-lite` cez
-Google AI Studio kľúč naozaj bez poplatku, žiadna karta netreba. Jediný
-kompromis: Google si na free tieri vyhradzuje právo použiť obsah promptu na
-zlepšovanie svojich modelov (na platenom tieri nie).
+**⚠️ Modely v Gemini API sa menia RÝCHLO - toto sa už raz stalo:** k 21.7.2026
+sa zistilo, že pôvodne použitý `gemini-2.5-flash` bol vyradený (vracal 404 na
+každé volanie, mesiace pred pôvodne oznámeným dátumom vypnutia) - presne v
+ten istý deň Google vypustil celú novú generáciu (Gemini 3.5/3.6). Aktuálny
+default v kóde je `gemini-3.5-flash-lite` (k 23.7.2026 overené: stabilný, GA,
+zadarmo cez AI Studio kľúč). Ak sa to zopakuje (chyba 404 v Actions logu):
+1. choď na [aistudio.google.com](https://aistudio.google.com) → Models, over si aktuálny názov
+2. nastav ho ako GitHub repo secret alebo variable `GEMINI_MODEL` (kód sa nemusí meniť vôbec)
+
+**Rýchly test bez celého syncu:** repo → Actions → **"Test Gemini API"** →
+Run workflow. Spustí len `test-gemini.js` (jedno malé volanie, žiadny
+Intervals.icu sync, žiadny git commit) a v logu ukáže buď
+`✅ Funguje!` alebo presnú chybu s vysvetlením (404/429/400/403). Vieš tam aj
+zadať iný model na vyskúšanie (pole "model" pri spustení), bez toho aby si
+menil `GEMINI_MODEL` secret. Lokálne to isté: `GEMINI_API_KEY=xxx node test-gemini.js`.
+
+**Free tier:** k júlu 2026 sú Flash/Flash-Lite modely cez Google AI Studio
+kľúč naozaj bez poplatku, žiadna karta netreba (Pro modely sú od apríla 2026
+už len platené). Jediný kompromis: Google si na free tieri vyhradzuje právo
+použiť obsah promptu na zlepšovanie svojich modelov (na platenom tieri nie).
 
 **Ako sa buduje kontext pre AI:** `buildAiPrompt()` v `sync.js` berie
 zlúčenú históriu (`wellness_history.json` + `wellness_daily.json` — pozor,
@@ -135,15 +151,46 @@ na celú sériu). Zámerne **NEpočíta** oficiálne Recovery %/Strain skóre ap
 surové HRV/TF/spánok + odchýlky a text ich opisuje slovami, aby sa nikdy
 nerozchádzal s číslom, ktoré appka reálne zobrazuje. Ak `data/status.json`
 (pozri "Stav" nižšie) hovorí niečo iné než "aktívny", pridá sa to do promptu
-tiež, nech to Gemini zohľadní v odporúčaní.
+tiež, nech to Gemini zohľadní v odporúčaní. Do promptu ide aj **komentár za
+každý deň v okne** (nie len dnešný) - takže napr. včerajší komentár "zajtra
+chcem voľno" sa dnes reálne zohľadní, nielen dnešný komentár.
+
+**Pamäť naprieč dňami (`data/ai_memory.md`):** po každom úspešnom Gemini
+volaní sa krátky súhrn pripíše do tohto súboru (`## YYYY-MM-DD` nadpis +
+text), a posledných 14 záznamov sa pri ďalšom volaní pošle späť do promptu,
+aby Gemini mohol nadviazať na vzory naprieč dňami. Pôvodne to bol `.json`,
+prepísané na `.md` na tvoju žiadosť - obsah je čistá próza, takže sa takto dá
+pekne prečítať priamo na GitHube (nadpisy + text), na rozdiel od JSON poľa s
+dlhým textom v úvodzovkách. Formát parsuje/zapisuje len tento skript
+(`parseAiMemoryMd`/`serializeAiMemoryMd` v `sync.js`), takže je to bezpečné -
+žiadny externý nástroj mu nemusí rozumieť.
+
+**Krátky súhrn + podrobný plán (dve veci z jedného volania):** Gemini
+dostane pokyn odpovedať čistým JSON-om `{"kratky": "...", "podrobny": "..."}`
+namiesto voľného textu (`generationConfig.responseMimeType: "application/json"`),
+aby sa dalo spoľahlivo rozdeliť na dve časti bez krehkého parsovania
+oddeľovačov v texte:
+- `kratky` → `ai_summary_daily.json.summary` (3-5 viet, ako doteraz, zobrazuje sa vždy)
+- `podrobny` → `ai_summary_daily.json.plan` (dlhší tréningový plán na dnes s
+  2-3 alternatívami podľa scenára, zohľadňuje aj posledných **14 dní**
+  aktivít nie len 7) - na stránke skrytý za tlačidlom "Zobraziť podrobný plán ↓"
+
+Ak by Gemini z nejakého dôvodu nevrátil platný JSON (zriedkavé, ale stáva sa
+- napr. keby okolo pridal markdown code fence), kód sa to najprv pokúsi
+vytiahnuť z fence bloku, a ak sa to fakt nedá naparsovať, uloží celú
+odpoveď ako `summary` bez `plan` namiesto tvrdého zlyhania.
 
 **Diagnostika, ak sa karta na stránke nezobrazuje:** GitHub → Actions →
 posledný beh `sync.yml` → v logu hľadaj riadky s `AI súhrn` — buď uvidíš
-dôvod preskočenia (chýba kľúč / API chyba / už vygenerované dnes), alebo
-`✅ AI súhrn dňa uložený`. Ak sa uložil, ale karta sa aj tak nezobrazuje,
-skontroluj že `data/ai_summary_daily.json` v repe reálne existuje a že
-`index.html` v repe obsahuje `id="ai-card"` (overí, že sa nahral správny
-súbor a GitHub Pages cache sa už obnovila).
+dôvod preskočenia (chýba kľúč / API chyba s presným kódom a telom / už
+vygenerované dnes), alebo `✅ AI súhrn dňa uložený`. Ak sa uložil, ale karta
+sa aj tak nezobrazuje, skontroluj že `data/ai_summary_daily.json` v repe
+reálne existuje a že `index.html` v repe obsahuje `id="ai-card"` (overí, že
+sa nahral správny súbor a GitHub Pages cache sa už obnovila). Karta na
+stránke je od tejto verzie **vždy viditeľná** (predtým sa pri chýbajúcich
+dátach skrývala úplne, čo vyzeralo ako "nič sa nedeje") - vždy ukáže jeden z
+troch stavov: nič zatiaľ (s presným návodom čo skontrolovať) / staršie /
+dnešné, a tlačidlo "🧠 AI súhrn" píše priebeh priamo do tejto karty.
 
 ---
 
@@ -154,12 +201,58 @@ appkou. Na rozdiel od zvyšku appky sa **nezapisuje cez `sync.js`/Intervals.icu*
 - klik rovno z prehliadača zavolá GitHub Contents API
 (`PUT /repos/xsklencik/recovery/contents/data/status.json`) tým istým PAT
 tokenom, čo používa aj tlačidlo Aktualizovať. Žiadny GitHub Actions beh
-netreba, zmena sa prejaví v repe do sekundy. `sync.js` si tento súbor pri
-ďalšom behu len prečíta a pridá ako kontext pre AI súhrn (pozri vyššie).
+netreba, zmena sa prejaví v repe do sekundy (potvrdené funkčné - `status.json`
+sa reálne zapisuje). `sync.js` si tento súbor pri ďalšom behu len prečíta a
+pridá ako kontext pre AI súhrn (pozri vyššie).
+
+**Robí to aj niečo viditeľné, nielen kontext pre AI:** keď stav nie je
+"aktívny", zobrazí sa farebný banner hneď nad AI kartou (žltý pre Chorý,
+červený pre Zranený, modrý pre Pauza) - takže má reálny efekt na to, čo vidno
+na dashboarde, nielen na to, čo si AI text napíše. Recovery/Strain výpočet
+samotný stav zámerne neupravuje (to by menilo algoritmus, čo je samostatné
+rozhodnutie) - vplyv je zatiaľ len cez banner a AI odporúčanie.
 
 ---
 
-## Čo appka reálne počíta (algoritmus)
+## Výkon / VO2max / FTP (`power.html`)
+
+Samostatná stránka, nezávislá od zvyšku appky (žiadny sync.js, žiadny
+Intervals.icu) - fyzikálny odhad výkonu z času na kopcovitom segmente.
+
+**Fyzika:** `computeSegmentPower()` počíta tri zložky výkonu -
+gravitačnú (hmotnosť×g×prevýšenie/čas), valivý odpor (Crr × hmotnosť×g×rýchlosť)
+a aero odpor (0.5×hustota vzduchu×CdA×rýchlosť³, s CdA 0.4 m² ako odhad pre
+sed do kopca). Overené na tvojich dátach zo segmentu Valy (4.9.2025): vypočítaná
+rýchlosť 9.55 km/h takmer presne sedí s tvojím 9.5 km/h zo Stravy, a vypočítaný
+výkon 294 W je v rozumnej zhode s tým, čo odhadla Strava (272 W) - rozdiel je
+očakávaný, keďže Strava používa vlastné (neznáme) predpoklady pre CdA/Crr.
+
+**VO2max ≈ 10.8 × W/kg + 7** (ACSM rovnica pre cyklistiku, aplikovaná na
+takmer-maximálne úsilie ~5 min). **FTP ≈ výkon × pomer podľa dĺžky úsilia**
+(0.80 pre ≤4 min, 0.83 pre 4-7 min, 0.90 pre 7-15 min, 0.95 pre 15+ min) -
+kratšie úsilia majú väčší odstup od hodinového FTP tempa.
+
+**Dôležité - toto sú odhady z jedného terénneho úsilia**, nie lab-meranie
+(spiroergometria pre VO2max, 20-60 min test pre FTP) - počítaj s neistotou
+rádovo ±10-15 %. Na to, čo chceš (porovnanie rok čo rok na tom istom
+segmente), to ale stačí bohato - metodika je vždy rovnaká, takže relatívne
+zlepšenie/zhoršenie bude vidieť aj keby absolútne čísla neboli dokonale presné.
+
+**Segmenty/bicykle sú presety, nie napevno zadrôtované** - Husárik nemá
+vyplnenú vzdialenosť/prevýšenie (chýbajú mi presné čísla, pošli mi ich alebo
+doplň priamo vo formulári, kľudne aj cez "Vlastný segment"). Váha Marin
+Gestalt je len môj odhad (10.5 kg) - uprav na presnú hodnotu.
+
+**Plášte/tlak:** zatiaľ len 4 hrubé presety Crr (cesta/tvrdý gravel/sypký
+gravel/MTB) + tlak sa len ukladá k pokusu (zatiaľ neovplyvňuje výpočet
+priamo). Pošli mi presný model plášťa a tlak, ktorý bežne používaš, a
+spresním Crr hodnoty.
+
+**Ukladanie:** "💾 Uložiť tento pokus" zapíše cez GitHub Contents API do
+`data/segment_efforts.json` (rovnaký princíp ako `status.json` - potrebuje
+ten istý PAT token, čo aj tlačidlo Aktualizovať/Token na Dashboarde). História
+pod kalkulačkou zobrazí všetky uložené pokusy pre práve zvolený segment,
+zoradené od najnovšieho.
 
 Popis logiky v `app-common.js` — čo sa deje s dátami od chvíle, čo prídu
 z Intervals.icu, po to, čo vidíš na obrazovke.
