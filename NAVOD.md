@@ -377,6 +377,24 @@ až po ďalšom syncu (tlačidlo "🔄 Aktualizovať" alebo najbližší cron-jo
 
 ---
 
+## Kalendár (`calendar.html`)
+
+Mesačný kalendár - bodka pre aktivitu (z `activities_history.json`/`activities_daily.json`,
+rovnaké dáta ako História), bodka pre poznámku/plán. Klik na deň otvorí modal s aktivitami toho
+dňa + textarea na poznámku - funguje pre minulé AJ budúce dni.
+
+**Ukladanie:** `data/day_notes.json` cez GitHub Contents API priamo z prehliadača (rovnaký
+princíp ako `status.json`/`segment_efforts.json` - žiadny GitHub Actions beh netreba, potrebuje
+ten istý PAT token). Prázdna poznámka = zmaže záznam pre ten deň.
+
+**Prepojenie na AI súhrn:** `sync.js` (`buildAiPrompt()`) číta `day_notes.json` a posiela do
+promptu okno **3 dni dozadu až 10 dní dopredu** od dneška - takže poznámka napísaná dnes pre
+29.7. sa ráno 29.7. reálne objaví v kontexte pre Gemini, nie len spätne po fakte. Toto dopĺňa
+staršiu funkciu (komentáre z `wellness` dát cez check-in) o možnosť písať dopredu, keďže wellness
+záznam pre budúci deň logicky ešte neexistuje.
+
+---
+
 ## Kontinuálne HR dáta mimo aktivít (Huawei Watch Fit 5) — otvorený problém
 
 Cieľ: mať dennú "záťaž srdca mimo tréningu" (podobne ako Google Heart

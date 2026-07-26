@@ -40,8 +40,21 @@
         <input type="number" step="1" id="in-elevation" style="width:110px;">
       </div>
     </div>
+    <div class="field-row" style="margin-bottom:0;">
+      <div class="field">
+        <span class="field-label">Výkon zo Stravy (W, voliteľné)</span>
+        <input type="number" step="1" id="in-strava-power" placeholder="ak vieš, presnejšie než fyzika" style="width:220px;">
+      </div>
+    </div>
+    <div class="form-hint">Ak zadáš výkon priamo zo Stravy, použije sa namiesto fyzikálneho výpočtu nižšie (Strava má celú GPX stopu, nie len priemer - je presnejšia).</div>
 
-    <div class="form-section-label bordered">Čas na segmente</div>
+    <div class="form-section-label bordered">Dátum a čas na segmente</div>
+    <div class="field-row" style="margin-bottom:10px;">
+      <div class="field">
+        <span class="field-label">Dátum pokusu</span>
+        <input type="date" id="in-date" style="width:150px;">
+      </div>
+    </div>
     <div class="power-slider-row">
       <input type="range" id="time-slider" min="60" max="1800" step="1" value="328">
       <span class="power-slider-val" id="time-slider-val">5:28</span>
@@ -141,6 +154,7 @@
   <a href="history.html"><span class="bn-icon">🗓</span>História</a>
   <a href="checkin.html"><span class="bn-icon">📝</span>Check-in</a>
   <a href="power.html" class="active"><span class="bn-icon">⚡</span>Výkon</a>
+  <a href="calendar.html"><span class="bn-icon">📅</span>Kalendár</a>
 </nav>
 
 <script src="app-common.js"></script>
@@ -205,6 +219,8 @@ const distIn = document.getElementById('in-distance');
 const elevIn = document.getElementById('in-elevation');
 const riderIn = document.getElementById('in-rider-kg');
 const bikeKgIn = document.getElementById('in-bike-kg');
+const dateIn = document.getElementById('in-date');
+const stravaPowerIn = document.getElementById('in-strava-power');
 const slider = document.getElementById('time-slider');
 const timeText = document.getElementById('time-text');
 const sliderVal = document.getElementById('time-slider-val');
@@ -215,12 +231,20 @@ crrSel.value = 'tufo_thundero';
 distIn.value = SEGMENTS.valy.distanceKm;
 elevIn.value = SEGMENTS.valy.elevationM;
 bikeKgIn.value = BIKES.rein.weightKg;
+dateIn.value = todayISO();
+
+// Všetky uložené pokusy (naprieč segmentmi) - potrebné na párovanie krátky+dlhý úsilie pre
+// poctivejší CP/W' odhad (pozri nižšie). Načíta sa raz, prekreslí compute() keď dorazí.
+let ALL_EFFORTS = [];
+loadJson(EFFORTS_URL).then(all=>{ ALL_EFFORTS = all||[]; compute(); renderHistory(ALL_EFFORTS); renderPrediction(); });
 
 segSel.addEventListener('change', ()=>{
   const s = SEGMENTS[segSel.value];
   if(s.distanceKm!=null) distIn.value = s.distanceKm;
   if(s.elevationM!=null) elevIn.value = s.elevationM;
   compute();
+  renderHistory(ALL_EFFORTS);
+  renderPrediction();
 });
 bikeSel.addEventListener('change', ()=>{
   const b = BIKES[bikeSel.value];
@@ -237,9 +261,9 @@ timeText.addEventListener('change', ()=>{
   if(t!=null){ slider.value = Math.max(60, Math.min(1800, t)); sliderVal.textContent = fmtTime(t); }
   compute();
 });
-[distIn, elevIn, riderIn, bikeKgIn, crrSel].forEach(el=>el.addEventListener('input', compute));
+[distIn, elevIn, riderIn, bikeKgIn, crrSel, dateIn, stravaPowerIn].forEach(el=>el.addEventListener('input', compute));
 
-// ---------- Fyzika + odhady ----------
+// ---------- Fyzika ----------
 function computeSegmentPower({distanceKm, elevationM, timeSec, riderKg, bikeKg, crr}){
   const g = 9.81;
   const totalMass = riderKg + bikeKg;
@@ -251,12 +275,55 @@ function computeSegmentPower({distanceKm, elevationM, timeSec, riderKg, bikeKg, 
   const aeroW = 0.5 * airDensity * CdA * Math.pow(speedMs, 3);
   return { totalPowerW: gravityW + rollingW + aeroW, gravityW, rollingW, aeroW, speedMs };
 }
-function estimateVO2max(wPerKg){ return 10.8 * wPerKg + 7; }
+
+// ---------- VO2max/FTP - poctivejšia verzia ----------
+// PROBLÉM, ktorý toto rieši: pôvodná verzia dávala do VO2max vzorca výkon PRIAMO, nech mal
+// efort 5 min (Valy) alebo 16-24 min (Husárik). VO2max vzorec (10.8×W/kg+7) je ale kalibrovaný
+// na výkon BLÍZKO VO2max (~3-8 min úsilie) - na 16-24 min efort už jazdíš vedome pomalšie (bližšie
+// k FTP tempu, nie maximálnemu aeróbnemu), takže rovnaký vzorec dá systematicky nižšie číslo.
+// Preto sa výkon najprv prepočíta na "5-minútový ekvivalent" cez model kritického výkonu
+// (Monod-Scherrer: P(t) = CP + W'/t), a AŽ TEN sa dosadí do VO2max vzorca.
+function fitCriticalPower(p1, t1, p2, t2){
+  if(Math.abs(t1 - t2) < 90) return null; // príliš blízke trvania -> nestabilný/nezmyselný fit
+  const cp = (p1*t1 - p2*t2) / (t1 - t2);
+  const wPrime = (p1 - cp) * t1;
+  if(cp <= 0 || cp >= Math.min(p1,p2) || wPrime <= 0) return null; // nezmyselný výsledok, zahoď
+  return { cp, wPrime };
+}
+// Bez párovania (žiadny iný uložený efort v okolitých ~45 dňoch inej dĺžky): škáluj podľa
+// typického profilu výkon/čas trénovaného cyklistu - hrubší odhad, ale lepší než nič.
+function genericScaleTo5min(powerW, timeSec){
+  if(timeSec <= 330) return powerW;
+  if(timeSec <= 600) return powerW * 1.05;
+  if(timeSec <= 900) return powerW * 1.10;
+  if(timeSec <= 1500) return powerW * 1.15;
+  return powerW * 1.20;
+}
 function estimateFtpRatio(timeSec){
   if(timeSec <= 240) return 0.80;
   if(timeSec <= 420) return 0.83;
   if(timeSec <= 900) return 0.90;
   return 0.95;
+}
+// Nájde najbližší (v čase) uložený pokus INEJ dĺžkovej kategórie (krátky ≤8min vs. dlhý >8min)
+// v rámci ~45 dní, naprieč VŠETKÝMI segmentmi (Valy aj Husárik) - fitness je fitness bez ohľadu
+// na to, na akom kopci si ju v ten týždeň zmeral.
+function findPairing(currentDate, currentTimeSec, currentPowerW, efforts){
+  const isCurrentShort = currentTimeSec <= 480;
+  const curT = new Date(currentDate).getTime();
+  let best = null, bestDiff = Infinity;
+  for(const e of efforts){
+    const eShort = e.timeSec <= 480;
+    if(eShort === isCurrentShort) continue; // potrebujeme OPAČNÚ dĺžkovú kategóriu
+    const diffDays = Math.abs(new Date(e.date).getTime() - curT) / 86400000;
+    if(diffDays <= 45 && diffDays < bestDiff){ best = e; bestDiff = diffDays; }
+  }
+  if(!best) return null;
+  const fit = isCurrentShort
+    ? fitCriticalPower(currentPowerW, currentTimeSec, best.powerW, best.timeSec)
+    : fitCriticalPower(best.powerW, best.timeSec, currentPowerW, currentTimeSec);
+  if(!fit) return null;
+  return { ...fit, pairedWith: best.segment + ' ' + best.date, pairedDiffDays: Math.round(bestDiff) };
 }
 
 let lastResult = null;
@@ -266,31 +333,48 @@ function compute(){
   const timeSec = parseTime(timeText.value) || Number(slider.value);
   const riderKg = Number(riderIn.value), bikeKg = Number(bikeKgIn.value);
   const crr = CRR_PRESETS[crrSel.value].crr;
+  const effortDate = dateIn.value || todayISO();
   if(!distanceKm || !elevationM || !timeSec || !riderKg || !bikeKg){
     document.getElementById('out-power').textContent = '—';
     lastResult = null;
     return;
   }
   const r = computeSegmentPower({distanceKm, elevationM, timeSec, riderKg, bikeKg, crr});
-  const wPerKg = r.totalPowerW / riderKg;
-  const vo2max = estimateVO2max(wPerKg);
-  const ftpW = r.totalPowerW * estimateFtpRatio(timeSec);
+  const stravaOverride = stravaPowerIn.value ? Number(stravaPowerIn.value) : null;
+  const powerW = stravaOverride || r.totalPowerW;
+  const powerSource = stravaOverride ? 'strava' : 'fyzika';
+  const wPerKg = powerW / riderKg;
+
+  const pairing = findPairing(effortDate, timeSec, powerW, ALL_EFFORTS);
+  let fiveMinPowerW, ftpW, methodNote;
+  if(pairing){
+    fiveMinPowerW = pairing.cp + pairing.wPrime / 300;
+    ftpW = pairing.cp;
+    methodNote = `Spárované s "${pairing.pairedWith}" (${pairing.pairedDiffDays} dní rozdiel) - CP model: CP ${Math.round(pairing.cp)} W, W' ${(pairing.wPrime/1000).toFixed(1)} kJ.`;
+  } else {
+    fiveMinPowerW = genericScaleTo5min(powerW, timeSec);
+    ftpW = powerW * estimateFtpRatio(timeSec);
+    methodNote = 'Bez párového krátkeho/dlhého úsilia do 45 dní - použitý všeobecný odhad podľa dĺžky úsilia (menej presné, pridaj párový efort inej dĺžky pre lepší odhad).';
+  }
+  const vo2max = 10.8 * (fiveMinPowerW / riderKg) + 7;
   const ftpWPerKg = ftpW / riderKg;
 
-  document.getElementById('out-power').textContent = Math.round(r.totalPowerW) + ' W';
+  document.getElementById('out-power').textContent = Math.round(powerW) + ' W' + (powerSource==='strava' ? ' (Strava)' : '');
   document.getElementById('out-power-wkg').textContent = wPerKg.toFixed(2) + ' W/kg';
   document.getElementById('out-vo2max').textContent = vo2max.toFixed(1);
   document.getElementById('out-ftp').textContent = Math.round(ftpW) + ' W';
   document.getElementById('out-ftp-wkg').textContent = ftpWPerKg.toFixed(2) + ' W/kg';
   document.getElementById('out-speed').textContent = (r.speedMs*3.6).toFixed(1);
   document.getElementById('power-breakdown').innerHTML =
-    `Rozpad výkonu: gravitácia ${Math.round(r.gravityW)} W · valivý odpor ${r.rollingW.toFixed(1)} W · aero ${r.aeroW.toFixed(1)} W`;
+    `Fyzikálny rozpad: gravitácia ${Math.round(r.gravityW)} W · valivý odpor ${r.rollingW.toFixed(1)} W · aero ${r.aeroW.toFixed(1)} W`
+    + (powerSource==='strava' ? ' <span style="color:var(--text-faint);">(nepoužité - výkon je zo Stravy)</span>' : '')
+    + `<br>${methodNote}`;
 
   lastResult = {
-    date: todayISO(), segment: SEGMENTS[segSel.value].name, bike: BIKES[bikeSel.value].name,
+    date: effortDate, segment: SEGMENTS[segSel.value].name, bike: BIKES[bikeSel.value].name,
     distanceKm, elevationM, timeSec, riderKg, bikeKg, crr,
     pressureBar: document.getElementById('in-pressure').value ? Number(document.getElementById('in-pressure').value) : null,
-    powerW: Math.round(r.totalPowerW), wPerKg: +wPerKg.toFixed(2),
+    powerW: Math.round(powerW), powerSource, wPerKg: +wPerKg.toFixed(2),
     vo2max: +vo2max.toFixed(1), ftpW: Math.round(ftpW), ftpWPerKg: +ftpWPerKg.toFixed(2),
   };
 }
@@ -335,7 +419,9 @@ document.getElementById('btn-save-effort').addEventListener('click', async ()=>{
   try{
     const all = await saveEffort(lastResult);
     status.textContent = '✅ Uložené.';
+    ALL_EFFORTS = all;
     renderHistory(all);
+    compute();
   }catch(e){
     status.textContent = '⚠️ ' + e.message;
   }
@@ -363,8 +449,6 @@ function renderHistory(all){
   `).join('');
 }
 
-loadJson(EFFORTS_URL).then(all=>renderHistory(all||[]));
-segSel.addEventListener('change', ()=> loadJson(EFFORTS_URL).then(all=>renderHistory(all||[])));
 
 // ---------- Predikcia času podľa aktuálnej formy (CTL) ----------
 // Princíp: z uložených pokusov na danom segmente vezmeme dvojice (CTL v deň pokusu, dosiahnuté
@@ -451,10 +535,8 @@ async function renderPrediction(){
     </div>
   `;
 }
-renderPrediction();
-segSel.addEventListener('change', renderPrediction);
-[riderIn, bikeKgIn, crrSel, distIn, elevIn].forEach(el=>el.addEventListener('change', renderPrediction));
-document.getElementById('btn-save-effort').addEventListener('click', ()=> setTimeout(renderPrediction, 500));
+[riderIn, bikeKgIn, crrSel, distIn, elevIn, dateIn].forEach(el=>el.addEventListener('change', renderPrediction));
+document.getElementById('btn-save-effort').addEventListener('click', ()=> setTimeout(()=>{ renderPrediction(); }, 600));
 </script>
 </body>
 </html>

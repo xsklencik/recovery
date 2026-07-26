@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kalendár — Adam</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .cal-month-label{font-weight:800;font-size:1.15rem;}
+  .cal-nav{display:flex;gap:6px;}
+  .cal-nav button{
+    width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);
+    color:var(--text);font-size:1rem;cursor:pointer;box-shadow:var(--shadow-card);
+  }
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .cal-dow{font-family:var(--mono);font-size:0.66rem;color:var(--text-faint);text-align:center;padding-bottom:4px;text-transform:uppercase;}
+  .cal-day{
+    background:var(--surface);border-radius:12px;box-shadow:var(--shadow-card);
+    min-height:58px;padding:6px 6px;cursor:pointer;display:flex;flex-direction:column;
+    border:1.5px solid transparent;
+  }
+  .cal-day.other-month{opacity:0.35;}
+  .cal-day.today{border-color:var(--accent);}
+  .cal-day-num{font-family:var(--mono);font-size:0.78rem;font-weight:600;}
+  .cal-day-dots{display:flex;gap:3px;margin-top:auto;flex-wrap:wrap;}
+  .cal-dot{width:6px;height:6px;border-radius:50%;}
+  .cal-dot.activity{background:var(--data);}
+  .cal-dot.note{background:var(--accent);}
+  .cal-legend{display:flex;gap:16px;margin-top:12px;font-size:0.74rem;color:var(--text-dim);}
+  .cal-legend-item{display:flex;align-items:center;gap:5px;}
+  @media (max-width:680px){
+    .cal-day{min-height:46px;padding:4px;}
+    .cal-grid{gap:4px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap" style="max-width:680px;">
+  <div class="top-row">
+    <div>
+      <div class="brand">
+        <h1>Kalendár</h1>
+      </div>
+      <div class="sub" style="color:var(--text-dim);font-size:0.85rem;margin-top:4px;">
+        Aktivity + poznámky/plány na konkrétne dni (aj budúce - dostanú sa do rannej AI analýzy).
+      </div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="cal-head">
+      <button class="btn" id="btn-prev-month" style="padding:8px 12px;">←</button>
+      <span class="cal-month-label" id="cal-month-label"></span>
+      <button class="btn" id="btn-next-month" style="padding:8px 12px;">→</button>
+    </div>
+    <div class="cal-grid" id="cal-dow-row">
+      <div class="cal-dow">Po</div><div class="cal-dow">Ut</div><div class="cal-dow">St</div>
+      <div class="cal-dow">Št</div><div class="cal-dow">Pi</div><div class="cal-dow">So</div><div class="cal-dow">Ne</div>
+    </div>
+    <div class="cal-grid" id="cal-grid" style="margin-top:6px;"></div>
+    <div class="cal-legend">
+      <div class="cal-legend-item"><span class="cal-dot activity"></span> aktivita</div>
+      <div class="cal-legend-item"><span class="cal-dot note"></span> poznámka/plán</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="day-modal">
+  <div class="modal">
+    <h3 id="day-modal-date">—</h3>
+    <div id="day-modal-activities" style="margin-bottom:14px;"></div>
+    <div class="field" style="margin-bottom:14px;">
+      <span class="field-label">Poznámka / plán na tento deň</span>
+      <textarea id="day-modal-note" rows="3" style="width:100%;" placeholder="napr. idem na túru, chcem voľno, preteky..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel" id="day-modal-cancel">Zrušiť</button>
+      <button class="save" id="day-modal-save">Uložiť</button>
+    </div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <a href="index.html"><span class="bn-icon">📊</span>Dashboard</a>
+  <a href="history.html"><span class="bn-icon">🗓</span>História</a>
+  <a href="checkin.html"><span class="bn-icon">📝</span>Check-in</a>
+  <a href="power.html"><span class="bn-icon">⚡</span>Výkon</a>
+  <a href="calendar.html" class="active"><span class="bn-icon">📅</span>Kalendár</a>
+</nav>
+
+<script src="app-common.js"></script>
+<script>
+const REPO_OWNER = 'xsklencik';
+const REPO_NAME = 'recovery';
+function getToken(){ return localStorage.getItem('gh_pat') || ''; }
+const NOTES_URL = 'data/day_notes.json';
+
+const DOW_MON0 = d => (d.getDay() + 6) % 7; // 0=Pondelok
+
+let cursor = new Date();
+cursor.setDate(1);
+let ACTIVITIES_BY_DATE = new Map();
+let NOTES_BY_DATE = new Map();
+let notesRaw = [];
+
+const MONTH_NAMES = ['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December'];
+
+async function loadData(){
+  const [actHist, actDaily, notes] = await Promise.all([
+    loadJson('data/activities_history.json'), loadJson('data/activities_daily.json'), loadJson(NOTES_URL),
+  ]);
+  const acts = mergeById(actHist||[], actDaily||[]);
+  ACTIVITIES_BY_DATE = new Map();
+  acts.forEach(a=>{
+    if(!ACTIVITIES_BY_DATE.has(a.date)) ACTIVITIES_BY_DATE.set(a.date, []);
+    ACTIVITIES_BY_DATE.get(a.date).push(a);
+  });
+  notesRaw = notes || [];
+  NOTES_BY_DATE = new Map(notesRaw.map(n=>[n.date, n]));
+  renderCalendar();
+}
+
+function renderCalendar(){
+  document.getElementById('cal-month-label').textContent = MONTH_NAMES[cursor.getMonth()] + ' ' + cursor.getFullYear();
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+  const firstOfMonth = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+  const startOffset = DOW_MON0(firstOfMonth);
+  const gridStart = new Date(firstOfMonth);
+  gridStart.setDate(gridStart.getDate() - startOffset);
+  const todayStr = todayISO();
+
+  for(let i=0;i<42;i++){
+    const d = new Date(gridStart);
+    d.setDate(d.getDate()+i);
+    const dateStr = d.toISOString().slice(0,10);
+    const isOtherMonth = d.getMonth() !== cursor.getMonth();
+    const cell = document.createElement('div');
+    cell.className = 'cal-day' + (isOtherMonth ? ' other-month' : '') + (dateStr===todayStr ? ' today' : '');
+    const hasActivity = ACTIVITIES_BY_DATE.has(dateStr);
+    const hasNote = NOTES_BY_DATE.has(dateStr) && NOTES_BY_DATE.get(dateStr).note && NOTES_BY_DATE.get(dateStr).note.trim();
+    cell.innerHTML = `
+      <span class="cal-day-num">${d.getDate()}</span>
+      <div class="cal-day-dots">
+        ${hasActivity ? '<span class="cal-dot activity"></span>' : ''}
+        ${hasNote ? '<span class="cal-dot note"></span>' : ''}
+      </div>
+    `;
+    cell.addEventListener('click', ()=> openDayModal(dateStr));
+    grid.appendChild(cell);
+    // po 6. stĺpci (nedeľa, index 6,13,20...) netreba nič extra, grid je 7-stĺpcový CSS grid
+  }
+}
+
+document.getElementById('btn-prev-month').addEventListener('click', ()=>{
+  cursor.setMonth(cursor.getMonth()-1);
+  renderCalendar();
+});
+document.getElementById('btn-next-month').addEventListener('click', ()=>{
+  cursor.setMonth(cursor.getMonth()+1);
+  renderCalendar();
+});
+
+let currentModalDate = null;
+
+function openDayModal(dateStr){
+  currentModalDate = dateStr;
+  document.getElementById('day-modal-date').textContent = dateStr;
+  const acts = ACTIVITIES_BY_DATE.get(dateStr) || [];
+  const actBox = document.getElementById('day-modal-activities');
+  if(acts.length){
+    actBox.innerHTML = '<div class="field-label" style="margin-bottom:6px;">Aktivity toho dňa</div>' +
+      acts.map(a=>`<div style="font-size:0.85rem;margin-bottom:4px;">🚴 ${escapeHtml(a.name||a.type||'Aktivita')}${a.moving_time ? ' · ' + Math.round(a.moving_time/60) + ' min' : ''}${a.icu_training_load ? ' · load ' + Math.round(a.icu_training_load) : ''}</div>`).join('');
+  } else {
+    actBox.innerHTML = '<div class="field-label">Žiadna zaznamenaná aktivita tento deň.</div>';
+  }
+  const existing = NOTES_BY_DATE.get(dateStr);
+  document.getElementById('day-modal-note').value = existing ? (existing.note || '') : '';
+  document.getElementById('day-modal').classList.add('show');
+}
+document.getElementById('day-modal-cancel').addEventListener('click', ()=>{
+  document.getElementById('day-modal').classList.remove('show');
+});
+
+async function saveDayNote(dateStr, note){
+  const token = getToken();
+  if(!token) throw new Error('Chýba GitHub token (Token tlačidlo na Dashboarde).');
+  const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/data/day_notes.json`;
+  let sha = null, existing = [];
+  const getRes = await fetch(apiUrl + '?t=' + Date.now(), {
+    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' },
+  });
+  if(getRes.ok){
+    const j = await getRes.json();
+    sha = j.sha;
+    try{ existing = JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g,''))))); }catch(e){ existing = []; }
+  }
+  const idx = existing.findIndex(n=>n.date===dateStr);
+  const entry = { date: dateStr, note, updatedAt: new Date().toISOString() };
+  if(note.trim()===''){
+    if(idx>=0) existing.splice(idx,1); // prázdna poznámka = zmazať záznam
+  } else if(idx>=0){
+    existing[idx] = entry;
+  } else {
+    existing.push(entry);
+  }
+  const content = JSON.stringify(existing, null, 1);
+  const b64 = btoa(unescape(encodeURIComponent(content)));
+  const putRes = await fetch(apiUrl, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+    body: JSON.stringify({ message: `Update day note: ${dateStr}`, content: b64, sha: sha || undefined, branch: 'main' }),
+  });
+  if(!putRes.ok){
+    const txt = await putRes.text();
+    throw new Error(`GitHub API ${putRes.status}: ${txt.slice(0,150)}`);
+  }
+  return existing;
+}
+
+document.getElementById('day-modal-save').addEventListener('click', async ()=>{
+  const btn = document.getElementById('day-modal-save');
+  const note = document.getElementById('day-modal-note').value;
+  btn.textContent = 'Ukladám…'; btn.disabled = true;
+  try{
+    const all = await saveDayNote(currentModalDate, note);
+    notesRaw = all;
+    NOTES_BY_DATE = new Map(all.map(n=>[n.date, n]));
+    document.getElementById('day-modal').classList.remove('show');
+    renderCalendar();
+  }catch(e){
+    alert('Chyba pri ukladaní: ' + e.message);
+  }finally{
+    btn.textContent = 'Uložiť'; btn.disabled = false;
+  }
+});
+
+loadData();
+</script>
+</body>
+</html>

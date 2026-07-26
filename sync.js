@@ -135,7 +135,10 @@ function aiTrailingBaseline(recsAsc, field, cutoffDate) {
 // pre AI naprieč dňami, keďže samotné volanie Gemini je bezstavové a nič si nepamätá samo od seba.
 // status: obsah data/status.json (Activity Status - Aktívny/Chorý/Zranený/Pauza), zapisuje sa
 // priamo z prehliadača cez GitHub Contents API (pozri index.html), sync.js ho len ČÍTA.
-function buildAiPrompt(wellnessMerged, activitiesMerged, pastSummaries, status) {
+// dayNotes: obsah data/day_notes.json (Kalendár - poznámky/plány na konkrétne dni, VRÁTANE
+// budúcich, napr. "29.7 idem na túru") - zapisuje sa priamo z calendar.html cez GitHub Contents
+// API, sync.js ho tu len ČÍTA a posiela okolie dneška (minulé aj budúce dni) do promptu.
+function buildAiPrompt(wellnessMerged, activitiesMerged, pastSummaries, status, dayNotes) {
   const recs = wellnessMerged
     .slice()
     .sort((a, b) => (a.date < b.date ? -1 : 1))
@@ -192,6 +195,22 @@ function buildAiPrompt(wellnessMerged, activitiesMerged, pastSummaries, status) 
   if (status && status.status && status.status !== 'active') {
     const statusLabels = { sick: 'Chorý', injured: 'Zranený', break: 'Pauza (dobrovoľné voľno)' };
     lines.push(`Aktuálny stav: ${statusLabels[status.status] || status.status} (nastavené ${status.updatedAt ? status.updatedAt.slice(0, 10) : '?'}) - zohľadni to v odporúčaní, netlač na tréning.`);
+  }
+  // Kalendárové poznámky/plány - okno 3 dni dozadu až 10 dní dopredu od dneška. Toto je ako sa
+  // do promptu dostane napr. "29.7 idem na túru", zapísané vopred cez calendar.html.
+  if (dayNotes && dayNotes.length) {
+    const todayMs = new Date(today.date).getTime();
+    const relevant = dayNotes
+      .filter(n => n.note && n.note.trim())
+      .filter(n => {
+        const diffDays = (new Date(n.date).getTime() - todayMs) / 86400000;
+        return diffDays >= -3 && diffDays <= 10;
+      })
+      .sort((a, b) => (a.date < b.date ? -1 : 1));
+    if (relevant.length) {
+      lines.push('Poznámky/plány v kalendári (minulé aj budúce, voči dnešku):');
+      relevant.forEach(n => lines.push(`- ${n.date}: "${n.note.trim()}"`));
+    }
   }
   lines.push('Dnešné ranné dáta oproti jeho vlastnému priemeru (posledných ~60 dní):');
   [
@@ -409,7 +428,8 @@ async function main() {
     // status.json zapisuje priamo prehliadač cez GitHub Contents API (Activity Status karta),
     // sync.js ho tu len číta ako ďalší kus kontextu pre Gemini.
     const status = loadJsonObjectSafe(path.join(DATA_DIR, 'status.json'));
-    const aiCtx = buildAiPrompt(wellnessForAi, activitiesMerged, pastSummaries, status);
+    const dayNotes = loadJsonSafe(path.join(DATA_DIR, 'day_notes.json'));
+    const aiCtx = buildAiPrompt(wellnessForAi, activitiesMerged, pastSummaries, status, dayNotes);
 
     // DÔLEŽITÉ: tento sync beh sa u teba nespúšťa raz denne cez natívny GitHub Actions
     // "schedule:" (ten sa nepodarilo spoľahlivo rozbehať), ale externe cez cron-job.org,
