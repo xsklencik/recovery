@@ -397,7 +397,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-26T06:00:57.554Z"
+  "syncedAt": "2026-07-26T06:10:37.193Z"
  },
  {
   "id": "2026-07-24",
@@ -418,7 +418,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-26T06:00:57.554Z"
+  "syncedAt": "2026-07-26T06:10:37.193Z"
  },
  {
   "id": "2026-07-25",
@@ -433,13 +433,13 @@
   "ctl": 34.381073,
   "atl": 23.997456,
   "weight": 59.3,
-  "comments": null,
+  "comments": "recovery jazda so siskou na cierne kde je konecne na useku kde bola panelovka asfalt, strane stastny som",
   "mood": 3,
   "soreness": 2,
   "fatigue": 2,
   "stress": 1,
   "source": "intervals_api",
-  "syncedAt": "2026-07-26T06:00:57.554Z"
+  "syncedAt": "2026-07-26T06:10:37.193Z"
  },
  {
   "id": "2026-07-26",
@@ -460,6 +460,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-26T06:00:57.554Z"
+  "syncedAt": "2026-07-26T06:10:37.193Z"
  }
 ]
