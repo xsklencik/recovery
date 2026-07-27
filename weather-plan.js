@@ -179,10 +179,10 @@ async function main() {
 
   const prompt = buildPlanPrompt(weatherDays, wellnessMerged, dayNotes, statusByDate);
   console.log('Generujem plán (Gemini)...');
-  // Vyššie maxOutputTokens ako predtým (1200 -> 2600) - odkedy sa pre každý deň pýtame na 3
+  // Vyššie maxOutputTokens ako predtým (8000) - odkedy sa pre každý deň pýtame na 3
   // alternatívy namiesto 1 návrhu, je výstupný JSON cca 3x dlhší a pri starom limite by sa
   // Gemini odpoveď mohla orezať uprostred JSON-u a celá sa nedala naparsovať (=> opäť "bez návrhu").
-  const result = await callGemini(prompt, { json: true, maxOutputTokens: 2600 });
+  const result = await callGemini(prompt, { json: true, maxOutputTokens: 8000 });
   const raw = result ? result.text : null;
   const usedModel = result ? result.model : (process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL);
   let suggestions = [];
