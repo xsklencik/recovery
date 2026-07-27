@@ -63,27 +63,44 @@ h1{font-size:1.3rem;font-weight:800;margin:0;letter-spacing:-0.02em;}
 .btn-icon{font-size:0.9em;}
 
 /* ---------- Hero: kruhové gauge (Bevel-štýl prstenec s rystickými ryskami) ---------- */
-.ring-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-@media (max-width:680px){.ring-row{grid-template-columns:1fr;}}
+/* 3 prstence vedľa seba (Strain / Recovery / Sleep) - VŽDY v jednom riadku, aj na mobile
+   (rovnako ako v referenčnom Bevel screenshote), rozmery sa len plynulo zmenšujú cez clamp(). */
+.ring-row{display:grid;grid-template-columns:repeat(3, 1fr);gap:clamp(6px,2vw,14px);}
 
 .ring-card{
-  background:var(--surface); border-radius:24px; box-shadow:var(--shadow-card);
-  padding:24px 22px 20px; display:flex; flex-direction:column; align-items:center; text-align:center;
+  background:var(--surface); border-radius:clamp(14px,3vw,24px); box-shadow:var(--shadow-card);
+  padding:clamp(12px,2.6vw,24px) clamp(8px,2vw,22px) clamp(10px,2vw,20px); display:flex; flex-direction:column; align-items:center; text-align:center;
+  min-width:0;
 }
-.ring-card-top{display:flex;justify-content:space-between;align-items:baseline;width:100%;margin-bottom:6px;}
-.ring-card-label{font-family:var(--mono);font-size:0.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text-dim);font-weight:600;}
-.ring-card-scale{font-family:var(--mono);font-size:0.66rem;color:var(--text-faint);}
+.ring-card-top{display:flex;justify-content:space-between;align-items:baseline;width:100%;margin-bottom:6px;gap:4px;}
+.ring-card-label{font-family:var(--mono);font-size:clamp(0.58rem,1.6vw,0.72rem);text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ring-card-scale{font-family:var(--mono);font-size:clamp(0.54rem,1.3vw,0.66rem);color:var(--text-faint);white-space:nowrap;}
 
-.ring-wrap{position:relative;width:160px;height:160px;margin:6px auto 10px;}
+.ring-wrap{position:relative;width:clamp(76px,19vw,160px);height:clamp(76px,19vw,160px);margin:6px auto 10px;
+  animation:ringPop .65s cubic-bezier(.34,1.56,.64,1) both;}
 .ring-svg{width:100%;height:100%;display:block;}
 .ring-center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
 .ring-number{display:inline-flex;align-items:flex-start;}
-.ring-value{font-family:var(--mono);font-size:2.3rem;font-weight:700;letter-spacing:-0.02em;line-height:1;}
-.ring-unit{font-family:var(--mono);font-size:1rem;color:var(--text-dim);margin-top:5px;margin-left:1px;}
+.ring-value{font-family:var(--mono);font-size:clamp(1.15rem,4.4vw,2.3rem);font-weight:700;letter-spacing:-0.02em;line-height:1;}
+.ring-unit{font-family:var(--mono);font-size:clamp(0.62rem,1.8vw,1rem);color:var(--text-dim);margin-top:5px;margin-left:1px;}
 
-.ring-verdict{font-weight:700;font-size:0.92rem;margin-bottom:3px;}
-.ring-detail{color:var(--text-dim);font-size:0.78rem;line-height:1.4;max-width:230px;}
-.ring-date{font-family:var(--mono);font-size:0.68rem;color:var(--text-faint);margin-top:12px;padding-top:12px;border-top:1px solid var(--line-soft);width:100%;}
+.ring-verdict{font-weight:700;font-size:clamp(0.68rem,2vw,0.92rem);margin-bottom:3px;}
+.ring-detail{color:var(--text-dim);font-size:clamp(0.62rem,1.7vw,0.78rem);line-height:1.4;max-width:230px;}
+.ring-target{font-family:var(--mono);font-size:clamp(0.58rem,1.5vw,0.72rem);color:var(--text-dim);margin-top:6px;padding:4px 8px;background:var(--surface-2);border-radius:8px;line-height:1.35;}
+.ring-date{font-family:var(--mono);font-size:clamp(0.56rem,1.4vw,0.68rem);color:var(--text-faint);margin-top:12px;padding-top:12px;border-top:1px solid var(--line-soft);width:100%;}
+
+/* Kresliaci sa progress oblúk + jemný "pop" prstenca pri (re)renderi. */
+.ring-arc-fill{transition:stroke-dasharray 1000ms cubic-bezier(.22,.9,.3,1);}
+.ring-target-band{transition:stroke-dasharray 700ms ease, stroke-dashoffset 700ms ease;}
+@keyframes ringPop{
+  0%{opacity:0; transform:scale(.82);}
+  65%{opacity:1; transform:scale(1.035);}
+  100%{opacity:1; transform:scale(1);}
+}
+@media (prefers-reduced-motion: reduce){
+  .ring-wrap{animation:none;}
+  .ring-arc-fill{transition:none;}
+}
 
 /* ---------- Metrics: karty (Bevel HRV/RHR mini-card štýl) ---------- */
 .metrics-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:14px;}
@@ -207,6 +224,7 @@ tr:hover td{background:var(--surface-2);}
 .methodology b{color:var(--text);font-weight:600;}
 .methodology .m-block{margin-bottom:14px;}
 .methodology .m-block:last-child{margin-bottom:0;}
+.methodology .m-block code{font-family:var(--mono);font-size:0.85em;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:5px;padding:1px 5px;}
 
 .err{color:var(--bad);margin:16px 0;font-size:0.85rem;white-space:pre-wrap;font-family:var(--mono);}
 .loading{color:var(--text-dim);padding:60px 0;text-align:center;font-family:var(--mono);font-size:0.85rem;}
@@ -276,8 +294,6 @@ body{padding-bottom:78px;}
   h1{font-size:1.1rem;}
   .btn-group{flex-wrap:wrap;width:100%;}
   .btn{flex:1 1 auto;justify-content:center;min-height:44px;padding:10px 12px;}
-  .ring-value{font-size:2.0rem;}
-  .ring-wrap{width:140px;height:140px;}
   .ring-detail{max-width:none;}
   .metrics-row{grid-template-columns:repeat(auto-fit,minmax(96px,1fr));}
   .metric{padding:12px 10px;}

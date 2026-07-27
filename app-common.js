@@ -541,6 +541,64 @@ function strainVerdict(strain){
   return {label:'Extrémna záťaž', color, detail:'Veľmi náročný deň. Zajtra pravdepodobne nižšie recovery.'};
 }
 
+// ---------- Sleep 0-100 (Intervals.icu sleepScore) — verdikt/farba na rovnakom princípe ako Recovery ----------
+const SLEEP_GRADIENT = [
+  {at:0,   color:PALETTE.bad},
+  {at:50,  color:PALETTE.warn},
+  {at:75,  color:PALETTE.data},
+  {at:100, color:'#1B4F91'},
+];
+function sleepVerdict(score){
+  if(score===undefined || score===null || isNaN(score)) return {label:'Bez dát', color:PALETTE.neutral, detail:'Chýba nočné meranie spánku.'};
+  const color = gradientColor(score, SLEEP_GRADIENT);
+  if(score>=75) return {label:'Kvalitný spánok', color, detail:'Dobrá dĺžka aj kvalita spánku.'};
+  if(score>=50) return {label:'Priemerný spánok', color, detail:'Spánok mierne pod tvojím štandardom.'};
+  return {label:'Nedostatočný spánok', color, detail:'Krátky alebo prerušovaný spánok — počítaj s tým v Recovery.'};
+}
+
+// ---------- Cieľový rozsah Strain ("target strain range", Whoop-style) ----------
+// Whoopov presný interný vzorec nie je verejne publikovaný — toto je vlastná, plne
+// transparentná náhrada s rovnakou myšlienkou: čím vyššie ranné Recovery (a čím vyššia
+// aktuálna natrénovanosť/CTL), tým vyššie je dnešné "bezpečné okno" záťaže, do ktorého sa
+// oplatí mieriť. Pod pásmom = netrénuješ na svoj dnešný potenciál, nad pásmom = riskuješ
+// neprimeranú akútnu záťaž vzhľadom na aktuálny stav tela. Celé počítané na škále Strain 0–21:
+//
+//  1) Stred pásma (center) sa lineárne odvodí z Recovery %:
+//       center = 2.5 + (recovery / 100) * 15        → recovery 0 % → 2.5, recovery 100 % → 17.5
+//  2) Fitness korekcia — vyššie CTL (chronická tréningová záťaž = lepšia natrénovanosť) mierne
+//     posúva stred nahor, lebo rovnaká záťaž je pri vyššom CTL relatívne "lacnejšia":
+//       fitnessAdj = clamp((CTL − 35) × 0.045, −1.5, +1.5)     (35 = orientačný stredný CTL)
+//       center = clamp(center + fitnessAdj, 1.5, 19.5)
+//  3) Šírka pásma je pevná ±2.3 (dosť úzka, aby mala zmysel ako konkrétny cieľ, no nie tak
+//     úzka, aby bola nereálna trafiť presne):
+//       low = max(0, center − 2.3), high = min(21, center + 2.3)
+const STRAIN_TARGET_CENTER_BASE = 2.5;
+const STRAIN_TARGET_CENTER_SPAN = 15;
+const STRAIN_TARGET_CTL_MID = 35;
+const STRAIN_TARGET_CTL_COEF = 0.045;
+const STRAIN_TARGET_CTL_ADJ_CLAMP = 1.5;
+const STRAIN_TARGET_HALF_WIDTH = 2.3;
+function computeStrainTarget(recoveryPct, ctl){
+  if(recoveryPct==null || isNaN(recoveryPct)) return null;
+  let center = STRAIN_TARGET_CENTER_BASE + (recoveryPct/100) * STRAIN_TARGET_CENTER_SPAN;
+  if(ctl!=null && !isNaN(ctl)){
+    const fitnessAdj = Math.max(-STRAIN_TARGET_CTL_ADJ_CLAMP, Math.min(STRAIN_TARGET_CTL_ADJ_CLAMP, (ctl - STRAIN_TARGET_CTL_MID) * STRAIN_TARGET_CTL_COEF));
+    center += fitnessAdj;
+  }
+  center = Math.max(1.5, Math.min(19.5, center));
+  const low = Math.max(0, Math.round((center - STRAIN_TARGET_HALF_WIDTH) * 10) / 10);
+  const high = Math.min(21, Math.round((center + STRAIN_TARGET_HALF_WIDTH) * 10) / 10);
+  return {low, high, center: Math.round(center*10)/10};
+}
+// Krátky text popisujúci, kde je dnešný strain voči cieľovému pásmu.
+function strainTargetNote(strain, target){
+  if(!target) return null;
+  if(strain==null || isNaN(strain)) return `Cieľ dnes: ${target.low}–${target.high}`;
+  if(strain < target.low) return `Cieľ dnes: ${target.low}–${target.high} · pod pásmom, je priestor pridať`;
+  if(strain > target.high) return `Cieľ dnes: ${target.low}–${target.high} · nad pásmom, zvažuj skôr regeneráciu`;
+  return `Cieľ dnes: ${target.low}–${target.high} · v pásme ✓`;
+}
+
 // ---------- Rolling baseline (60-dňové kĺzavé okno) ----------
 function rollingStats(recs, field, methodBoundaryDate, window){
   window = window || 60;
@@ -657,7 +715,13 @@ function computeResults(recs, activities){
 // Kruhový gauge (prstenec, plynule od 12. hodiny v smere hodinových ručičiek) + jemné rysky
 // po obvode v kroku 25 % - "prístrojový" motív namiesto hladkého wellness-app prstenca.
 // value/min/max: dátový rozsah, z ktorého sa odvodí percento vyplnenia (orezané na [0,1]).
-function renderRingGauge(svgId, value, min, max, color){
+// opts (voliteľné):
+//   target: {low, high}  — na dráhu sa navyše nakreslí zvýraznený "cieľový" pás medzi low/high
+//                           (napr. dnešné cieľové okno Strain podľa Recovery), pod progress oblúkom.
+//   targetColor: farba pásu (default: color s priehľadnosťou)
+//   animate: false        — vypne "kreslenie sa" oblúka od nuly (default true)
+function renderRingGauge(svgId, value, min, max, color, opts){
+  opts = opts || {};
   const svg = document.getElementById(svgId);
   if(!svg) return;
   const size = 160, cx = size/2, cy = size/2, r = 64, trackW = 13;
@@ -683,15 +747,67 @@ function renderRingGauge(svgId, value, min, max, color){
   track.setAttribute('fill','none'); track.setAttribute('stroke', PALETTE.surface3); track.setAttribute('stroke-width', trackW);
   svg.appendChild(track);
 
+  // Cieľový pás (napr. dnešné odporúčané okno Strain) — širší, priehľadný oblúk pod progress arc.
+  if(opts.target && opts.target.low!=null && opts.target.high!=null && opts.target.high > opts.target.low){
+    const lowPct = Math.max(0, Math.min(1, (opts.target.low - min)/(max-min)));
+    const highPct = Math.max(0, Math.min(1, (opts.target.high - min)/(max-min)));
+    const bandLen = Math.max(0, highPct - lowPct) * circumference;
+    if(bandLen > 0){
+      const band = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      band.setAttribute('cx',cx); band.setAttribute('cy',cy); band.setAttribute('r',r);
+      band.setAttribute('fill','none');
+      band.setAttribute('stroke', opts.targetColor || ((color || PALETTE.accent) + '30'));
+      band.setAttribute('stroke-width', trackW + 7);
+      band.setAttribute('stroke-linecap','round');
+      band.setAttribute('stroke-dasharray', `${bandLen} ${circumference}`);
+      band.setAttribute('stroke-dashoffset', String(-lowPct * circumference));
+      band.setAttribute('transform', `rotate(-90 ${cx} ${cy})`);
+      band.classList.add('ring-target-band');
+      svg.appendChild(band);
+    }
+  }
+
   if(pct > 0){
     const arc = document.createElementNS('http://www.w3.org/2000/svg','circle');
     arc.setAttribute('cx',cx); arc.setAttribute('cy',cy); arc.setAttribute('r',r);
     arc.setAttribute('fill','none'); arc.setAttribute('stroke', color || PALETTE.accent);
     arc.setAttribute('stroke-width', trackW); arc.setAttribute('stroke-linecap','round');
-    arc.setAttribute('stroke-dasharray', `${circumference*pct} ${circumference}`);
     arc.setAttribute('transform', `rotate(-90 ${cx} ${cy})`);
-    svg.appendChild(arc);
+    arc.classList.add('ring-arc-fill');
+    const finalDasharray = `${circumference*pct} ${circumference}`;
+    if(opts.animate === false){
+      arc.setAttribute('stroke-dasharray', finalDasharray);
+      svg.appendChild(arc);
+    } else {
+      arc.setAttribute('stroke-dasharray', `0 ${circumference}`);
+      svg.appendChild(arc);
+      // Nastaviť cieľový dasharray až v ďalšom frame, aby CSS transition mala z čoho animovať.
+      requestAnimationFrame(()=>{
+        requestAnimationFrame(()=>{ arc.setAttribute('stroke-dasharray', finalDasharray); });
+      });
+    }
   }
+}
+
+// Plynulé "počítanie" číselnej hodnoty v prstenci (namiesto skokovej zmeny textu) - jemný
+// efekt, ktorý dopĺňa kresliacu sa animáciu oblúka pri každom (re)renderi.
+function animateRingNumber(el, toValue, decimals){
+  if(!el) return;
+  decimals = decimals || 0;
+  if(toValue==null || isNaN(toValue)){ el.textContent = '—'; return; }
+  const fromValue = parseFloat((el.textContent||'').replace(',', '.'));
+  const start = (isNaN(fromValue) ? toValue : fromValue);
+  const t0 = performance.now();
+  const duration = 850;
+  if(el._ringAnimFrame) cancelAnimationFrame(el._ringAnimFrame);
+  function step(now){
+    const t = Math.min(1, (now - t0) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const val = start + (toValue - start) * eased;
+    el.textContent = decimals > 0 ? val.toFixed(decimals) : String(Math.round(val));
+    if(t < 1) el._ringAnimFrame = requestAnimationFrame(step);
+  }
+  el._ringAnimFrame = requestAnimationFrame(step);
 }
 
 // Hladká krivka cez body (Catmull-Rom -> kubické Bezier segmenty), namiesto lomenej čiary -

@@ -34,6 +34,21 @@
     <div class="ring-row">
       <div class="ring-card">
         <div class="ring-card-top">
+          <span class="ring-card-label">Strain dnes</span>
+          <span class="ring-card-scale">0–21</span>
+        </div>
+        <div class="ring-wrap">
+          <svg id="gauge-strain" class="ring-svg"></svg>
+          <div class="ring-center"><span class="ring-value" id="strain-val">—</span></div>
+        </div>
+        <div class="ring-verdict" id="strain-verdict"></div>
+        <div class="ring-detail" id="strain-detail"></div>
+        <div class="ring-target" id="strain-target"></div>
+        <div class="ring-date">dnešná kumulatívna záťaž</div>
+      </div>
+
+      <div class="ring-card">
+        <div class="ring-card-top">
           <span class="ring-card-label">Recovery</span>
           <span class="ring-card-scale">0–100</span>
         </div>
@@ -48,16 +63,16 @@
 
       <div class="ring-card">
         <div class="ring-card-top">
-          <span class="ring-card-label">Strain dnes</span>
-          <span class="ring-card-scale">0–21</span>
+          <span class="ring-card-label">Sleep</span>
+          <span class="ring-card-scale">0–100</span>
         </div>
         <div class="ring-wrap">
-          <svg id="gauge-strain" class="ring-svg"></svg>
-          <div class="ring-center"><span class="ring-value" id="strain-val">—</span></div>
+          <svg id="gauge-sleep" class="ring-svg"></svg>
+          <div class="ring-center"><div class="ring-number"><span class="ring-value" id="sleep-pct">—</span><span class="ring-unit">%</span></div></div>
         </div>
-        <div class="ring-verdict" id="strain-verdict"></div>
-        <div class="ring-detail" id="strain-detail"></div>
-        <div class="ring-date">dnešná kumulatívna záťaž</div>
+        <div class="ring-verdict" id="sleep-verdict"></div>
+        <div class="ring-detail" id="sleep-detail"></div>
+        <div class="ring-date" id="sleep-date"></div>
       </div>
     </div>
 
@@ -173,6 +188,8 @@
       <div class="m-block"><b>Recovery %</b> — počíta sa z ranných fyziologických dát a zo skutočnej tréningovej záťaže, v pomere <b>60&nbsp;% fyziológia · 40&nbsp;% tréningová únava</b>. Huawei Watch Fit 5 dáva iba jedno nočné meranie (HRV/RHR/spánok), ktoré samo osebe nevie spoľahlivo zachytiť viacdňovú kumulovanú únavu — preto má skutočná záťaž (Intervals.icu Load) väčšiu váhu než pri klasických HRV-first modeloch. Fyziológia: HRV 30&nbsp;% · spánková TF 15&nbsp;% · pokojová TF (denná) 10&nbsp;% · spánok 5&nbsp;% (spánková TF má vyššiu váhu než denná, lebo nočný priemer je presnejší signál - rovnaký princíp ako RHR u Whoop/Oura). Vážené z-skóre voči 60-dňovému kĺzavému priemeru, mapované na stupnicu s posunutým stredom — priemerný deň ≈ 63&nbsp;%. Tréningová únava 40&nbsp;% — pozri nižšie.</div>
       <div class="m-block"><b>Tréningová únava (40 %)</b> — <i>Fatigue Score</i> = súčet Load z posledných 14 dní (T-1 a staršie, nikdy nie z dnešného dňa), každý deň exponenciálne menej váhový (0,70× na deň dozadu) a nelineárne "napenalizovaný" (Load^1,12), aby veľké tréningy dopadli neúmerne viac než malé. Fatigue Score sa porovná s tvojou aktuálnou "kapacitou" (odvodenou z CTL predošlého dňa — vyšší CTL = viac tolerancie na rovnakú záťaž), výsledný pomer sa mapuje na skóre s pevným stredom v 1,0 (nie voči plávajúcemu priemeru — inak by si sa pri chronickom preťažení sám "znecitlivel"). Graf tejto metriky bol odstránený (bol zle vyladený, väčšina dní vychádzala príliš vysoko) - hodnota sa naďalej počíta a vstupuje do Recovery (banner "Tréningová únava" hore), len sa už nezobrazuje ako samostatný graf.</div>
       <div class="m-block"><b>Strain 0–21</b> — rastie počas dňa. Počíta sa priamo z Intervals.icu <b>Load</b> (spoľahlivá, kalibrovaná záťažová metrika pre každú aktivitu). Kroky sa pripočítajú <b>vždy</b>, ale ak si mal v ten deň pešiu aktivitu (hike/walk/beh, rozpoznané podľa typu alebo chôdzového tempa - nie podľa toho, ako to Intervals.icu náhodou označí), jej odhadnuté kroky sa z denného súčtu najprv odčítajú, aby sa nezapočítali dvakrát (raz cez Load aktivity, raz cez kroky). Súčet sa škáluje logaritmicky, takže pridávanie záťaže pri už vysokom strain rastie čoraz pomalšie.</div>
+      <div class="m-block"><b>Cieľové pásmo Strain</b> (zvýraznený pás na prstenci Strain) — vlastná, transparentná náhrada Whoopovho "target strain range" (presný Whoop vzorec nie je verejný). Stred pásma: <code>2,5 + (Recovery / 100) × 15</code> — pri 0&nbsp;% Recovery vychádza stred 2,5, pri 100&nbsp;% až 17,5. K tomu sa pripočíta jemná fitness korekcia podľa CTL: <code>clamp((CTL − 35) × 0,045; −1,5; +1,5)</code> (vyššie CTL = vyššia natrénovanosť = o niečo vyšší strop). Výsledný stred sa orezáva na 1,5–19,5 a pásmo má pevnú šírku ±2,3. Pod pásmom = netrénuješ na dnešný potenciál, v pásme = zásah, nad pásmom = riziko neprimeranej akútnej záťaže vzhľadom na dnešné Recovery.</div>
+      <div class="m-block"><b>Sleep 0–100</b> — priamo Intervals.icu <i>sleepScore</i> (kombinuje dĺžku aj kvalitu spánku z hodiniek). Farba/verdikt na rovnakej stupnici ako Recovery (červená pod 50, jantárová 50–74, zelená od 75).</div>
       <div class="m-block"><b>Forma (TSB)</b> — CTL mínus ATL, informačná metrika dlhodobej formy (do Recovery nevstupuje). Počíta sa z <b>dnešných</b> CTL/ATL (nie zo včerajška), takže sa mení počas dňa, akonáhle sa zosynchronizuje nová aktivita - vrátane okamžitého poklesu hneď po tvrdom tréningu (čerstvá záťaž = okamžitá únava, fyziologicky správne). Farebné pásma podľa štandardných zón: <b>Prechod</b> (nad 20, riziko odtrénovania), <b>Svieži</b> (5 až 20), <b>Sivá zóna</b> (-10 až 5, neutrál), <b>Optimálne</b> (-30 až -10, tréningové okno), <b>Vysoké riziko</b> (pod -30, preťaženie/únava).</div>
       <div class="m-block"><b>Bannery hore</b> (HRV, pokojová/spánková TF, kroky, tréningová únava, CTL/ATL/TSB) — rýchly denný prehľad. Farba hodnoty HRV/TF/krokov ukazuje odchýlku od tvojho vlastného 60-dňového priemeru (zelená = lepšie ako zvyčajne, žltá = mierne horšie, červená = výrazne horšie). Tréningová únava je farebná podľa pásma pomeru (svieži/v norme/zvýšená/vysoká/extrémna). TSB je farebné podľa zóny Forma grafu vyššie. Kliknutím na riadok v histórii uvidíš aj Formu/CTL/ATL daného dňa a kliknutím na aktivitu jej detail (vrátane premenovania/zmazania priamo na Intervals.icu).</div>
       <div class="m-block" style="color:var(--text-faint);font-size:0.76rem;">Poznámka k HR zónam: čas v jednotlivých zónach (Z1–Z5) sa stále zobrazuje v detaile aktivity ako informačný údaj, no do výpočtu Strain už nevstupuje.</div>
@@ -668,19 +685,37 @@ function render(results, activities, aiSummary){
   document.getElementById('recovery-verdict').style.color = v.color;
   document.getElementById('recovery-detail').textContent = v.detail;
 
-  const pct = today.recovery ?? 0;
-  document.getElementById('recovery-pct').textContent = today.recovery!==null ? pct : '—';
+  animateRingNumber(document.getElementById('recovery-pct'), today.recovery, 0);
   renderRingGauge('gauge-recovery', today.recovery, 0, 100, v.color);
 
   const todayDate = todayISO();
   renderAiSummary(aiSummary, todayDate);
   const todayStrain = STRAIN_BY_DATE.has(todayDate) ? STRAIN_BY_DATE.get(todayDate) : 0;
   const sv = strainVerdict(todayStrain);
-  document.getElementById('strain-val').textContent = todayStrain.toFixed(1);
+  animateRingNumber(document.getElementById('strain-val'), todayStrain, 1);
   document.getElementById('strain-verdict').textContent = sv.label;
   document.getElementById('strain-verdict').style.color = sv.color;
   document.getElementById('strain-detail').textContent = sv.detail;
-  renderRingGauge('gauge-strain', todayStrain, 0, 21, sv.color);
+
+  // Cieľové pásmo strain podľa dnešného Recovery (+ CTL) — pozri computeStrainTarget().
+  const strainTarget = today.recovery!=null ? computeStrainTarget(today.recovery, today.ctl) : null;
+  const strainTargetEl = document.getElementById('strain-target');
+  const targetNote = strainTargetNote(todayStrain, strainTarget);
+  strainTargetEl.textContent = targetNote || '';
+  strainTargetEl.style.display = targetNote ? 'block' : 'none';
+  renderRingGauge('gauge-strain', todayStrain, 0, 21, sv.color, {
+    target: strainTarget,
+    targetColor: PALETTE.accent + '2a',
+  });
+
+  // Sleep prstenec (Intervals.icu sleepScore, 0–100) — rovnaký vizuál a princíp ako Recovery.
+  const sleepV = sleepVerdict(today.sleepScore);
+  animateRingNumber(document.getElementById('sleep-pct'), today.sleepScore, 0);
+  document.getElementById('sleep-verdict').textContent = sleepV.label;
+  document.getElementById('sleep-verdict').style.color = sleepV.color;
+  document.getElementById('sleep-detail').textContent = sleepV.detail;
+  document.getElementById('sleep-date').textContent = today.sleepSecs!=null ? `dĺžka spánku: ${fmtHM(today.sleepSecs)}` : today.date;
+  renderRingGauge('gauge-sleep', today.sleepScore, 0, 100, sleepV.color);
 
   // ---- Bannery: farba = odchýlka od 60-dňového baseline ----
   function devInfo(value, bl, direction){
