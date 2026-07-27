@@ -1,0 +1,29 @@
+name: Weather Plan
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Vygeneruj plán podľa počasia
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: node weather-plan.js
+      - name: Commit a push výsledok
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -f data/weather_plan.json ]; then git add data/weather_plan.json; fi
+          if ! git diff --staged --quiet; then
+            git commit -m "Weather plan $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git push
+          fi

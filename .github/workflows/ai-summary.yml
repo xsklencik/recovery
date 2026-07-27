@@ -1,0 +1,36 @@
+name: AI Summary
+
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Vygenerovať aj keď dnešný súhrn už existuje'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+
+jobs:
+  ai-summary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Vygeneruj AI súhrn dňa
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          FORCE_AI: ${{ github.event.inputs.force || 'false' }}
+        run: node ai-summary.js
+      - name: Commit a push výsledok
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -f data/ai_summary_daily.json ]; then git add data/ai_summary_daily.json; fi
+          if [ -f data/ai_memory.md ]; then git add data/ai_memory.md; fi
+          if ! git diff --staged --quiet; then
+            git commit -m "AI summary $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git push
+          fi
