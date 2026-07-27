@@ -192,7 +192,17 @@ function mean(arr){ return arr.reduce((a,b)=>a+b,0)/arr.length; }
 function stdev(arr){ const m = mean(arr); return Math.sqrt(mean(arr.map(x=>(x-m)**2))); }
 function clamp(x,lo,hi){return Math.max(lo,Math.min(hi,x));}
 
-function todayISO(){ return new Date().toISOString().slice(0,10); }
+// POZOR: nikdy nepoužívaj new Date().toISOString().slice(0,10) na "dnešný dátum" - to prevádza
+// na UTC, čo v skorých ranných hodinách (Slovensko UTC+1/+2) posunie dátum o deň dozadu (presne
+// tento bug spôsoboval, že klik na 26. v kalendári otváral 25.). localDateStr() číta lokálne
+// zložky dátumu (getFullYear/getMonth/getDate), žiadny UTC prevod.
+function localDateStr(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function todayISO(){ return localDateStr(new Date()); }
 
 async function loadJson(url){
   try{

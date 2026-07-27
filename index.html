@@ -227,6 +227,7 @@
   <a href="checkin.html"><span class="bn-icon">📝</span>Check-in</a>
   <a href="power.html"><span class="bn-icon">⚡</span>Výkon</a>
   <a href="calendar.html"><span class="bn-icon">📅</span>Kalendár</a>
+  <a href="plan.html"><span class="bn-icon">🌦️</span>Plán</a>
 </nav>
 
 <script src="app-common.js"></script>
@@ -234,6 +235,7 @@
 const REPO_OWNER = 'xsklencik';
 const REPO_NAME = 'recovery';
 const WORKFLOW_FILE = 'sync.yml';
+const AI_WORKFLOW_FILE = 'ai-summary.yml';
 
 document.getElementById('baseline-note').textContent =
   'Farba hodnoty = odchýlka od tvojho 60-dňového priemeru (od ' + NEW_METHOD_CUTOFF + ' pre HRV a spánkovú TF, kvôli zmene metódy merania).';
@@ -423,6 +425,9 @@ document.getElementById('btn-refresh').addEventListener('click', async ()=>{
 // ---------- AI súhrn tlačidlo: rovnaký princíp ako refresh, len s force_ai:'true' ----------
 // (sync.js bez tohto vynútenia AI súhrn cez deň už len raz vygeneruje a potom preskakuje,
 // pozri NAVOD.md - toto tlačidlo je práve na to obísť pri manuálnom kliku).
+// ---------- AI súhrn tlačidlo: teraz spúšťa SAMOSTATNÝ workflow (ai-summary.yml), nie celý sync.
+// Rýchlejšie (nerobí Intervals.icu sync, len číta už-commitnuté dáta) a nezávislé od toho, ako
+// často beží bežný sync. force:'true' obchádza "už dnes vygenerované" kontrolu v ai-summary.js.
 document.getElementById('btn-ai-summary').addEventListener('click', async ()=>{
   const btn = document.getElementById('btn-ai-summary');
   const token = getToken();
@@ -441,7 +446,7 @@ document.getElementById('btn-ai-summary').addEventListener('click', async ()=>{
   cardText.textContent = '⏳ Spúšťam GitHub Actions beh…';
   try{
     const dispatchRes = await fetch(
-      `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${WORKFLOW_FILE}/dispatches`,
+      `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${AI_WORKFLOW_FILE}/dispatches`,
       {
         method: 'POST',
         headers: {
@@ -449,7 +454,7 @@ document.getElementById('btn-ai-summary').addEventListener('click', async ()=>{
           'Accept': 'application/vnd.github+json',
           'X-GitHub-Api-Version': '2022-11-28',
         },
-        body: JSON.stringify({ ref: 'main', inputs: { days: '1', force_ai: 'true' } }),
+        body: JSON.stringify({ ref: 'main', inputs: { force: 'true' } }),
       }
     );
     if(!dispatchRes.ok){

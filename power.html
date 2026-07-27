@@ -155,6 +155,7 @@
   <a href="checkin.html"><span class="bn-icon">📝</span>Check-in</a>
   <a href="power.html" class="active"><span class="bn-icon">⚡</span>Výkon</a>
   <a href="calendar.html"><span class="bn-icon">📅</span>Kalendár</a>
+  <a href="plan.html"><span class="bn-icon">🌦️</span>Plán</a>
 </nav>
 
 <script src="app-common.js"></script>
@@ -170,10 +171,10 @@ const SEGMENTS = {
   husarik: { name: 'Husárik', distanceKm: 2.90, elevationM: 266 },
   custom:  { name: 'Vlastný segment', distanceKm: null, elevationM: null },
 };
-// Váha CTM Rein je z tvojich dát (16 kg, jazda 4.9.2025). Marin Gestalt potvrdené na 12 kg.
+// Marin Gestalt je teraz primárny bicykel - preto ako prvá/predvolená možnosť.
 const BIKES = {
-  rein:   { name: 'CTM Rein 1.0',    weightKg: 16 },
   marin:  { name: 'Marin Gestalt',   weightKg: 12 },
+  rein:   { name: 'CTM Rein 1.0',    weightKg: 16 },
   custom: { name: 'Iný bicykel',     weightKg: null },
 };
 // Crr hodnoty: všeobecné presety + tvoj konkrétny plášť (Tufo Gravel Thundero HD 700x40C).
@@ -226,11 +227,11 @@ const timeText = document.getElementById('time-text');
 const sliderVal = document.getElementById('time-slider-val');
 
 segSel.value = 'valy';
-bikeSel.value = 'rein';
+bikeSel.value = 'marin';
 crrSel.value = 'tufo_thundero';
 distIn.value = SEGMENTS.valy.distanceKm;
 elevIn.value = SEGMENTS.valy.elevationM;
-bikeKgIn.value = BIKES.rein.weightKg;
+bikeKgIn.value = BIKES.marin.weightKg;
 dateIn.value = todayISO();
 
 // Všetky uložené pokusy (naprieč segmentmi) - potrebné na párovanie krátky+dlhý úsilie pre

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plán podľa počasia — Adam</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .plan-day{background:var(--surface);border-radius:16px;box-shadow:var(--shadow-card);padding:14px 16px;margin-bottom:10px;}
+  .plan-day-head{display:flex;align-items:center;gap:10px;}
+  .plan-day-emoji{font-size:1.4rem;}
+  .plan-day-date{font-family:var(--mono);font-weight:700;font-size:0.85rem;}
+  .plan-day-weather{font-size:0.76rem;color:var(--text-faint);margin-left:auto;text-align:right;}
+  .plan-day-body{margin-top:8px;font-size:0.85rem;color:var(--text);line-height:1.55;}
+  .plan-day-own{color:var(--accent);font-weight:600;}
+  .plan-day-status{display:inline-block;margin-top:6px;font-size:0.7rem;padding:2px 8px;border-radius:6px;background:var(--surface-2);color:var(--text-dim);}
+  .plan-meta{font-family:var(--mono);font-size:0.7rem;color:var(--text-faint);margin-bottom:14px;}
+</style>
+</head>
+<body>
+<div class="wrap" style="max-width:640px;">
+  <div class="top-row">
+    <div>
+      <div class="brand">
+        <h1>Plán podľa počasia</h1>
+      </div>
+      <div class="sub" style="color:var(--text-dim);font-size:0.85rem;margin-top:4px;">
+        Najbližších 8 dní - počasie v Čadci + AI návrh tréningu pre dni, kde ešte nemáš vlastný plán.
+      </div>
+    </div>
+    <button class="btn primary" id="btn-generate">🔄 Vygenerovať plán</button>
+  </div>
+
+  <div class="plan-meta" id="plan-meta">Načítavam…</div>
+  <div id="plan-days"></div>
+</div>
+
+<nav class="bottom-nav">
+  <a href="index.html"><span class="bn-icon">📊</span>Dashboard</a>
+  <a href="history.html"><span class="bn-icon">🗓</span>História</a>
+  <a href="checkin.html"><span class="bn-icon">📝</span>Check-in</a>
+  <a href="power.html"><span class="bn-icon">⚡</span>Výkon</a>
+  <a href="calendar.html"><span class="bn-icon">📅</span>Kalendár</a>
+  <a href="plan.html" class="active"><span class="bn-icon">🌦️</span>Plán</a>
+</nav>
+
+<script src="app-common.js"></script>
+<script>
+const REPO_OWNER = 'xsklencik';
+const REPO_NAME = 'recovery';
+function getToken(){ return localStorage.getItem('gh_pat') || ''; }
+const PLAN_URL = 'data/weather_plan.json';
+const PLAN_WORKFLOW_FILE = 'weather-plan.yml';
+
+function renderPlan(plan){
+  const meta = document.getElementById('plan-meta');
+  const daysBox = document.getElementById('plan-days');
+  if(!plan || !plan.days || !plan.days.length){
+    meta.textContent = 'Zatiaľ nevygenerované. Klikni "🔄 Vygenerovať plán".';
+    daysBox.innerHTML = '';
+    return;
+  }
+  meta.textContent = `Vygenerované ${plan.generatedAt ? plan.generatedAt.slice(0,16).replace('T',' ') : '?'} · ${plan.location || ''}`;
+  daysBox.innerHTML = plan.days.map(d=>{
+    const body = d.ownNote
+      ? `<span class="plan-day-own">Tvoj plán:</span> ${escapeHtml(d.ownNote)}`
+      : (d.aiSuggestion ? escapeHtml(d.aiSuggestion) : '<span style="color:var(--text-faint);">Bez návrhu.</span>');
+    return `
+      <div class="plan-day">
+        <div class="plan-day-head">
+          <span class="plan-day-emoji">${d.weatherEmoji||'❓'}</span>
+          <span class="plan-day-date">${d.date}</span>
+          <span class="plan-day-weather">${d.weatherDesc||''}, ${Math.round(d.tempMin)}–${Math.round(d.tempMax)}°C${d.precipMm?', 🌧️'+d.precipMm+'mm':''}</span>
+        </div>
+        <div class="plan-day-body">${body}</div>
+        ${d.status ? `<span class="plan-day-status">stav: ${escapeHtml(d.status)}</span>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+document.getElementById('btn-generate').addEventListener('click', async ()=>{
+  const btn = document.getElementById('btn-generate');
+  const token = getToken();
+  if(!token){ alert('Chýba GitHub token - nastav ho tlačidlom Token na Dashboarde.'); return; }
+  btn.disabled = true;
+  btn.textContent = '⏳ Generujem…';
+  document.getElementById('plan-meta').textContent = '⏳ Spúšťam GitHub Actions beh (počasie + Gemini)…';
+  try{
+    const dispatchRes = await fetch(
+      `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${PLAN_WORKFLOW_FILE}/dispatches`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
+        body: JSON.stringify({ ref: 'main', inputs: {} }),
+      }
+    );
+    if(!dispatchRes.ok){
+      const txt = await dispatchRes.text();
+      throw new Error(`GitHub API ${dispatchRes.status}: ${txt.slice(0,200)}`);
+    }
+    const before = await loadJson(PLAN_URL);
+    const beforeTs = before && before.generatedAt ? before.generatedAt : null;
+    let done = false;
+    for(let i=0;i<30;i++){
+      document.getElementById('plan-meta').textContent = `⏳ Generujem… (${(i+1)*8}s) - toto okno môžeš zavrieť, beh dobehne aj bez neho.`;
+      await new Promise(r=>setTimeout(r, 8000));
+      const check = await loadJson(PLAN_URL);
+      if(check && check.generatedAt && check.generatedAt !== beforeTs){
+        renderPlan(check);
+        done = true;
+        break;
+      }
+    }
+    if(!done){
+      document.getElementById('plan-meta').textContent = '⚠️ Trvá to dlhšie, skús o chvíľu obnoviť stránku.';
+    }
+  }catch(e){
+    document.getElementById('plan-meta').textContent = '⚠️ Chyba: ' + e.message;
+  }finally{
+    btn.disabled = false;
+    btn.textContent = '🔄 Vygenerovať plán';
+  }
+});
+
+loadJson(PLAN_URL).then(renderPlan);
+</script>
+</body>
+</html>
