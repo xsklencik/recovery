@@ -12,6 +12,12 @@ const path = require('path');
 const DATA_DIR = path.join(__dirname, 'data');
 const LAT = 49.4386, LON = 18.7898; // Čadca, Slovensko
 const DEFAULT_GEMINI_MODEL = 'gemini-3.6-flash';
+// PRÍČINA "Bez návrhu" bugu: ak primárny model vráti chybu (404 po vyradení, 429 po vyčerpaní
+// free-tier kvóty, alebo dočasná nedostupnosť - typické pár dní po vydaní nového modelu), skript
+// sa doteraz potichu vzdal a všetky dni bez vlastnej poznámky ostali navždy bez návrhu. Rovnaký
+// princíp ako pri fetchWeatherWithParams nižšie: namiesto tvrdého vzdania sa skús postupne aj
+// tieto zálohy, kým jedna neodpovie.
+const FALLBACK_GEMINI_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.1-flash'];
 
 function loadJsonSafe(file, fallback) {
   if (!fs.existsSync(file)) return fallback;
@@ -73,47 +79,70 @@ async function fetchWeather() {
   }));
 }
 
+async function callGeminiOnce(model, key, prompt, opts) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+  const generationConfig = { temperature: 0.7, maxOutputTokens: opts.maxOutputTokens || 1200 };
+  if (opts.json) generationConfig.responseMimeType = 'application/json';
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig }),
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    throw new Error(`Gemini API ${res.status} (model=${model}): ${txt.slice(0, 300)}`);
+  }
+  const data = await res.json();
+  const text = data && data.candidates && data.candidates[0] && data.candidates[0].content
+    && data.candidates[0].content.parts && data.candidates[0].content.parts[0]
+    && data.candidates[0].content.parts[0].text;
+  return text ? text.trim() : null;
+}
+
+// Skúša modely v poradí: env premenná GEMINI_MODEL (ak je nastavená) alebo DEFAULT_GEMINI_MODEL,
+// potom FALLBACK_GEMINI_MODELS. Vráti { text, model } prvého modelu, ktorý naozaj odpovedal
+// (nie null/prázdne), namiesto toho, aby jedno zlyhanie znamenalo "žiadny návrh na celý týždeň".
 async function callGemini(prompt, opts) {
   opts = opts || {};
   const key = process.env.GEMINI_API_KEY;
   if (!key) { console.log('ℹ️ GEMINI_API_KEY nie je nastavený.'); return null; }
-  const model = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-  try {
-    const generationConfig = { temperature: 0.7, maxOutputTokens: 1200 };
-    if (opts.json) generationConfig.responseMimeType = 'application/json';
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig }),
-    });
-    if (!res.ok) {
-      const txt = await res.text().catch(() => '');
-      console.warn(`⚠️ Gemini API ${res.status} (model=${model}): ${txt}`);
-      return null;
+  const primary = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
+  const models = [primary, ...FALLBACK_GEMINI_MODELS.filter(m => m !== primary)];
+  for (const model of models) {
+    try {
+      const text = await callGeminiOnce(model, key, prompt, opts);
+      if (text) {
+        if (model !== primary) console.log(`ℹ️ Primárny model zlyhal, použitý záložný model: ${model}`);
+        return { text, model };
+      }
+      console.warn(`⚠️ Gemini (model=${model}) vrátil prázdnu odpoveď, skúšam ďalší model...`);
+    } catch (e) {
+      console.warn(`⚠️ ${e.message} - skúšam ďalší model...`);
     }
-    const data = await res.json();
-    const text = data && data.candidates && data.candidates[0] && data.candidates[0].content
-      && data.candidates[0].content.parts && data.candidates[0].content.parts[0]
-      && data.candidates[0].content.parts[0].text;
-    return text ? text.trim() : null;
-  } catch (e) {
-    console.warn('⚠️ Chyba pri volaní Gemini API:', e.message);
-    return null;
   }
+  console.warn('⚠️ Všetky Gemini modely zlyhali, plán ostane bez AI návrhov.');
+  return null;
 }
 
 function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate) {
   const lines = [];
   lines.push(
-    'Si osobný cyklistický/bežecký kouč. Na základe počasia a aktuálnej formy nižšie navrhni ' +
-    'plán na najbližších 7 dní. Odpovedz IBA validným JSON poľom (žiadny markdown, žiadne ```) ' +
-    'v tvare [{"date":"YYYY-MM-DD","suggestion":"..."}], jeden objekt na deň, len pre dni ' +
-    'označené nižšie ako "BEZ VLASTNÉHO PLÁNU" - dni, kde už má vlastnú poznámku, VYNECHAJ ' +
-    'úplne z výstupu (nepretláčaj sa do jeho vlastných plánov). "suggestion" = 1-2 vety, ' +
-    'konkrétne (typ tréningu, orientačná dĺžka/zóny), zohľadňujúce počasie toho dňa (dážď/vietor/ ' +
-    'teplota - napr. silný dážď -> radšej doma/rolky, alebo presuň von na iný deň v okne, ak to ' +
-    'ide) a to, či je deň skôr na zotavenie alebo záťaž vzhľadom na okolité dni.'
+    'Si osobný cyklistický/bežecký kouč. Na základe počasia a aktuálnej formy nižšie navrhni pre ' +
+    'KAŽDÝ deň označený nižšie ako "BEZ VLASTNÉHO PLÁNU" TRI rôzne alternatívy tréningu (nie tri ' +
+    'preformulovania toho istého) - dni, kde už má vlastnú poznámku, VYNECHAJ úplne z výstupu ' +
+    '(nepretláčaj sa do jeho vlastných plánov). Tri alternatívy na deň:\n' +
+    '1) intensity="recovery" - regenerácia/voľno/veľmi ľahko,\n' +
+    '2) intensity="endurance" - vytrvalostná jazda/beh v nižšej zóne, dlhšie trvanie,\n' +
+    '3) intensity="intensity" - intervaly/tempo, kratšie ale náročnejšie.\n' +
+    'Každú alternatívu prispôsob počasiu toho dňa (dážď/vietor/teplota - napr. silný dážď -> ' +
+    'radšej doma/rolky aj pre "intensity" variant) a celkovému kontextu okolitých dní a aktuálnej ' +
+    'formy (napr. pred/po náročnom dni uprav, čo dáva zmysel odporučiť). Odpovedz IBA validným ' +
+    'JSON poľom (žiadny markdown, žiadne ```), presne v tvare:\n' +
+    '[{"date":"YYYY-MM-DD","alternatives":[' +
+    '{"label":"krátky názov 2-4 slová","intensity":"recovery","suggestion":"1-2 vety, konkrétne"},' +
+    '{"label":"...","intensity":"endurance","suggestion":"..."},' +
+    '{"label":"...","intensity":"intensity","suggestion":"..."}' +
+    ']}]'
   );
   lines.push('');
   lines.push('Predpoveď počasia (Čadca, Slovensko):');
@@ -150,24 +179,54 @@ async function main() {
 
   const prompt = buildPlanPrompt(weatherDays, wellnessMerged, dayNotes, statusByDate);
   console.log('Generujem plán (Gemini)...');
-  const raw = await callGemini(prompt, { json: true });
+  // Vyššie maxOutputTokens ako predtým (1200 -> 2600) - odkedy sa pre každý deň pýtame na 3
+  // alternatívy namiesto 1 návrhu, je výstupný JSON cca 3x dlhší a pri starom limite by sa
+  // Gemini odpoveď mohla orezať uprostred JSON-u a celá sa nedala naparsovať (=> opäť "bez návrhu").
+  const result = await callGemini(prompt, { json: true, maxOutputTokens: 2600 });
+  const raw = result ? result.text : null;
+  const usedModel = result ? result.model : (process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL);
   let suggestions = [];
   if (raw) {
     let jsonStr = raw.trim();
     const fenceMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (fenceMatch) jsonStr = fenceMatch[1].trim();
-    try { suggestions = JSON.parse(jsonStr); }
-    catch (e) { console.warn('⚠️ Odpoveď z Gemini sa nedala naparsovať ako JSON:', e.message); }
+    try {
+      const parsed = JSON.parse(jsonStr);
+      if (Array.isArray(parsed)) suggestions = parsed;
+      else console.warn('⚠️ Odpoveď z Gemini nie je JSON pole, ignorujem.');
+    } catch (e) { console.warn('⚠️ Odpoveď z Gemini sa nedala naparsovať ako JSON:', e.message); }
+  }
+
+  const KNOWN_INTENSITIES = ['recovery', 'endurance', 'intensity'];
+  const INTENSITY_LABELS = { recovery: 'Regenerácia', endurance: 'Vytrvalosť', intensity: 'Intenzita' };
+  // Normalizuje a obmedzí to, čo Gemini vrátil pre jeden deň, na max 3 použiteľné alternatívy s
+  // konzistentným tvarom (id/label/intensity/suggestion) - aj keby model vynechal label alebo
+  // poslal neznámu hodnotu intensity, frontend dostane vždy rozumný tvar dát.
+  function normalizeAlternatives(alts) {
+    if (!Array.isArray(alts)) return [];
+    return alts
+      .filter(a => a && a.suggestion)
+      .slice(0, 3)
+      .map((a, i) => {
+        const intensity = KNOWN_INTENSITIES.includes(a.intensity) ? a.intensity : 'endurance';
+        return {
+          id: ['a', 'b', 'c'][i] || String(i),
+          label: a.label || INTENSITY_LABELS[intensity],
+          intensity,
+          suggestion: String(a.suggestion),
+        };
+      });
   }
 
   const output = {
     generatedAt: new Date().toISOString(),
-    model: process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL,
+    model: usedModel,
     location: 'Čadca, Slovensko',
     days: weatherDays.map(w => {
       const [desc, emoji] = describeWeather(w.weatherCode);
       const note = dayNotes.find(n => n.date === w.date);
-      const suggestion = suggestions.find(s => s.date === w.date);
+      const hasOwnNote = !!(note && note.note);
+      const daySuggestion = suggestions.find(s => s.date === w.date);
       return {
         date: w.date,
         weatherDesc: desc,
@@ -176,9 +235,12 @@ async function main() {
         tempMin: w.tempMin,
         precipMm: w.precipMm,
         windMaxKmh: w.windMaxKmh,
-        ownNote: (note && note.note) ? note.note : null,
+        ownNote: hasOwnNote ? note.note : null,
         status: statusByDate[w.date] !== 'active' ? statusByDate[w.date] : null,
-        aiSuggestion: suggestion ? suggestion.suggestion : null,
+        // Dni s vlastným plánom nemajú alternatívy (rovnaká logika ako predtým pri aiSuggestion -
+        // "ak nemám vlastný plán" bola explicitná požiadavka). Pre ostatné dni až 3 alternatívy,
+        // ktoré si frontend (plan.html) vie prepínať a na základe voľby prepočítať okolité dni.
+        alternatives: hasOwnNote ? [] : normalizeAlternatives(daySuggestion && daySuggestion.alternatives),
       };
     }),
   };

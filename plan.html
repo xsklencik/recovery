@@ -17,7 +17,17 @@
   .plan-day-body{margin-top:8px;font-size:0.85rem;color:var(--text);line-height:1.55;}
   .plan-day-own{color:var(--accent);font-weight:600;}
   .plan-day-status{display:inline-block;margin-top:6px;font-size:0.7rem;padding:2px 8px;border-radius:6px;background:var(--surface-2);color:var(--text-dim);}
-  .plan-meta{font-family:var(--mono);font-size:0.7rem;color:var(--text-faint);margin-bottom:14px;}
+  .plan-meta{font-family:var(--mono);font-size:0.7rem;color:var(--text-faint);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .plan-reset{background:none;border:none;color:var(--accent);font-family:var(--mono);font-size:0.7rem;cursor:pointer;padding:0;text-decoration:underline;flex-shrink:0;}
+  .plan-alts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+  .plan-alt{
+    border:1.5px solid var(--line);background:var(--surface);color:var(--text-dim);
+    border-radius:10px;padding:5px 10px;font-size:0.74rem;font-weight:600;cursor:pointer;
+    font-family:var(--sans);transition:border-color .12s, background .12s, color .12s;
+  }
+  .plan-alt:hover{border-color:var(--text-faint);}
+  .plan-alt.active{border-color:var(--accent);background:var(--accent-dim);color:var(--accent);}
+  .plan-alt-auto{display:inline-block;margin-left:6px;font-size:0.7rem;color:var(--text-faint);font-weight:600;}
 </style>
 </head>
 <body>
@@ -28,13 +38,16 @@
         <h1>Plán podľa počasia</h1>
       </div>
       <div class="sub" style="color:var(--text-dim);font-size:0.85rem;margin-top:4px;">
-        Najbližších 8 dní - počasie v Čadci + AI návrh tréningu pre dni, kde ešte nemáš vlastný plán.
+        Najbližších 8 dní - počasie v Čadci + AI návrh (3 alternatívy na výber) pre dni, kde ešte nemáš vlastný plán. Klikni na alternatívu a susedné dni sa tomu prispôsobia.
       </div>
     </div>
     <button class="btn primary" id="btn-generate">🔄 Vygenerovať plán</button>
   </div>
 
-  <div class="plan-meta" id="plan-meta">Načítavam…</div>
+  <div class="plan-meta">
+    <span id="plan-meta">Načítavam…</span>
+    <button class="plan-reset" id="btn-reset-choices" style="display:none;">↺ zresetovať výber</button>
+  </div>
   <div id="plan-days"></div>
 </div>
 
@@ -55,19 +68,104 @@ function getToken(){ return localStorage.getItem('gh_pat') || ''; }
 const PLAN_URL = 'data/weather_plan.json';
 const PLAN_WORKFLOW_FILE = 'weather-plan.yml';
 
+// ---------- Výber alternatívy na deň + kaskáda do susedných dní ----------
+// Uložené len v localStorage prehliadača (nie do repa) - je to čisto UI preferencia "ktorú
+// alternatívu si dnes chcem pozrieť", nie zmena samotného vygenerovaného plánu.
+const CHOICE_KEY = 'plan_choices_v1';
+let CURRENT_PLAN = null;
+
+function loadChoices(){
+  try{ return JSON.parse(localStorage.getItem(CHOICE_KEY) || '{}'); }
+  catch{ return {}; }
+}
+function saveChoices(c){ localStorage.setItem(CHOICE_KEY, JSON.stringify(c)); }
+
+// Dni, ktoré majú reálne alternatívy na výber (vynecháva dni s vlastnou poznámkou alebo bez AI návrhu).
+function daysWithAlternatives(plan){
+  return plan.days.filter(d => !d.ownNote && d.alternatives && d.alternatives.length);
+}
+
+// Po kliknutí na alternatívu pre `fromDate` skús doladiť NASLEDUJÚCI deň (ak ho užívateľ sám
+// ručne nevybral), aby dával tréningovo zmysel: po "intensity" dni navrhni "recovery", po
+// "recovery" dni navrhni "intensity" (je priestor zabrať), po "endurance" dni navrhni "recovery".
+// Ide zámerne len o jeden krok dopredu - reťaziť to ďalej by rýchlo prestalo byť predvídateľné.
+function cascade(plan, choices, fromDate){
+  const seq = daysWithAlternatives(plan);
+  const idx = seq.findIndex(d => d.date === fromDate);
+  if(idx === -1) return choices;
+  const cur = choices[fromDate];
+  if(!cur) return choices;
+  const curAlt = seq[idx].alternatives[cur.i];
+  if(!curAlt) return choices;
+  const next = seq[idx+1];
+  if(!next) return choices;
+  const nextChoice = choices[next.date];
+  if(nextChoice && nextChoice.manual) return choices; // užívateľ si tento deň už vybral sám, nemeníme mu ho
+
+  const wantIntensity = curAlt.intensity === 'intensity' ? 'recovery'
+    : curAlt.intensity === 'recovery' ? 'intensity'
+    : 'recovery';
+  let ni = next.alternatives.findIndex(a => a.intensity === wantIntensity);
+  if(ni === -1) ni = next.alternatives.findIndex(a => a.intensity === 'endurance');
+  if(ni === -1) ni = 0;
+  choices[next.date] = { i: ni, manual:false, auto:true };
+  return choices;
+}
+
+function pickAlternative(date, i){
+  let choices = loadChoices();
+  choices[date] = { i, manual:true };
+  choices = cascade(CURRENT_PLAN, choices, date);
+  saveChoices(choices);
+  renderPlan(CURRENT_PLAN);
+}
+
+function resetChoices(){
+  localStorage.removeItem(CHOICE_KEY);
+  renderPlan(CURRENT_PLAN);
+}
+
 function renderPlan(plan){
+  CURRENT_PLAN = plan;
   const meta = document.getElementById('plan-meta');
+  const resetBtn = document.getElementById('btn-reset-choices');
   const daysBox = document.getElementById('plan-days');
   if(!plan || !plan.days || !plan.days.length){
     meta.textContent = 'Zatiaľ nevygenerované. Klikni "🔄 Vygenerovať plán".';
+    resetBtn.style.display = 'none';
     daysBox.innerHTML = '';
     return;
   }
   meta.textContent = `Vygenerované ${plan.generatedAt ? plan.generatedAt.slice(0,16).replace('T',' ') : '?'} · ${plan.location || ''}`;
+
+  // Vyčisti si výbery pre dni, ktoré už v aktuálnom pláne neexistujú alebo nemajú alternatívy
+  // (napr. po pregenerovaní plánu, keď sa okno 8 dní posunulo, alebo si si medzitým pridal vlastnú
+  // poznámku na daný deň).
+  const validDates = new Set(daysWithAlternatives(plan).map(d => d.date));
+  let choices = loadChoices();
+  let choicesChanged = false;
+  Object.keys(choices).forEach(date => {
+    if(!validDates.has(date)){ delete choices[date]; choicesChanged = true; }
+  });
+  if(choicesChanged) saveChoices(choices);
+  resetBtn.style.display = Object.keys(choices).length ? '' : 'none';
+
   daysBox.innerHTML = plan.days.map(d=>{
-    const body = d.ownNote
-      ? `<span class="plan-day-own">Tvoj plán:</span> ${escapeHtml(d.ownNote)}`
-      : (d.aiSuggestion ? escapeHtml(d.aiSuggestion) : '<span style="color:var(--text-faint);">Bez návrhu.</span>');
+    let body, altsHtml = '';
+    if(d.ownNote){
+      body = `<span class="plan-day-own">Tvoj plán:</span> ${escapeHtml(d.ownNote)}`;
+    } else if(d.alternatives && d.alternatives.length){
+      const choice = choices[d.date];
+      const i = (choice && choice.i < d.alternatives.length) ? choice.i : 0;
+      const active = d.alternatives[i];
+      body = escapeHtml(active.suggestion) +
+        (choice && choice.auto ? '<span class="plan-alt-auto">🔁 doladené podľa predošlého dňa</span>' : '');
+      altsHtml = `<div class="plan-alts">` + d.alternatives.map((a,ai)=>`
+        <button class="plan-alt ${ai===i?'active':''}" data-date="${d.date}" data-i="${ai}">${escapeHtml(a.label)}</button>
+      `).join('') + `</div>`;
+    } else {
+      body = '<span style="color:var(--text-faint);">Bez návrhu.</span>';
+    }
     return `
       <div class="plan-day">
         <div class="plan-day-head">
@@ -76,11 +174,18 @@ function renderPlan(plan){
           <span class="plan-day-weather">${d.weatherDesc||''}, ${Math.round(d.tempMin)}–${Math.round(d.tempMax)}°C${d.precipMm?', 🌧️'+d.precipMm+'mm':''}</span>
         </div>
         <div class="plan-day-body">${body}</div>
+        ${altsHtml}
         ${d.status ? `<span class="plan-day-status">stav: ${escapeHtml(d.status)}</span>` : ''}
       </div>
     `;
   }).join('');
+
+  daysBox.querySelectorAll('.plan-alt').forEach(btn=>{
+    btn.addEventListener('click', ()=> pickAlternative(btn.dataset.date, parseInt(btn.dataset.i, 10)));
+  });
 }
+
+document.getElementById('btn-reset-choices').addEventListener('click', resetChoices);
 
 document.getElementById('btn-generate').addEventListener('click', async ()=>{
   const btn = document.getElementById('btn-generate');
