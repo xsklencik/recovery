@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-07-27T19:35:36.492Z",
+ "generatedAt": "2026-07-27T19:50:13.949Z",
  "model": "gemini-3.6-flash",
  "location": "Čadca, Slovensko",
  "days": [
@@ -25,7 +25,26 @@
    "windMaxKmh": 7.6,
    "ownNote": null,
    "status": null,
-   "alternatives": []
+   "alternatives": [
+    {
+     "id": "a",
+     "label": "Regenerácia doma a strečing",
+     "intensity": "recovery",
+     "suggestion": "Vzhľadom na silnejší dážď si dopraj úplné voľno, strečing a pošetri sily pred zajtrajšou celodennou túrou."
+    },
+    {
+     "id": "b",
+     "label": "Ľahká jazda na trenažéri",
+     "intensity": "endurance",
+     "suggestion": "Daj si 50-60 minút veľmi ľahkého točenia v Zóne 1 na trenažéri bez moknutia, aby si rozhýbal nohy."
+    },
+    {
+     "id": "c",
+     "label": "Aktivácia na trenažéri",
+     "intensity": "intensity",
+     "suggestion": "35 minút na trenažéri s 5x30 sekundovými svižnými akceleráciami pre udržanie tonusu bez zbytočnej únavy."
+    }
+   ]
   },
   {
    "date": "2026-07-29",
@@ -49,7 +68,26 @@
    "windMaxKmh": 13.5,
    "ownNote": null,
    "status": null,
-   "alternatives": []
+   "alternatives": [
+    {
+     "id": "a",
+     "label": "Vyjazdovanie po túre",
+     "intensity": "recovery",
+     "suggestion": "Po včerajšej túre v Tatrách zvoľ 30-minútovú kompenzačnú prechádzku alebo úplný oddych na regeneráciu nôh."
+    },
+    {
+     "id": "b",
+     "label": "Pohodový vytrvalostný beh",
+     "intensity": "endurance",
+     "suggestion": "Dopraj si 45 minút ľahkého behu v nízkych tepoch (Z1/Z2) na vyplavenie únavy z horskej turistiky."
+    },
+    {
+     "id": "c",
+     "label": "Kratšie tempo na bicykli",
+     "intensity": "intensity",
+     "suggestion": "45 minút na bicykli vrátane 3x3 minút v Zóne 3 pre prebudenie dynamiky po celodennom chodení."
+    }
+   ]
   },
   {
    "date": "2026-07-31",
@@ -61,7 +99,26 @@
    "windMaxKmh": 13.7,
    "ownNote": null,
    "status": null,
-   "alternatives": []
+   "alternatives": [
+    {
+     "id": "a",
+     "label": "Doplnenie sil a valcovanie",
+     "intensity": "recovery",
+     "suggestion": "Daj si voľný deň zameraný na hydratáciu a penový valec pred nadchádzajúcim víkendovým objemom."
+    },
+    {
+     "id": "b",
+     "label": "Letný objem na ceste",
+     "intensity": "endurance",
+     "suggestion": "Využi teplé počasie na 2,5 až 3-hodinovú plynulú vytrvalostnú jazdu v Zóne 2."
+    },
+    {
+     "id": "c",
+     "label": "Intervaly v kopci",
+     "intensity": "intensity",
+     "suggestion": "90-minútový tréning so 4x6 minútami v Zóne 4 v miernom stúpaní, ideálne v suchom teplom počasí."
+    }
+   ]
   },
   {
    "date": "2026-08-01",
@@ -73,7 +130,26 @@
    "windMaxKmh": 16,
    "ownNote": null,
    "status": null,
-   "alternatives": []
+   "alternatives": [
+    {
+     "id": "a",
+     "label": "Predvíkendový odpočinok",
+     "intensity": "recovery",
+     "suggestion": "Smerom k dlhej jazde na Námestovo zvoľ úplný odpočinok a kvalitný spánok."
+    },
+    {
+     "id": "b",
+     "label": "Objem v miernom mrholení",
+     "intensity": "endurance",
+     "suggestion": "2 hodiny v stabilnom Z2 tempe; jemné mrholenie pri 32°C prinesie príjemné osvieženie."
+    },
+    {
+     "id": "c",
+     "label": "Krátke mikrovýbuchy",
+     "intensity": "intensity",
+     "suggestion": "50 minút jazdy s 8x15 sekundovými šprintmi pre stimuláciu nervového systému bez vyčerpania zásoby glykogénu."
+    }
+   ]
   },
   {
    "date": "2026-08-02",
@@ -85,7 +161,26 @@
    "windMaxKmh": 13.5,
    "ownNote": null,
    "status": null,
-   "alternatives": []
+   "alternatives": [
+    {
+     "id": "a",
+     "label": "Predštartový relax",
+     "intensity": "recovery",
+     "suggestion": "Dnes maj úplné voľno, zameraj sa na sacharidovú kompenzáciu a prípravu bicykla na zajtrajšiu 130 km trasu."
+    },
+    {
+     "id": "b",
+     "label": "Roztočenie nôh Z1",
+     "intensity": "endurance",
+     "suggestion": "Daj si len 30-45 minút veľmi ľahkej vyjazdovacej jazdy v Zóne 1 na prekrvenie svalov pred veľkým dňom."
+    },
+    {
+     "id": "c",
+     "label": "Krátka aktivácia 3x1 min",
+     "intensity": "intensity",
+     "suggestion": "30 minút jazdy s 3x1 minútou vo svižnom tempe jazdy, aby si prebudil nohy a nezničil sa na zajtra."
+    }
+   ]
   },
   {
    "date": "2026-08-03",
