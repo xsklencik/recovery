@@ -62,28 +62,57 @@ h1{font-size:1.3rem;font-weight:800;margin:0;letter-spacing:-0.02em;}
 .btn.primary:hover{background:#E85A2E;}
 .btn-icon{font-size:0.9em;}
 
-/* ---------- Hero: kruhové gauge (Bevel-štýl prstenec s rystickými ryskami) ---------- */
-.ring-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-@media (max-width:680px){.ring-row{grid-template-columns:1fr;}}
-
-.ring-card{
-  background:var(--surface); border-radius:24px; box-shadow:var(--shadow-card);
-  padding:24px 22px 20px; display:flex; flex-direction:column; align-items:center; text-align:center;
+/* ---------- Hero: mobilný 3x ring row (Strain / Recovery / Sleep) ---------- */
+.ring-row{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  background:var(--surface);
+  border-radius:24px;
+  box-shadow:var(--shadow-card);
+  padding:14px 10px 12px;
 }
-.ring-card-top{display:flex;justify-content:space-between;align-items:baseline;width:100%;margin-bottom:6px;}
-.ring-card-label{font-family:var(--mono);font-size:0.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text-dim);font-weight:600;}
-.ring-card-scale{font-family:var(--mono);font-size:0.66rem;color:var(--text-faint);}
-
-.ring-wrap{position:relative;width:160px;height:160px;margin:6px auto 10px;}
+.ring-widget{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-width:0;
+}
+.ring-wrap{position:relative;width:96px;height:96px;margin:2px auto 6px;}
 .ring-svg{width:100%;height:100%;display:block;}
 .ring-center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
 .ring-number{display:inline-flex;align-items:flex-start;}
-.ring-value{font-family:var(--mono);font-size:2.3rem;font-weight:700;letter-spacing:-0.02em;line-height:1;}
-.ring-unit{font-family:var(--mono);font-size:1rem;color:var(--text-dim);margin-top:5px;margin-left:1px;}
-
-.ring-verdict{font-weight:700;font-size:0.92rem;margin-bottom:3px;}
-.ring-detail{color:var(--text-dim);font-size:0.78rem;line-height:1.4;max-width:230px;}
-.ring-date{font-family:var(--mono);font-size:0.68rem;color:var(--text-faint);margin-top:12px;padding-top:12px;border-top:1px solid var(--line-soft);width:100%;}
+.ring-value{font-family:var(--mono);font-size:1.45rem;font-weight:700;letter-spacing:-0.02em;line-height:1;}
+.ring-unit{font-family:var(--mono);font-size:0.76rem;color:var(--text-dim);margin-top:2px;margin-left:2px;}
+.ring-label{font-family:var(--mono);font-size:0.67rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);font-weight:700;}
+.ring-summary{
+  margin-top:10px;
+  background:var(--surface);
+  border-radius:16px;
+  box-shadow:var(--shadow-card);
+  padding:10px 12px;
+}
+.ring-summary-line{
+  display:flex;
+  gap:6px;
+  align-items:baseline;
+  flex-wrap:wrap;
+  color:var(--text-dim);
+  font-size:0.74rem;
+  line-height:1.45;
+}
+.ring-summary-line + .ring-summary-line{margin-top:4px;}
+#strain-verdict,#recovery-verdict{font-weight:700;}
+#strain-target-range,#recovery-date{font-family:var(--mono);color:var(--text-faint);font-size:0.68rem;}
+.ring-target-arc{
+  filter:drop-shadow(0 0 3px rgba(205,232,112,0.65));
+  animation:ringTargetPulse 2s ease-in-out infinite;
+}
+@keyframes ringTargetPulse{
+  0%,100%{opacity:.72;}
+  50%{opacity:1;}
+}
 
 /* ---------- Metrics: karty (Bevel HRV/RHR mini-card štýl) ---------- */
 .metrics-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:14px;}
@@ -276,9 +305,12 @@ body{padding-bottom:78px;}
   h1{font-size:1.1rem;}
   .btn-group{flex-wrap:wrap;width:100%;}
   .btn{flex:1 1 auto;justify-content:center;min-height:44px;padding:10px 12px;}
-  .ring-value{font-size:2.0rem;}
-  .ring-wrap{width:140px;height:140px;}
-  .ring-detail{max-width:none;}
+  .ring-row{gap:6px;padding:12px 8px 10px;border-radius:18px;}
+  .ring-wrap{width:84px;height:84px;}
+  .ring-value{font-size:1.2rem;}
+  .ring-unit{font-size:0.68rem;}
+  .ring-label{font-size:0.62rem;}
+  .ring-summary{border-radius:14px;}
   .metrics-row{grid-template-columns:repeat(auto-fit,minmax(96px,1fr));}
   .metric{padding:12px 10px;}
   .section-head{margin:26px 0 12px;}
@@ -289,4 +321,8 @@ body{padding-bottom:78px;}
   .modal-backdrop{align-items:flex-end;padding:0;}
   .modal-backdrop.show{display:flex;}
   select, .modal input, input[type="date"], input[type="number"]{min-height:40px;}
+}
+
+@media (prefers-reduced-motion: reduce){
+  .ring-target-arc{animation:none;filter:none;}
 }

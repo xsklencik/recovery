@@ -654,22 +654,89 @@ function computeResults(recs, activities){
 // ---------- Unified chart renderer: auto-scaled line chart s crosshair/tooltip + voliteľné farebné pásma ----------
 // series: [{field, color, label, width?, dash?, hideDots?}]
 // opts: {fixedMin,fixedMax,gridValues,minAtZero,hideDots,dotColorFn,yFormat,tooltipFormat,bands:[{min,max,color}],height}
-// Kruhový gauge (prstenec, plynule od 12. hodiny v smere hodinových ručičiek) + jemné rysky
-// po obvode v kroku 25 % - "prístrojový" motív namiesto hladkého wellness-app prstenca.
-// value/min/max: dátový rozsah, z ktorého sa odvodí percento vyplnenia (orezané na [0,1]).
-function renderRingGauge(svgId, value, min, max, color){
+function clamp01(v){ return clamp(v, 0, 1); }
+function lerp(a,b,t){ return a + (b-a)*t; }
+function round1(v){ return Math.round(v*10)/10; }
+function round2(v){ return Math.round(v*100)/100; }
+
+function ringArcFromValue(value, min, max, circumference){
+  const pct = (value==null || isNaN(value)) ? 0 : clamp01((value-min)/(max-min||1));
+  return {pct, dasharray: `${circumference} ${circumference}`, dashoffset: circumference*(1-pct)};
+}
+
+function ringArcFromRange(rangeMin, rangeMax, min, max, circumference){
+  const start = clamp01((rangeMin-min)/(max-min||1));
+  const end = clamp01((rangeMax-min)/(max-min||1));
+  const span = Math.max(0, end-start);
+  return {
+    start,
+    span,
+    dasharray: `${circumference*span} ${circumference}`,
+    dashoffset: circumference*(1-start),
+  };
+}
+
+function prefersReducedMotion(){
+  return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+
+function computeStrainTargetRange(inputs){
+  const inData = inputs || {};
+  const recovery = inData.recovery!=null ? inData.recovery : 0;
+  const sleepScore = inData.sleepScore!=null ? inData.sleepScore : 0;
+  const hrvRatio = inData.hrvRatio!=null ? inData.hrvRatio : 1.0;
+  const rhrDelta = inData.rhrDelta!=null ? inData.rhrDelta : 0;
+  const sleepDebtHours = inData.sleepDebtHours!=null ? inData.sleepDebtHours : 0;
+  const soreness = inData.soreness!=null ? inData.soreness : 0;
+
+  const rec = clamp01(recovery / 100);
+  const slp = clamp01(sleepScore / 100);
+  const hrv = clamp01((hrvRatio - 0.85) / 0.30);
+  const rhr = clamp01(((-rhrDelta) + 6) / 12);
+  const debt = 1 - clamp01(sleepDebtHours / 6);
+  const sore = 1 - clamp01(soreness / 10);
+  const readiness = 0.38*rec + 0.18*slp + 0.20*hrv + 0.14*rhr + 0.07*debt + 0.03*sore;
+
+  const center = lerp(5.0, 16.5, readiness);
+  const width = lerp(2.2, 4.8, readiness);
+
+  let targetMin = center - width/2;
+  let targetMax = center + width/2;
+  targetMin = clamp(targetMin, 3.5, 17.0);
+  targetMax = clamp(targetMax, targetMin + 1.2, 18.5);
+
+  if(recovery < 34) targetMax = Math.min(targetMax, 9.5);
+  if(recovery > 75 && hrvRatio > 1.05 && rhrDelta <= 0){
+    targetMin = Math.max(targetMin, 10.5);
+    targetMax = Math.min(19.0, targetMax + 0.8);
+  }
+
+  return {
+    readiness: round2(readiness),
+    targetMin: round1(targetMin),
+    targetMax: round1(targetMax),
+    targetCenter: round1((targetMin + targetMax)/2),
+  };
+}
+
+// Kruhový gauge (prstenec) + voliteľný target-range overlay pre Strain.
+function renderRingGauge(svgId, value, min, max, color, opts){
+  opts = opts || {};
   const svg = document.getElementById(svgId);
   if(!svg) return;
-  const size = 160, cx = size/2, cy = size/2, r = 64, trackW = 13;
-  const pct = (value==null || isNaN(value)) ? 0 : Math.max(0, Math.min(1, (value-min)/(max-min)));
+  const size = 128, cx = size/2, cy = size/2, r = 50, trackW = 10;
   const circumference = 2*Math.PI*r;
+  const reduceMotion = prefersReducedMotion();
+  const currentArc = ringArcFromValue(value, min, max, circumference);
+  const previousPct = Number(svg.dataset.currentPct);
+  const fromArc = ringArcFromValue((isFinite(previousPct) ? min + previousPct*(max-min) : min), min, max, circumference);
   svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
   svg.innerHTML = '';
 
   const ticks = document.createElementNS('http://www.w3.org/2000/svg','g');
   for(let i=0;i<=4;i++){
     const a = (-90 + i*90) * Math.PI/180;
-    const rOuter = r + trackW/2 + 6, rInner = r + trackW/2 + 2;
+    const rOuter = r + trackW/2 + 4, rInner = r + trackW/2 + 1;
     const tick = document.createElementNS('http://www.w3.org/2000/svg','line');
     tick.setAttribute('x1', cx + rInner*Math.cos(a)); tick.setAttribute('y1', cy + rInner*Math.sin(a));
     tick.setAttribute('x2', cx + rOuter*Math.cos(a)); tick.setAttribute('y2', cy + rOuter*Math.sin(a));
@@ -683,15 +750,36 @@ function renderRingGauge(svgId, value, min, max, color){
   track.setAttribute('fill','none'); track.setAttribute('stroke', PALETTE.surface3); track.setAttribute('stroke-width', trackW);
   svg.appendChild(track);
 
-  if(pct > 0){
-    const arc = document.createElementNS('http://www.w3.org/2000/svg','circle');
-    arc.setAttribute('cx',cx); arc.setAttribute('cy',cy); arc.setAttribute('r',r);
-    arc.setAttribute('fill','none'); arc.setAttribute('stroke', color || PALETTE.accent);
-    arc.setAttribute('stroke-width', trackW); arc.setAttribute('stroke-linecap','round');
-    arc.setAttribute('stroke-dasharray', `${circumference*pct} ${circumference}`);
-    arc.setAttribute('transform', `rotate(-90 ${cx} ${cy})`);
-    svg.appendChild(arc);
+  if(opts.targetRange){
+    const target = ringArcFromRange(opts.targetRange.min, opts.targetRange.max, min, max, circumference);
+    const targetArc = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    targetArc.setAttribute('cx',cx); targetArc.setAttribute('cy',cy); targetArc.setAttribute('r',r);
+    targetArc.setAttribute('fill','none'); targetArc.setAttribute('stroke', '#CDE870');
+    targetArc.setAttribute('stroke-width', trackW+1.5); targetArc.setAttribute('stroke-linecap','round');
+    targetArc.setAttribute('stroke-dasharray', reduceMotion ? target.dasharray : `0 ${circumference}`);
+    targetArc.setAttribute('stroke-dashoffset', target.dashoffset);
+    targetArc.setAttribute('transform', `rotate(-90 ${cx} ${cy})`);
+    targetArc.setAttribute('class', 'ring-target-arc');
+    if(!reduceMotion) targetArc.style.transition = 'stroke-dasharray 780ms cubic-bezier(.22,1,.36,1)';
+    svg.appendChild(targetArc);
+    if(!reduceMotion){
+      requestAnimationFrame(()=>{ targetArc.setAttribute('stroke-dasharray', target.dasharray); });
+    }
   }
+
+  const arc = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  arc.setAttribute('cx',cx); arc.setAttribute('cy',cy); arc.setAttribute('r',r);
+  arc.setAttribute('fill','none'); arc.setAttribute('stroke', color || PALETTE.accent);
+  arc.setAttribute('stroke-width', trackW); arc.setAttribute('stroke-linecap','round');
+  arc.setAttribute('stroke-dasharray', currentArc.dasharray);
+  arc.setAttribute('stroke-dashoffset', reduceMotion ? currentArc.dashoffset : fromArc.dashoffset);
+  arc.setAttribute('transform', `rotate(-90 ${cx} ${cy})`);
+  if(!reduceMotion) arc.style.transition = 'stroke-dashoffset 820ms cubic-bezier(.22,1,.36,1)';
+  svg.appendChild(arc);
+  if(!reduceMotion){
+    requestAnimationFrame(()=>{ arc.setAttribute('stroke-dashoffset', currentArc.dashoffset); });
+  }
+  svg.dataset.currentPct = currentArc.pct.toFixed(4);
 }
 
 // Hladká krivka cez body (Catmull-Rom -> kubické Bezier segmenty), namiesto lomenej čiary -

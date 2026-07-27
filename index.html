@@ -32,33 +32,35 @@
 
   <div id="app" style="display:none;">
     <div class="ring-row">
-      <div class="ring-card">
-        <div class="ring-card-top">
-          <span class="ring-card-label">Recovery</span>
-          <span class="ring-card-scale">0–100</span>
-        </div>
-        <div class="ring-wrap">
-          <svg id="gauge-recovery" class="ring-svg"></svg>
-          <div class="ring-center"><div class="ring-number"><span class="ring-value" id="recovery-pct">—</span><span class="ring-unit">%</span></div></div>
-        </div>
-        <div class="ring-verdict" id="recovery-verdict"></div>
-        <div class="ring-detail" id="recovery-detail"></div>
-        <div class="ring-date" id="recovery-date"></div>
-      </div>
-
-      <div class="ring-card">
-        <div class="ring-card-top">
-          <span class="ring-card-label">Strain dnes</span>
-          <span class="ring-card-scale">0–21</span>
-        </div>
+      <div class="ring-widget">
         <div class="ring-wrap">
           <svg id="gauge-strain" class="ring-svg"></svg>
           <div class="ring-center"><span class="ring-value" id="strain-val">—</span></div>
         </div>
-        <div class="ring-verdict" id="strain-verdict"></div>
-        <div class="ring-detail" id="strain-detail"></div>
-        <div class="ring-date">dnešná kumulatívna záťaž</div>
+        <div class="ring-label">Strain</div>
       </div>
+
+      <div class="ring-widget">
+        <div class="ring-wrap">
+          <svg id="gauge-recovery" class="ring-svg"></svg>
+          <div class="ring-center"><div class="ring-number"><span class="ring-value" id="recovery-pct">—</span><span class="ring-unit">%</span></div></div>
+        </div>
+        <div class="ring-label">Recovery</div>
+      </div>
+
+      <div class="ring-widget">
+        <div class="ring-wrap">
+          <svg id="gauge-sleep" class="ring-svg"></svg>
+          <div class="ring-center"><div class="ring-number"><span class="ring-value" id="sleep-pct">—</span><span class="ring-unit">%</span></div></div>
+        </div>
+        <div class="ring-label">Sleep</div>
+      </div>
+    </div>
+    <div class="ring-summary">
+      <div class="ring-summary-line"><span id="strain-verdict"></span><span id="strain-detail"></span></div>
+      <div class="ring-summary-line"><span id="strain-target-range"></span></div>
+      <div class="ring-summary-line"><span id="recovery-verdict"></span><span id="recovery-detail"></span></div>
+      <div class="ring-summary-line"><span id="recovery-date"></span></div>
     </div>
 
     <div class="metrics-row" id="metrics-row"></div>
@@ -655,6 +657,39 @@ document.getElementById('ai-plan-toggle').addEventListener('click', ()=>{
   toggle.textContent = showing ? 'Zobraziť podrobný plán na dnes ↓' : 'Skryť podrobný plán ↑';
 });
 
+function animateMetricNumber(id, value, decimals){
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(value==null || isNaN(value)){
+    el.textContent = '—';
+    return;
+  }
+  const target = Number(value);
+  const toText = v => decimals > 0 ? v.toFixed(decimals) : Math.round(v).toString();
+  if(prefersReducedMotion()){
+    el.textContent = toText(target);
+    el.dataset.value = String(target);
+    return;
+  }
+  const prev = el.dataset.value!=null ? Number(el.dataset.value) : 0;
+  const from = isFinite(prev) ? prev : 0;
+  const start = performance.now();
+  const duration = 650;
+  function frame(now){
+    const t = Math.min(1, (now-start)/duration);
+    const eased = 1 - Math.pow(1-t, 3);
+    const current = from + (target-from)*eased;
+    el.textContent = toText(current);
+    if(t < 1){
+      requestAnimationFrame(frame);
+    } else {
+      el.textContent = toText(target);
+      el.dataset.value = String(target);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
 function render(results, activities, aiSummary){
   ALL_RESULTS = results;
   document.getElementById('app').style.display='block';
@@ -669,18 +704,42 @@ function render(results, activities, aiSummary){
   document.getElementById('recovery-detail').textContent = v.detail;
 
   const pct = today.recovery ?? 0;
-  document.getElementById('recovery-pct').textContent = today.recovery!==null ? pct : '—';
-  renderRingGauge('gauge-recovery', today.recovery, 0, 100, v.color);
+  animateMetricNumber('recovery-pct', today.recovery, 0);
+  renderRingGauge('gauge-recovery', today.recovery, 0, 100, PALETTE.good);
 
   const todayDate = todayISO();
   renderAiSummary(aiSummary, todayDate);
   const todayStrain = STRAIN_BY_DATE.has(todayDate) ? STRAIN_BY_DATE.get(todayDate) : 0;
   const sv = strainVerdict(todayStrain);
-  document.getElementById('strain-val').textContent = todayStrain.toFixed(1);
+  animateMetricNumber('strain-val', todayStrain, 1);
   document.getElementById('strain-verdict').textContent = sv.label;
   document.getElementById('strain-verdict').style.color = sv.color;
   document.getElementById('strain-detail').textContent = sv.detail;
-  renderRingGauge('gauge-strain', todayStrain, 0, 21, sv.color);
+  const hrvRatio = (today.hrv!=null && LATEST_BASELINE.hrv && LATEST_BASELINE.hrv.mean) ? today.hrv / LATEST_BASELINE.hrv.mean : 1.0;
+  const rhrDelta = (today.restingHR!=null && LATEST_BASELINE.restingHR && LATEST_BASELINE.restingHR.mean!=null) ? today.restingHR - LATEST_BASELINE.restingHR.mean : 0;
+  const currentIndex = results.findIndex(r=>r.date===today.date);
+  const sleepDebtHours = currentIndex >= 0
+    ? results.slice(Math.max(0, currentIndex-2), currentIndex+1).reduce((sum, day)=>{
+        if(day.sleepSecs==null || isNaN(day.sleepSecs)) return sum;
+        const sleepHours = day.sleepSecs/3600;
+        return sum + Math.max(0, 8 - sleepHours);
+      }, 0)
+    : 0;
+  const strainTarget = computeStrainTargetRange({
+    recovery: pct,
+    sleepScore: today.sleepScore ?? 0,
+    hrvRatio,
+    rhrDelta,
+    sleepDebtHours,
+    soreness: today.soreness ?? 0,
+  });
+  document.getElementById('strain-target-range').textContent = `Cieľ: ${strainTarget.targetMin.toFixed(1)}–${strainTarget.targetMax.toFixed(1)} · readiness ${strainTarget.readiness.toFixed(2)}`;
+  renderRingGauge('gauge-strain', todayStrain, 0, 21, PALETTE.neutral, {
+    targetRange: {min: strainTarget.targetMin, max: strainTarget.targetMax},
+  });
+
+  animateMetricNumber('sleep-pct', today.sleepScore, 0);
+  renderRingGauge('gauge-sleep', today.sleepScore, 0, 100, PALETTE.data);
 
   // ---- Bannery: farba = odchýlka od 60-dňového baseline ----
   function devInfo(value, bl, direction){
