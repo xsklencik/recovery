@@ -1,0 +1,103 @@
+{
+ "generatedAt": "2026-07-27T10:44:22.386Z",
+ "model": "gemini-3.6-flash",
+ "location": "Čadca, Slovensko",
+ "days": [
+  {
+   "date": "2026-07-27",
+   "weatherDesc": "slabý dážď",
+   "weatherEmoji": "🌦️",
+   "tempMax": 22.6,
+   "tempMin": 15.2,
+   "precipMm": 3.5,
+   "windMaxKmh": 16.9,
+   "ownNote": "asi bude prsat cize budem mat volno",
+   "status": "break",
+   "aiSuggestion": null
+  },
+  {
+   "date": "2026-07-28",
+   "weatherDesc": "zamračené",
+   "weatherEmoji": "☁️",
+   "tempMax": 22.2,
+   "tempMin": 12.7,
+   "precipMm": 0,
+   "windMaxKmh": 6.8,
+   "ownNote": null,
+   "status": null,
+   "aiSuggestion": null
+  },
+  {
+   "date": "2026-07-29",
+   "weatherDesc": "prevažne jasno",
+   "weatherEmoji": "🌤️",
+   "tempMax": 26.9,
+   "tempMin": 13,
+   "precipMm": 0,
+   "windMaxKmh": 7.1,
+   "ownNote": "ideme na celodennu turu do tatier",
+   "status": null,
+   "aiSuggestion": null
+  },
+  {
+   "date": "2026-07-30",
+   "weatherDesc": "prevažne jasno",
+   "weatherEmoji": "🌤️",
+   "tempMax": 31.1,
+   "tempMin": 15.5,
+   "precipMm": 0,
+   "windMaxKmh": 12.7,
+   "ownNote": null,
+   "status": null,
+   "aiSuggestion": null
+  },
+  {
+   "date": "2026-07-31",
+   "weatherDesc": "slabé mrholenie",
+   "weatherEmoji": "🌦️",
+   "tempMax": 33.3,
+   "tempMin": 18.9,
+   "precipMm": 0.3,
+   "windMaxKmh": 13.4,
+   "ownNote": null,
+   "status": null,
+   "aiSuggestion": null
+  },
+  {
+   "date": "2026-08-01",
+   "weatherDesc": "slabé mrholenie",
+   "weatherEmoji": "🌦️",
+   "tempMax": 31,
+   "tempMin": 18.8,
+   "precipMm": 1.2,
+   "windMaxKmh": 13.9,
+   "ownNote": null,
+   "status": null,
+   "aiSuggestion": null
+  },
+  {
+   "date": "2026-08-02",
+   "weatherDesc": "slabé mrholenie",
+   "weatherEmoji": "🌦️",
+   "tempMax": 32.3,
+   "tempMin": 20.7,
+   "precipMm": 1.2,
+   "windMaxKmh": 10.3,
+   "ownNote": null,
+   "status": null,
+   "aiSuggestion": null
+  },
+  {
+   "date": "2026-08-03",
+   "weatherDesc": "jasno",
+   "weatherEmoji": "☀️",
+   "tempMax": 34.1,
+   "tempMin": 20.3,
+   "precipMm": 0,
+   "windMaxKmh": 15.8,
+   "ownNote": "planujeme tu dat Namestovo co je asi 130km. cize dovtedy nechcem asi ziadne intenzity ale iba objem",
+   "status": null,
+   "aiSuggestion": null
+  }
+ ]
+}
