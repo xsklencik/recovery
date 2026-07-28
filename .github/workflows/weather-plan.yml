@@ -2,6 +2,15 @@ name: Weather Plan
 
 on:
   workflow_dispatch:
+    inputs:
+      edit_instruction:
+        description: 'Pokyn na úpravu EXISTUJÚCEHO plánu (napr. "skráť dnešný tréning na 60 minút"). Nechaj prázdne pre bežné vygenerovanie nového plánu.'
+        required: false
+        default: ''
+      current_selection:
+        description: 'Interné - JSON mapa dátum->index aktuálne vybranej alternatívy z prehliadača (posiela plan.html automaticky, nevypĺňaj ručne).'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -14,9 +23,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Vygeneruj plán podľa počasia
+      - name: Vygeneruj alebo uprav plán podľa počasia
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PLAN_EDIT_INSTRUCTION: ${{ github.event.inputs.edit_instruction }}
+          PLAN_CURRENT_SELECTION: ${{ github.event.inputs.current_selection }}
         run: node weather-plan.js
       - name: Commit a push výsledok
         run: |
