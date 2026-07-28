@@ -439,7 +439,7 @@
   "fatigue": 2,
   "stress": 1,
   "source": "intervals_api",
-  "syncedAt": "2026-07-28T16:01:01.821Z"
+  "syncedAt": "2026-07-28T22:01:08.273Z"
  },
  {
   "id": "2026-07-26",
@@ -460,13 +460,13 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-28T16:01:01.821Z"
+  "syncedAt": "2026-07-28T22:01:08.273Z"
  },
  {
   "id": "2026-07-27",
   "date": "2026-07-27",
   "restingHR": 57,
-  "hrv": 57.846153,
+  "hrv": 57.106384,
   "hrvSDNN": 58,
   "avgSleepingHR": 58,
   "sleepScore": 82,
@@ -481,20 +481,20 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-28T16:01:01.821Z"
+  "syncedAt": "2026-07-28T22:01:08.273Z"
  },
  {
   "id": "2026-07-28",
   "date": "2026-07-28",
   "restingHR": 56,
-  "hrv": null,
+  "hrv": 68.51351,
   "hrvSDNN": 66,
   "avgSleepingHR": 57,
   "sleepScore": 81,
   "sleepSecs": 25200,
-  "steps": 11663,
-  "ctl": 34.456264,
-  "atl": 26.537046,
+  "steps": 14795,
+  "ctl": 34.78566,
+  "atl": 28.400755,
   "weight": null,
   "comments": "Po poslednej rehabilitácii ideme na Zákopčie na chatu kde budeme hrať bedminton čiže celý deň budem mimo",
   "mood": null,
@@ -502,6 +502,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-07-28T16:01:01.821Z"
+  "syncedAt": "2026-07-28T22:01:08.273Z"
  }
 ]
