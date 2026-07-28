@@ -20,6 +20,10 @@
       <a class="nav-link" href="index.html">← späť na dashboard</a>
       <a class="nav-link" href="checkin.html">📝 Ranný check-in</a>
     </div>
+    <div class="btn-group">
+      <button class="btn" id="btn-token"><span class="btn-icon">⚙</span> Token</button>
+      <button class="btn" id="btn-icu-key"><span class="btn-icon">🔑</span> Intervals kľúč</button>
+    </div>
   </div>
 
   <div id="loading" class="loading">načítavam dáta…</div>
@@ -66,6 +70,34 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="token-modal">
+  <div class="modal">
+    <h3>GitHub token</h3>
+    <p>
+      Fine-grained Personal Access Token s prístupom <b>len na tento repozitár</b> a oprávnením
+      <b>Contents: Read and write</b>. Potrebný na ukladanie komentárov k dňom. Token sa uloží len
+      v tomto prehliadači (localStorage) - rovnaký, aký sa zadáva na Dashboarde.
+    </p>
+    <input type="password" id="token-input" placeholder="github_pat_xxxxxxxx">
+    <div class="modal-actions">
+      <button class="cancel" id="token-cancel">Zrušiť</button>
+      <button class="save" id="token-save">Uložiť</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="icu-key-modal">
+  <div class="modal">
+    <h3>Intervals.icu API key</h3>
+    <p>Nájdeš na intervals.icu → Settings → Developer Settings. Potrebný, aby sa komentár k dňu pri uložení zosynchronizoval aj do Intervals.icu. Ukladá sa len v tomto prehliadači.</p>
+    <input type="password" id="icu-key-input" placeholder="tvoj Intervals.icu API key">
+    <div class="modal-actions">
+      <button class="cancel" id="icu-key-cancel">Zrušiť</button>
+      <button class="save" id="icu-key-save">Uložiť</button>
+    </div>
+  </div>
+</div>
+
 <nav class="bottom-nav">
   <a href="index.html"><span class="bn-icon">📊</span>Dashboard</a>
   <a href="history.html" class="active"><span class="bn-icon">🗓</span>História</a>
@@ -79,11 +111,37 @@
 <script>
 let ALL_RESULTS_ROWS = []; // newest-first, kompletná história
 let ALL_ACTIVITIES_H = [];
+let NOTES_BY_DATE_H = new Map(); // data/day_notes.json — zdieľané s Kalendárom, pozri dayCommentFor()/saveDayComment() v app-common.js
+
+// ---------- GitHub token / Intervals.icu API key modaly (rovnaké localStorage kľúče ako Dashboard) ----------
+document.getElementById('btn-token').addEventListener('click', ()=>{
+  document.getElementById('token-input').value = getGhToken();
+  document.getElementById('token-modal').classList.add('show');
+});
+document.getElementById('token-cancel').addEventListener('click', ()=>{
+  document.getElementById('token-modal').classList.remove('show');
+});
+document.getElementById('token-save').addEventListener('click', ()=>{
+  setGhToken(document.getElementById('token-input').value.trim());
+  document.getElementById('token-modal').classList.remove('show');
+});
+document.getElementById('btn-icu-key').addEventListener('click', ()=>{
+  document.getElementById('icu-key-input').value = getIcuApiKey();
+  document.getElementById('icu-key-modal').classList.add('show');
+});
+document.getElementById('icu-key-cancel').addEventListener('click', ()=>{
+  document.getElementById('icu-key-modal').classList.remove('show');
+});
+document.getElementById('icu-key-save').addEventListener('click', ()=>{
+  setIcuApiKey(document.getElementById('icu-key-input').value.trim());
+  document.getElementById('icu-key-modal').classList.remove('show');
+});
 
 async function main(){
-  const [history, daily, actHistory, actDaily] = await Promise.all([
+  const [history, daily, actHistory, actDaily, dayNotes] = await Promise.all([
     loadJson(HISTORY_URL), loadJson(DAILY_URL),
-    loadJson(ACT_HISTORY_URL), loadJson(ACT_DAILY_URL)
+    loadJson(ACT_HISTORY_URL), loadJson(ACT_DAILY_URL),
+    loadJson(DAY_NOTES_URL),
   ]);
 
   if(!history && !daily){
@@ -98,6 +156,7 @@ async function main(){
   let activities = mergeById(actHistory, actDaily);
   activities.sort((a,b)=> (a.start_date_local||a.date) < (b.start_date_local||b.date) ? -1 : 1);
   ALL_ACTIVITIES_H = activities;
+  NOTES_BY_DATE_H = new Map((dayNotes||[]).map(n=>[n.date, n]));
 
   const {results} = computeResults(recs, activities);
   ALL_RESULTS_ROWS = results.slice().reverse(); // najnovšie prvé
@@ -135,7 +194,7 @@ function renderFormaHistory(results, range){
 }
 
 function renderFullTable(rows){
-  drawTable('history-table-full', rows, ALL_ACTIVITIES_H);
+  drawTable('history-table-full', rows, ALL_ACTIVITIES_H, NOTES_BY_DATE_H);
   document.getElementById('history-count').textContent = rows.length + ' záznamov';
 }
 

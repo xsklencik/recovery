@@ -596,11 +596,13 @@ let ALL_ACTIVITIES = [];
 let STRAIN_BY_DATE = new Map();
 let LATEST_BASELINE = {};
 let STEPS_BASELINE_BY_DATE = new Map();
+let NOTES_BY_DATE_D = new Map(); // data/day_notes.json — zdieľané s Kalendárom/Históriou, pozri app-common.js
 
 async function main(){
-  const [history, daily, sync, actHistory, actDaily, aiSummary] = await Promise.all([
+  const [history, daily, sync, actHistory, actDaily, aiSummary, dayNotes] = await Promise.all([
     loadJson(HISTORY_URL), loadJson(DAILY_URL), loadJson(SYNC_URL),
-    loadJson(ACT_HISTORY_URL), loadJson(ACT_DAILY_URL), loadJson(AI_SUMMARY_URL)
+    loadJson(ACT_HISTORY_URL), loadJson(ACT_DAILY_URL), loadJson(AI_SUMMARY_URL),
+    loadJson(DAY_NOTES_URL)
   ]);
 
   if(!history && !daily){
@@ -615,6 +617,7 @@ async function main(){
   let activities = mergeById(actHistory, actDaily);
   activities.sort((a,b)=> (a.start_date_local||a.date) < (b.start_date_local||b.date) ? -1 : 1);
   ALL_ACTIVITIES = activities;
+  NOTES_BY_DATE_D = new Map((dayNotes||[]).map(n=>[n.date, n]));
 
   if(sync && sync.lastSync){
     const d = new Date(sync.lastSync);
@@ -821,7 +824,7 @@ function render(results, activities, aiSummary){
   renderForma(90);
   renderPhysio(7);
   renderLoad(90);
-  drawTable('history-table', results.slice().reverse().slice(0,30), activities);
+  drawTable('history-table', results.slice().reverse().slice(0,30), activities, NOTES_BY_DATE_D);
 
   document.querySelectorAll('.tab-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{

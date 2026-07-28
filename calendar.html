@@ -39,11 +39,6 @@
     background:var(--surface-2);border-radius:10px;padding:8px 10px;margin:6px 0;
     font-size:0.8rem;color:var(--text-dim);line-height:1.5;
   }
-  .wellness-comment-box{
-    background:var(--surface-2);border-radius:10px;padding:9px 12px;
-    font-size:0.82rem;color:var(--text-dim);line-height:1.5;
-  }
-  .wellness-comment-box .wc-label{font-family:var(--mono);font-size:0.64rem;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;}
   @media (max-width:680px){
     .cal-day{min-height:46px;padding:4px;}
     .cal-grid{gap:4px;}
@@ -59,7 +54,12 @@
       </div>
       <div class="sub" style="color:var(--text-dim);font-size:0.85rem;margin-top:4px;">
         Aktivity + poznámky/plány na konkrétne dni (aj budúce - dostanú sa do rannej AI analýzy).
+        Komentár dňa je tu ten istý údaj ako "Komentár dňa" v Histórii a na Dashboarde.
       </div>
+    </div>
+    <div class="btn-group">
+      <button class="btn" id="btn-token"><span class="btn-icon">⚙</span> Token</button>
+      <button class="btn" id="btn-icu-key"><span class="btn-icon">🔑</span> Intervals kľúč</button>
     </div>
   </div>
 
@@ -85,7 +85,6 @@
   <div class="modal">
     <h3 id="day-modal-date">—</h3>
     <div id="day-modal-activities" style="margin-bottom:14px;"></div>
-    <div id="day-modal-wellness-comment" style="display:none;margin-bottom:14px;"></div>
     <div class="field" style="margin-bottom:10px;">
       <span class="field-label">Stav na tento deň (voliteľné, prebije všeobecný Stav)</span>
       <div class="status-options" id="day-modal-status" style="margin-top:6px;">
@@ -96,10 +95,11 @@
       </div>
     </div>
     <div class="field" style="margin-bottom:14px;">
-      <span class="field-label">Poznámka / plán na tento deň</span>
-      <textarea id="day-modal-note" rows="3" style="width:100%;" placeholder="napr. idem na túru, chcem voľno, preteky..."></textarea>
+      <span class="field-label">Komentár / poznámka / plán na tento deň <span style="font-weight:400;color:var(--text-faint);">— rovnaký údaj ako "Komentár dňa" v Histórii, pri uložení sa zapíše aj do Intervals.icu</span></span>
+      <textarea id="day-modal-note" rows="3" style="width:100%;" placeholder="napr. idem na túru, chcem voľno, preteky, ako som sa cítil..."></textarea>
     </div>
-    <div class="modal-actions">
+    <div class="modal-actions" style="align-items:center;gap:10px;">
+      <span id="day-modal-save-status" style="font-size:0.74rem;color:var(--text-faint);margin-right:auto;"></span>
       <button class="cancel" id="day-modal-cancel">Zrušiť</button>
       <button class="save" id="day-modal-save">Uložiť</button>
     </div>
@@ -115,14 +115,65 @@
   <a href="plan.html"><span class="bn-icon">🌦️</span>Plán</a>
 </nav>
 
+<div class="modal-backdrop" id="token-modal">
+  <div class="modal">
+    <h3>GitHub token</h3>
+    <p>
+      Fine-grained Personal Access Token s prístupom <b>len na tento repozitár</b> a oprávnením
+      <b>Contents: Read and write</b>. Potrebný na ukladanie poznámok/komentárov k dňom. Token sa
+      uloží len v tomto prehliadači (localStorage) - rovnaký, aký sa zadáva na Dashboarde.
+    </p>
+    <input type="password" id="token-input" placeholder="github_pat_xxxxxxxx">
+    <div class="modal-actions">
+      <button class="cancel" id="token-cancel">Zrušiť</button>
+      <button class="save" id="token-save">Uložiť</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="icu-key-modal">
+  <div class="modal">
+    <h3>Intervals.icu API key</h3>
+    <p>Nájdeš na intervals.icu → Settings → Developer Settings. Potrebný, aby sa komentár k dňu pri uložení zosynchronizoval aj do Intervals.icu. Ukladá sa len v tomto prehliadači.</p>
+    <input type="password" id="icu-key-input" placeholder="tvoj Intervals.icu API key">
+    <div class="modal-actions">
+      <button class="cancel" id="icu-key-cancel">Zrušiť</button>
+      <button class="save" id="icu-key-save">Uložiť</button>
+    </div>
+  </div>
+</div>
+
 <script src="app-common.js"></script>
 <script>
 const REPO_OWNER = 'xsklencik';
 const REPO_NAME = 'recovery';
-function getToken(){ return localStorage.getItem('gh_pat') || ''; }
 const NOTES_URL = 'data/day_notes.json';
 const ANALYSES_URL = 'data/activity_analyses.json';
 const ANALYZE_WORKFLOW_FILE = 'analyze-activity.yml';
+
+// ---------- GitHub token / Intervals.icu API key modaly (rovnaké localStorage kľúče ako Dashboard) ----------
+document.getElementById('btn-token').addEventListener('click', ()=>{
+  document.getElementById('token-input').value = getGhToken();
+  document.getElementById('token-modal').classList.add('show');
+});
+document.getElementById('token-cancel').addEventListener('click', ()=>{
+  document.getElementById('token-modal').classList.remove('show');
+});
+document.getElementById('token-save').addEventListener('click', ()=>{
+  setGhToken(document.getElementById('token-input').value.trim());
+  document.getElementById('token-modal').classList.remove('show');
+});
+document.getElementById('btn-icu-key').addEventListener('click', ()=>{
+  document.getElementById('icu-key-input').value = getIcuApiKey();
+  document.getElementById('icu-key-modal').classList.add('show');
+});
+document.getElementById('icu-key-cancel').addEventListener('click', ()=>{
+  document.getElementById('icu-key-modal').classList.remove('show');
+});
+document.getElementById('icu-key-save').addEventListener('click', ()=>{
+  setIcuApiKey(document.getElementById('icu-key-input').value.trim());
+  document.getElementById('icu-key-modal').classList.remove('show');
+});
 
 const DOW_MON0 = d => (d.getDay() + 6) % 7; // 0=Pondelok
 
@@ -136,8 +187,8 @@ const ACTIVITY_EMOJI = {
 function emojiForActivity(a){ return ACTIVITY_EMOJI[a.type] || '⚫'; }
 
 async function runActivityAnalysis(activityId, btn){
-  const token = getToken();
-  if(!token){ alert('Chýba GitHub token - nastav ho tlačidlom Token na Dashboarde.'); return; }
+  const token = getGhToken();
+  if(!token){ alert('Chýba GitHub token - nastav ho tlačidlom Token hore.'); return; }
   const statusEl = btn.nextElementSibling;
   btn.disabled = true;
   statusEl.textContent = '⏳ Spúšťam...';
@@ -231,7 +282,8 @@ function renderCalendar(){
     const cell = document.createElement('div');
     cell.className = 'cal-day' + (isOtherMonth ? ' other-month' : '') + (dateStr===todayStr ? ' today' : '');
     const dayActs = ACTIVITIES_BY_DATE.get(dateStr) || [];
-    const hasNote = NOTES_BY_DATE.has(dateStr) && NOTES_BY_DATE.get(dateStr).note && NOTES_BY_DATE.get(dateStr).note.trim();
+    const wRec = WELLNESS_BY_DATE.get(dateStr);
+    const hasNote = !!dayCommentFor(wRec ? wRec.comments : null, (NOTES_BY_DATE.get(dateStr)||{}).note);
     const emojiHtml = dayActs.slice(0,2).map(a=>`<span class="cal-emoji">${emojiForActivity(a)}</span>`).join('')
       + (dayActs.length>2 ? `<span class="cal-emoji-more">+${dayActs.length-2}</span>` : '');
     cell.innerHTML = `
@@ -291,20 +343,14 @@ function openDayModal(dateStr){
     actBox.innerHTML = '<div class="field-label">Žiadna zaznamenaná aktivita tento deň.</div>';
   }
 
-  // Komentár z wellness dát (zapísaný cez checkin.html alebo detail dňa na Dashboarde) - zlúčený
-  // sem ako kontext, len na zobrazenie (edituje sa inde, Intervals.icu API, nie odtiaľto).
+  // Zjednotený "Komentár dňa" - rovnaká hodnota ako v Histórii/na Dashboarde (dayCommentFor
+  // v app-common.js): prednosť má Intervals.icu wellness.comments, inak lokálna day_notes.json
+  // kópia. Textarea je teraz vždy editovateľná priamo odtiaľto (predtým bol komentár z wellness
+  // len na čítanie).
   const wellnessRec = WELLNESS_BY_DATE.get(dateStr);
-  const wcBox = document.getElementById('day-modal-wellness-comment');
-  if(wellnessRec && wellnessRec.comments && wellnessRec.comments.trim()){
-    wcBox.style.display = 'block';
-    wcBox.innerHTML = `<div class="wellness-comment-box"><div class="wc-label">Komentár dňa (z Dashboardu/check-inu)</div>${escapeHtml(wellnessRec.comments)}</div>`;
-  } else {
-    wcBox.style.display = 'none';
-    wcBox.innerHTML = '';
-  }
-
   const existing = NOTES_BY_DATE.get(dateStr);
-  document.getElementById('day-modal-note').value = existing ? (existing.note || '') : '';
+  document.getElementById('day-modal-note').value = dayCommentFor(wellnessRec ? wellnessRec.comments : null, existing ? existing.note : null);
+  document.getElementById('day-modal-save-status').textContent = '';
   selectedDayStatus = existing && existing.status ? existing.status : null;
   document.querySelectorAll('#day-modal-status .status-opt').forEach(btn=>{
     btn.classList.toggle('active', btn.dataset.status === selectedDayStatus);
@@ -324,56 +370,38 @@ document.getElementById('day-modal-cancel').addEventListener('click', ()=>{
   document.getElementById('day-modal').classList.remove('show');
 });
 
-async function saveDayNote(dateStr, note, status){
-  const token = getToken();
-  if(!token) throw new Error('Chýba GitHub token (Token tlačidlo na Dashboarde).');
-  const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/data/day_notes.json`;
-  let sha = null, existing = [];
-  const getRes = await fetch(apiUrl + '?t=' + Date.now(), {
-    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' },
-  });
-  if(getRes.ok){
-    const j = await getRes.json();
-    sha = j.sha;
-    try{ existing = JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g,''))))); }catch(e){ existing = []; }
-  }
-  const idx = existing.findIndex(n=>n.date===dateStr);
-  const isEmpty = note.trim()==='' && !status;
-  if(isEmpty){
-    if(idx>=0) existing.splice(idx,1); // prázdna poznámka AJ žiadny stav = zmazať záznam
-  } else {
-    const entry = { date: dateStr, note, status: status || undefined, updatedAt: new Date().toISOString() };
-    if(idx>=0) existing[idx] = entry; else existing.push(entry);
-  }
-  const content = JSON.stringify(existing, null, 1);
-  const b64 = btoa(unescape(encodeURIComponent(content)));
-  const putRes = await fetch(apiUrl, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28',
-    },
-    body: JSON.stringify({ message: `Update day note: ${dateStr}`, content: b64, sha: sha || undefined, branch: 'main' }),
-  });
-  if(!putRes.ok){
-    const txt = await putRes.text();
-    throw new Error(`GitHub API ${putRes.status}: ${txt.slice(0,150)}`);
-  }
-  return existing;
-}
-
 document.getElementById('day-modal-save').addEventListener('click', async ()=>{
   const btn = document.getElementById('day-modal-save');
+  const statusEl = document.getElementById('day-modal-save-status');
   const note = document.getElementById('day-modal-note').value;
   btn.textContent = 'Ukladám…'; btn.disabled = true;
+  statusEl.style.color = 'var(--text-faint)';
+  statusEl.textContent = 'Ukladám…';
   try{
-    const all = await saveDayNote(currentModalDate, note, selectedDayStatus);
-    notesRaw = all;
-    NOTES_BY_DATE = new Map(all.map(n=>[n.date, n]));
-    document.getElementById('day-modal').classList.remove('show');
+    // saveDayComment (app-common.js) zapíše naraz do data/day_notes.json (okamžite viditeľné
+    // v Histórii aj na Dashboarde) a best-effort aj do Intervals.icu wellness.comments.
+    const res = await saveDayComment(currentModalDate, note, selectedDayStatus);
+    notesRaw = res.notes;
+    NOTES_BY_DATE = new Map(res.notes.map(n=>[n.date, n]));
+    // Optimistická lokálna aktualizácia, nech sa hneď premietne aj do WELLNESS_BY_DATE (bez
+    // čakania na ďalší sync beh) - dayCommentFor() nabudúce nájde rovnaký text na oboch miestach.
+    if(note.trim()!==''){
+      const w = WELLNESS_BY_DATE.get(currentModalDate) || {date: currentModalDate};
+      w.comments = note.trim();
+      WELLNESS_BY_DATE.set(currentModalDate, w);
+    }
+    if(res.icuOk){
+      statusEl.style.color = 'var(--good)';
+      statusEl.textContent = '✅ Uložené (aj do Intervals.icu)';
+    } else if(res.icuError){
+      statusEl.style.color = 'var(--warn)';
+      statusEl.textContent = '⚠️ Intervals.icu: ' + res.icuError;
+    }
     renderCalendar();
+    setTimeout(()=>{ document.getElementById('day-modal').classList.remove('show'); }, res.icuError ? 900 : 300);
   }catch(e){
-    alert('Chyba pri ukladaní: ' + e.message);
+    statusEl.style.color = 'var(--bad)';
+    statusEl.textContent = '⚠️ ' + e.message;
   }finally{
     btn.textContent = 'Uložiť'; btn.disabled = false;
   }

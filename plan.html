@@ -14,10 +14,12 @@
   .plan-day-emoji{font-size:1.4rem;}
   .plan-day-date{font-family:var(--mono);font-weight:700;font-size:0.85rem;}
   .plan-day-weather{font-size:0.76rem;color:var(--text-faint);margin-left:auto;text-align:right;}
+  .plan-day-window{display:block;font-size:0.72rem;color:var(--accent);margin-top:2px;}
   .plan-day-body{margin-top:8px;font-size:0.85rem;color:var(--text);line-height:1.55;}
   .plan-day-own{color:var(--accent);font-weight:600;}
   .plan-day-status{display:inline-block;margin-top:6px;font-size:0.7rem;padding:2px 8px;border-radius:6px;background:var(--surface-2);color:var(--text-dim);}
-  .plan-meta{font-family:var(--mono);font-size:0.7rem;color:var(--text-faint);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .plan-meta-row{font-family:var(--mono);font-size:0.7rem;color:var(--text-faint);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .plan-last-edit{font-family:var(--mono);font-size:0.68rem;color:var(--text-faint);margin-bottom:14px;font-style:italic;}
   .plan-reset{background:none;border:none;color:var(--accent);font-family:var(--mono);font-size:0.7rem;cursor:pointer;padding:0;text-decoration:underline;flex-shrink:0;}
   .plan-alts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
   .plan-alt{
@@ -28,6 +30,15 @@
   .plan-alt:hover{border-color:var(--text-faint);}
   .plan-alt.active{border-color:var(--accent);background:var(--accent-dim);color:var(--accent);}
   .plan-alt-auto{display:inline-block;margin-left:6px;font-size:0.7rem;color:var(--text-faint);font-weight:600;}
+  .plan-edit-card{background:var(--surface);border-radius:16px;box-shadow:var(--shadow-card);padding:12px 14px;margin-bottom:14px;}
+  .plan-edit-label{font-size:0.78rem;color:var(--text-dim);font-weight:600;margin-bottom:8px;display:block;}
+  .plan-edit-row{display:flex;gap:8px;}
+  .plan-edit-row input{
+    flex:1;padding:9px 12px;border-radius:10px;border:1.5px solid var(--line);
+    background:var(--surface-2);color:var(--text);font-family:var(--sans);font-size:0.85rem;
+  }
+  .plan-edit-row input:focus{outline:2px solid var(--accent-dim);border-color:var(--accent);}
+  .plan-edit-hint{font-size:0.7rem;color:var(--text-faint);margin-top:6px;}
 </style>
 </head>
 <body>
@@ -44,10 +55,20 @@
     <button class="btn primary" id="btn-generate">🔄 Vygenerovať plán</button>
   </div>
 
-  <div class="plan-meta">
+  <div class="plan-edit-card">
+    <label class="plan-edit-label" for="edit-instruction">✏️ Uprav existujúci plán vlastným pokynom</label>
+    <div class="plan-edit-row">
+      <input type="text" id="edit-instruction" placeholder='napr. "Skráť dnešný tréning na 60 minút" alebo "Presuň intervaly na zajtra"'>
+      <button class="btn" id="btn-edit">Upraviť</button>
+    </div>
+    <div class="plan-edit-hint">AI upraví len dni, ktorých sa pokyn týka - ostatné dni a dni s vlastnou poznámkou ostanú nezmenené.</div>
+  </div>
+
+  <div class="plan-meta-row">
     <span id="plan-meta">Načítavam…</span>
     <button class="plan-reset" id="btn-reset-choices" style="display:none;">↺ zresetovať výber</button>
   </div>
+  <div class="plan-last-edit" id="plan-last-edit" style="display:none;"></div>
   <div id="plan-days"></div>
 </div>
 
@@ -125,18 +146,42 @@ function resetChoices(){
   renderPlan(CURRENT_PLAN);
 }
 
+// Postaví mapu date->index aktuálne vybranej alternatívy (0 = predvolená prvá), ktorú backend
+// (weather-plan.js v edit-móde) potrebuje vedieť, keďže samotný výber žije len tu v prehliadači.
+function buildCurrentSelectionPayload(plan){
+  const choices = loadChoices();
+  const result = {};
+  daysWithAlternatives(plan).forEach(d=>{
+    const c = choices[d.date];
+    result[d.date] = (c && c.i < d.alternatives.length) ? c.i : 0;
+  });
+  return result;
+}
+
 function renderPlan(plan){
   CURRENT_PLAN = plan;
   const meta = document.getElementById('plan-meta');
   const resetBtn = document.getElementById('btn-reset-choices');
+  const lastEditBox = document.getElementById('plan-last-edit');
   const daysBox = document.getElementById('plan-days');
   if(!plan || !plan.days || !plan.days.length){
     meta.textContent = 'Zatiaľ nevygenerované. Klikni "🔄 Vygenerovať plán".';
     resetBtn.style.display = 'none';
+    lastEditBox.style.display = 'none';
     daysBox.innerHTML = '';
     return;
   }
   meta.textContent = `Vygenerované ${plan.generatedAt ? plan.generatedAt.slice(0,16).replace('T',' ') : '?'} · ${plan.location || ''}`;
+
+  if(plan.lastEdit && plan.lastEdit.instruction){
+    const changed = (plan.lastEdit.changedDates || []).length
+      ? ` (zmenené: ${plan.lastEdit.changedDates.join(', ')})`
+      : ' (žiadny deň sa nezmenil)';
+    lastEditBox.style.display = '';
+    lastEditBox.textContent = `✏️ Posledná úprava pokynom: "${plan.lastEdit.instruction}"${changed}`;
+  } else {
+    lastEditBox.style.display = 'none';
+  }
 
   // Vyčisti si výbery pre dni, ktoré už v aktuálnom pláne neexistujú alebo nemajú alternatívy
   // (napr. po pregenerovaní plánu, keď sa okno 8 dní posunulo, alebo si si medzitým pridal vlastnú
@@ -166,12 +211,15 @@ function renderPlan(plan){
     } else {
       body = '<span style="color:var(--text-faint);">Bez návrhu.</span>';
     }
+    const windowHtml = d.bestWindow
+      ? `<span class="plan-day-window">☂️ najlepšie okno ${d.bestWindow.start}–${d.bestWindow.end} (šanca dažďa ${d.bestWindow.avgRainProb}%)</span>`
+      : '';
     return `
       <div class="plan-day">
         <div class="plan-day-head">
           <span class="plan-day-emoji">${d.weatherEmoji||'❓'}</span>
           <span class="plan-day-date">${d.date}</span>
-          <span class="plan-day-weather">${d.weatherDesc||''}, ${Math.round(d.tempMin)}–${Math.round(d.tempMax)}°C${d.precipMm?', 🌧️'+d.precipMm+'mm':''}</span>
+          <span class="plan-day-weather">${d.weatherDesc||''}, ${Math.round(d.tempMin)}–${Math.round(d.tempMax)}°C${d.precipMm?', 🌧️'+d.precipMm+'mm':''}${windowHtml}</span>
         </div>
         <div class="plan-day-body">${body}</div>
         ${altsHtml}
@@ -187,13 +235,14 @@ function renderPlan(plan){
 
 document.getElementById('btn-reset-choices').addEventListener('click', resetChoices);
 
-document.getElementById('btn-generate').addEventListener('click', async ()=>{
-  const btn = document.getElementById('btn-generate');
+// ---------- Spustenie GitHub Actions behu (spoločné pre "Vygenerovať" aj "Upraviť") ----------
+// `inputs` ide priamo do workflow_dispatch inputs (edit_instruction/current_selection, alebo
+// prázdne pre bežné vygenerovanie). `progressLabel` je text zobrazený počas čakania.
+async function dispatchAndPoll(inputs, progressLabel){
   const token = getToken();
-  if(!token){ alert('Chýba GitHub token - nastav ho tlačidlom Token na Dashboarde.'); return; }
-  btn.disabled = true;
-  btn.textContent = '⏳ Generujem…';
-  document.getElementById('plan-meta').textContent = '⏳ Spúšťam GitHub Actions beh (počasie + Gemini)…';
+  if(!token){ alert('Chýba GitHub token - nastav ho tlačidlom Token na Dashboarde.'); return false; }
+  const metaEl = document.getElementById('plan-meta');
+  metaEl.textContent = `⏳ Spúšťam GitHub Actions beh (${progressLabel})…`;
   try{
     const dispatchRes = await fetch(
       `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${PLAN_WORKFLOW_FILE}/dispatches`,
@@ -203,7 +252,7 @@ document.getElementById('btn-generate').addEventListener('click', async ()=>{
           'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json',
           'X-GitHub-Api-Version': '2022-11-28',
         },
-        body: JSON.stringify({ ref: 'main', inputs: {} }),
+        body: JSON.stringify({ ref: 'main', inputs }),
       }
     );
     if(!dispatchRes.ok){
@@ -212,26 +261,51 @@ document.getElementById('btn-generate').addEventListener('click', async ()=>{
     }
     const before = await loadJson(PLAN_URL);
     const beforeTs = before && before.generatedAt ? before.generatedAt : null;
-    let done = false;
     for(let i=0;i<30;i++){
-      document.getElementById('plan-meta').textContent = `⏳ Generujem… (${(i+1)*8}s) - toto okno môžeš zavrieť, beh dobehne aj bez neho.`;
+      metaEl.textContent = `⏳ ${progressLabel}… (${(i+1)*8}s) - toto okno môžeš zavrieť, beh dobehne aj bez neho.`;
       await new Promise(r=>setTimeout(r, 8000));
       const check = await loadJson(PLAN_URL);
       if(check && check.generatedAt && check.generatedAt !== beforeTs){
         renderPlan(check);
-        done = true;
-        break;
+        return true;
       }
     }
-    if(!done){
-      document.getElementById('plan-meta').textContent = '⚠️ Trvá to dlhšie, skús o chvíľu obnoviť stránku.';
-    }
+    metaEl.textContent = '⚠️ Trvá to dlhšie, skús o chvíľu obnoviť stránku.';
+    return false;
   }catch(e){
-    document.getElementById('plan-meta').textContent = '⚠️ Chyba: ' + e.message;
-  }finally{
-    btn.disabled = false;
-    btn.textContent = '🔄 Vygenerovať plán';
+    metaEl.textContent = '⚠️ Chyba: ' + e.message;
+    return false;
   }
+}
+
+document.getElementById('btn-generate').addEventListener('click', async ()=>{
+  const btn = document.getElementById('btn-generate');
+  btn.disabled = true;
+  btn.textContent = '⏳ Generujem…';
+  await dispatchAndPoll({}, 'počasie + Gemini');
+  btn.disabled = false;
+  btn.textContent = '🔄 Vygenerovať plán';
+});
+
+document.getElementById('btn-edit').addEventListener('click', async ()=>{
+  const input = document.getElementById('edit-instruction');
+  const instruction = input.value.trim();
+  if(!instruction){ alert('Napíš najprv pokyn, čo sa má na pláne zmeniť.'); return; }
+  if(!CURRENT_PLAN || !CURRENT_PLAN.days || !CURRENT_PLAN.days.length){
+    alert('Najprv treba mať vygenerovaný nejaký plán ("🔄 Vygenerovať plán").');
+    return;
+  }
+  const btn = document.getElementById('btn-edit');
+  btn.disabled = true;
+  btn.textContent = '⏳ Upravujem…';
+  const selection = buildCurrentSelectionPayload(CURRENT_PLAN);
+  const ok = await dispatchAndPoll(
+    { edit_instruction: instruction, current_selection: JSON.stringify(selection) },
+    'úprava podľa pokynu'
+  );
+  if(ok) input.value = '';
+  btn.disabled = false;
+  btn.textContent = 'Upraviť';
 });
 
 loadJson(PLAN_URL).then(renderPlan);

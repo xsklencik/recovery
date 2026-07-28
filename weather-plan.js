@@ -1,8 +1,19 @@
 // weather-plan.js
 // Stiahne 8-dňovú predpoveď počasia pre Čadcu (Open-Meteo, zadarmo, žiadny API kľúč netreba),
 // skombinuje s aktuálnou formou (CTL/ATL) a kalendárovými poznámkami, a pre dni BEZ vlastnej
-// poznámky navrhne cez Gemini typ tréningu. Dni, kde už máš vlastný plán (day_notes.json), sa
-// nepretláčajú - "ak nemám vlastný plán" bolo explicitná požiadavka.
+// poznámky navrhne cez Gemini 3 alternatívy tréningu (recovery/endurance/intensity). Dni, kde už
+// máš vlastný plán (day_notes.json), sa nepretláčajú - "ak nemám vlastný plán" bolo explicitná
+// požiadavka.
+//
+// Dva režimy behu:
+//  1) Normálne generovanie (žiadny PLAN_EDIT_INSTRUCTION) - stiahne čerstvé počasie a vygeneruje
+//     kompletne nový plán, presne ako predtým.
+//  2) Úprava existujúceho plánu (PLAN_EDIT_INSTRUCTION nastavený, napr. z tlačidla "Upraviť plán"
+//     na stránke) - NEGENERUJE nový plán od nuly, ale pošle Gemini aktuálny plán + pokyn
+//     používateľa (napr. "skráť dnešný tréning na 60 minút", "presuň intervaly na zajtra") a
+//     upraví iba dni, ktorých sa pokyn reálne týka. PLAN_CURRENT_SELECTION (JSON mapa
+//     dátum->index aktuálne vybranej alternatívy z prehliadača) hovorí AI, čo si používateľ práve
+//     pozerá, keďže výber alternatívy žije len v localStorage prehliadača, nie v tomto súbore.
 //
 // Očakáva: GEMINI_API_KEY (ak chýba, skript sa ticho ukončí)
 
@@ -10,13 +21,14 @@ const fs = require('fs');
 const path = require('path');
 
 const DATA_DIR = path.join(__dirname, 'data');
+const PLAN_FILE = path.join(DATA_DIR, 'weather_plan.json');
 const LAT = 49.4386, LON = 18.7898; // Čadca, Slovensko
 const DEFAULT_GEMINI_MODEL = 'gemini-3.6-flash';
-// PRÍČINA "Bez návrhu" bugu: ak primárny model vráti chybu (404 po vyradení, 429 po vyčerpaní
-// free-tier kvóty, alebo dočasná nedostupnosť - typické pár dní po vydaní nového modelu), skript
-// sa doteraz potichu vzdal a všetky dni bez vlastnej poznámky ostali navždy bez návrhu. Rovnaký
-// princíp ako pri fetchWeatherWithParams nižšie: namiesto tvrdého vzdania sa skús postupne aj
-// tieto zálohy, kým jedna neodpovie.
+// PRÍČINA starého "Bez návrhu" bugu: ak primárny model vráti chybu (404 po vyradení, 429 po
+// vyčerpaní free-tier kvóty, alebo dočasná nedostupnosť - typické pár dní po vydaní nového
+// modelu), skript sa doteraz potichu vzdal a všetky dni bez vlastnej poznámky ostali navždy bez
+// návrhu. Rovnaký princíp ako pri fetchWeatherWithParams nižšie: namiesto tvrdého vzdania sa
+// skús postupne aj tieto zálohy, kým jedna neodpovie.
 const FALLBACK_GEMINI_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.1-flash'];
 
 function loadJsonSafe(file, fallback) {
@@ -42,13 +54,54 @@ const WEATHER_CODES = {
 };
 function describeWeather(code) { return WEATHER_CODES[code] || ['neznáme', '❓']; }
 
-// Open-Meteo dokumentácia je v rôznych zdrojoch nekonzistentná v pomenovaní parametrov
+// Dĺžka hľadaného súvislého okna (v hodinách) a rozumný denný rozsah, v ktorom sa vôbec oplatí
+// hľadať (nemá zmysel odporučiť "najlepšie okno" o 3:00 ráno).
+const TRAINING_WINDOW_HOURS = 4;
+const TRAINING_DAY_START_HOUR = 5;
+const TRAINING_DAY_END_HOUR = 22;
+
+// Z hodinovej pravdepodobnosti zrážok (Open-Meteo `precipitation_probability`, v %) nájde pre
+// daný deň najlepšie súvislé okno dĺžky TRAINING_WINDOW_HOURS s najnižšou priemernou šancou
+// dažďa, v rámci rozumného denného času. Vráti null, ak pre daný deň chýbajú hodinové dáta
+// (napr. posledný deň 8-dňového okna môže mať neúplné hodiny).
+function bestWindowForDay(hourlyTimes, hourlyProb, date) {
+  const dayHours = [];
+  for (let i = 0; i < hourlyTimes.length; i++) {
+    if (hourlyTimes[i].slice(0, 10) === date) {
+      const hour = parseInt(hourlyTimes[i].slice(11, 13), 10);
+      if (hour >= TRAINING_DAY_START_HOUR && hour <= TRAINING_DAY_END_HOUR && hourlyProb[i] != null) {
+        dayHours.push({ hour, prob: hourlyProb[i] });
+      }
+    }
+  }
+  dayHours.sort((a, b) => a.hour - b.hour);
+  if (dayHours.length < TRAINING_WINDOW_HOURS) return null;
+  let best = null;
+  for (let i = 0; i <= dayHours.length - TRAINING_WINDOW_HOURS; i++) {
+    const slice = dayHours.slice(i, i + TRAINING_WINDOW_HOURS);
+    const contiguous = slice.every((h, idx) => idx === 0 || h.hour === slice[idx - 1].hour + 1);
+    if (!contiguous) continue; // medzera v dátach (chýbajúca hodina) - okno nie je naozaj súvislé
+    const avg = slice.reduce((s, h) => s + h.prob, 0) / slice.length;
+    if (!best || avg < best.avg) {
+      best = { startHour: slice[0].hour, endHour: slice[slice.length - 1].hour + 1, avg };
+    }
+  }
+  if (!best) return null;
+  return {
+    start: String(best.startHour).padStart(2, '0') + ':00',
+    end: String(best.endHour).padStart(2, '0') + ':00',
+    avgRainProb: Math.round(best.avg),
+  };
+}
+
+// Open-Meteo dokumentácia je v rôznych zdrojoch nekonzistentná v pomenovaní denných parametrov
 // (weathercode vs weather_code, windspeed_10m_max vs wind_speed_10m_max - staršia vs. novšia
 // konvencia). Keďže zlý názov parametra spôsobí HTTP 400 pre CELÝ request, skúša sa najprv
-// klasická konvencia a pri zlyhaní fallback na novšiu, namiesto tvrdého pádu.
+// klasická konvencia a pri zlyhaní fallback na novšiu, namiesto tvrdého pádu. Hodinová
+// `precipitation_probability` má stabilný názov naprieč verziami, tá fallback nepotrebuje.
 async function fetchWeatherWithParams(dailyParams) {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
-    `&daily=${dailyParams}&timezone=Europe/Bratislava&forecast_days=8`;
+    `&daily=${dailyParams}&hourly=precipitation_probability&timezone=Europe/Bratislava&forecast_days=8`;
   const res = await fetch(url);
   if (!res.ok) {
     const txt = await res.text().catch(() => '');
@@ -67,6 +120,9 @@ async function fetchWeather() {
     data = await fetchWeatherWithParams('temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,weather_code');
   }
   const d = data.daily;
+  const h = data.hourly || {};
+  const hourlyTimes = h.time || [];
+  const hourlyProb = h.precipitation_probability || [];
   const weatherCodeArr = d.weather_code || d.weathercode || [];
   const windArr = d.wind_speed_10m_max || d.windspeed_10m_max || [];
   return d.time.map((date, i) => ({
@@ -76,6 +132,7 @@ async function fetchWeather() {
     precipMm: d.precipitation_sum[i],
     windMaxKmh: windArr[i],
     weatherCode: weatherCodeArr[i],
+    bestWindow: bestWindowForDay(hourlyTimes, hourlyProb, date),
   }));
 }
 
@@ -120,8 +177,41 @@ async function callGemini(prompt, opts) {
       console.warn(`⚠️ ${e.message} - skúšam ďalší model...`);
     }
   }
-  console.warn('⚠️ Všetky Gemini modely zlyhali, plán ostane bez AI návrhov.');
+  console.warn('⚠️ Všetky Gemini modely zlyhali.');
   return null;
+}
+
+// ---------- Normalizácia alternatív (spoločná pre generovanie aj úpravu) ----------
+const KNOWN_INTENSITIES = ['recovery', 'endurance', 'intensity'];
+const INTENSITY_LABELS = { recovery: 'Regenerácia', endurance: 'Vytrvalosť', intensity: 'Intenzita' };
+// Normalizuje a obmedzí to, čo Gemini vrátil pre jeden deň, na max 3 použiteľné alternatívy s
+// konzistentným tvarom (id/label/intensity/suggestion) - aj keby model vynechal label alebo
+// poslal neznámu hodnotu intensity, frontend dostane vždy rozumný tvar dát. Poradie sa
+// zachováva podľa toho, čo vrátil model (generovací aj edit prompt ho žiadajú v poradí
+// recovery/endurance/intensity), aby si výber alternatívy v prehliadači (index 0/1/2) držal
+// rovnaký význam aj po úprave existujúceho plánu.
+function normalizeAlternatives(alts) {
+  if (!Array.isArray(alts)) return [];
+  return alts
+    .filter(a => a && a.suggestion)
+    .slice(0, 3)
+    .map((a, i) => {
+      const intensity = KNOWN_INTENSITIES.includes(a.intensity) ? a.intensity : 'endurance';
+      return {
+        id: ['a', 'b', 'c'][i] || String(i),
+        label: a.label || INTENSITY_LABELS[intensity],
+        intensity,
+        suggestion: String(a.suggestion),
+      };
+    });
+}
+
+function weatherLineFor(date, weatherDesc, tempMin, tempMax, precipMm, windMaxKmh, planLabel, statusTxt, bestWindow) {
+  const windowTxt = bestWindow
+    ? ` [najlepšie okno: ${bestWindow.start}-${bestWindow.end}, šanca dažďa ${bestWindow.avgRainProb}%]`
+    : '';
+  return `- ${date}: ${weatherDesc}, ${Math.round(tempMin)}-${Math.round(tempMax)}°C, zrážky ${precipMm}mm, ` +
+    `vietor do ${Math.round(windMaxKmh)}km/h [${planLabel}]${statusTxt}${windowTxt}`;
 }
 
 function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate) {
@@ -136,8 +226,11 @@ function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate) {
     '3) intensity="intensity" - intervaly/tempo, kratšie ale náročnejšie.\n' +
     'Každú alternatívu prispôsob počasiu toho dňa (dážď/vietor/teplota - napr. silný dážď -> ' +
     'radšej doma/rolky aj pre "intensity" variant) a celkovému kontextu okolitých dní a aktuálnej ' +
-    'formy (napr. pred/po náročnom dni uprav, čo dáva zmysel odporučiť). Odpovedz IBA validným ' +
-    'JSON poľom (žiadny markdown, žiadne ```), presne v tvare:\n' +
+    'formy (napr. pred/po náročnom dni uprav, čo dáva zmysel odporučiť). Ak je pri dni uvedené ' +
+    '"najlepšie okno" (súvislý časový úsek s najnižšou pravdepodobnosťou dažďa), zohľadni ho a v ' +
+    'texte návrhu (najmä pri "endurance"/"intensity" variante, kde je dĺžka vonku dlhšia) stručne ' +
+    'spomeň orientačný čas, kedy je najvhodnejšie ísť trénovať. Odpovedz IBA validným JSON poľom ' +
+    '(žiadny markdown, žiadne ```), presne v tvare:\n' +
     '[{"date":"YYYY-MM-DD","alternatives":[' +
     '{"label":"krátky názov 2-4 slová","intensity":"recovery","suggestion":"1-2 vety, konkrétne"},' +
     '{"label":"...","intensity":"endurance","suggestion":"..."},' +
@@ -151,7 +244,8 @@ function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate) {
     const note = dayNotes.find(n => n.date === w.date);
     const status = statusByDate[w.date];
     const planLabel = (note && note.note && note.note.trim()) ? `MÁ VLASTNÝ PLÁN: "${note.note.trim()}"` : 'BEZ VLASTNÉHO PLÁNU';
-    lines.push(`- ${w.date}: ${desc}, ${Math.round(w.tempMin)}-${Math.round(w.tempMax)}°C, zrážky ${w.precipMm}mm, vietor do ${Math.round(w.windMaxKmh)}km/h [${planLabel}]${status && status !== 'active' ? ' [stav: ' + status + ']' : ''}`);
+    const statusTxt = status && status !== 'active' ? ' [stav: ' + status + ']' : '';
+    lines.push(weatherLineFor(w.date, desc, w.tempMin, w.tempMax, w.precipMm, w.windMaxKmh, planLabel, statusTxt, w.bestWindow));
   });
   lines.push('');
   if (wellnessRecent.length) {
@@ -161,7 +255,54 @@ function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate) {
   return lines.join('\n');
 }
 
-async function main() {
+// Prompt pre režim "úprava existujúceho plánu podľa pokynu" - namiesto počasia/formy odznova
+// posiela AKTUÁLNY stav plánu (vrátane toho, ktorú alternatívu má užívateľ práve vybranú v
+// prehliadači) a jeden voľný pokyn, ktorý hovorí, čo treba zmeniť.
+function buildEditPrompt(existingPlan, currentSelection, instruction) {
+  const lines = [];
+  lines.push(
+    'Si osobný cyklistický/bežecký kouč. Nižšie je AKTUÁLNY tréningový plán na najbližšie dni - ' +
+    'pre dni bez vlastnej poznámky vidíš všetky 3 momentálne alternatívy (recovery/endurance/' +
+    'intensity) a ktorú z nich má užívateľ práve vybranú (VYBRANÉ). Toto NIE JE požiadavka na ' +
+    'nové generovanie od nuly - len na úpravu existujúceho plánu podľa pokynu používateľa.\n\n' +
+    `POKYN OD POUŽÍVATEĽA: "${instruction}"\n\n` +
+    'Uprav LEN tie dni, ktorých sa pokyn reálne týka (napr. "skráť dnešný tréning na 60 minút" = ' +
+    'len dnešok; "presuň intervaly na zajtra" = dnešok aj zajtrajšok; "cítim sa dnes unavený, ' +
+    'uprav plán" = najbližší deň, prípadne aj deň po ňom, ak to dáva zmysel kvôli nadväznosti). ' +
+    'Dni, ktorých sa pokyn netýka, VYNECHAJ úplne z výstupu - ich pôvodné alternatívy ostanú ' +
+    'nezmenené. Dni s vlastným plánom (nižšie označené "MÁ VLASTNÝ PLÁN") NIKDY neuprav a ' +
+    'nezaraď do výstupu - tie sú mimo dosahu AI úprav. Pre každý upravovaný deň vráť znova ' +
+    'VŠETKY 3 alternatívy v rovnakom poradí podľa intenzity (recovery, endurance, intensity) - aj ' +
+    'tie, ktoré vecne nemeníš, len ich preformuluj/zachovaj - presne v tomto JSON tvare:\n' +
+    '[{"date":"YYYY-MM-DD","alternatives":[' +
+    '{"label":"...","intensity":"recovery","suggestion":"..."},' +
+    '{"label":"...","intensity":"endurance","suggestion":"..."},' +
+    '{"label":"...","intensity":"intensity","suggestion":"..."}' +
+    ']}]\n' +
+    'Odpovedz IBA validným JSON poľom, žiadny markdown, žiadne ```.'
+  );
+  lines.push('');
+  lines.push('Aktuálny plán:');
+  existingPlan.days.forEach(d => {
+    if (d.ownNote) {
+      lines.push(`- ${d.date}: ${d.weatherDesc}, ${Math.round(d.tempMin)}-${Math.round(d.tempMax)}°C [MÁ VLASTNÝ PLÁN: "${d.ownNote}"]`);
+      return;
+    }
+    if (!d.alternatives || !d.alternatives.length) {
+      lines.push(`- ${d.date}: ${d.weatherDesc}, ${Math.round(d.tempMin)}-${Math.round(d.tempMax)}°C [BEZ AI NÁVRHU]`);
+      return;
+    }
+    lines.push(weatherLineFor(d.date, d.weatherDesc, d.tempMin, d.tempMax, d.precipMm, d.windMaxKmh, 'BEZ VLASTNÉHO PLÁNU', '', d.bestWindow));
+    const selIdx = (currentSelection[d.date] != null && currentSelection[d.date] < d.alternatives.length) ? currentSelection[d.date] : 0;
+    d.alternatives.forEach((a, i) => {
+      lines.push(`   ${i === selIdx ? '→ VYBRANÉ' : '   '} [${a.intensity}] ${a.label}: ${a.suggestion}`);
+    });
+  });
+  return lines.join('\n');
+}
+
+// ---------- Režim 1: normálne generovanie nového plánu ----------
+async function generateNewPlan() {
   console.log('Sťahujem predpoveď počasia pre Čadcu...');
   const weatherDays = await fetchWeather();
 
@@ -179,10 +320,10 @@ async function main() {
 
   const prompt = buildPlanPrompt(weatherDays, wellnessMerged, dayNotes, statusByDate);
   console.log('Generujem plán (Gemini)...');
-  // Vyššie maxOutputTokens ako predtým (8000) - odkedy sa pre každý deň pýtame na 3
+  // Vyššie maxOutputTokens ako predtým (1200 -> 2600) - odkedy sa pre každý deň pýtame na 3
   // alternatívy namiesto 1 návrhu, je výstupný JSON cca 3x dlhší a pri starom limite by sa
   // Gemini odpoveď mohla orezať uprostred JSON-u a celá sa nedala naparsovať (=> opäť "bez návrhu").
-  const result = await callGemini(prompt, { json: true, maxOutputTokens: 8000 });
+  const result = await callGemini(prompt, { json: true, maxOutputTokens: 2600 });
   const raw = result ? result.text : null;
   const usedModel = result ? result.model : (process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL);
   let suggestions = [];
@@ -195,27 +336,6 @@ async function main() {
       if (Array.isArray(parsed)) suggestions = parsed;
       else console.warn('⚠️ Odpoveď z Gemini nie je JSON pole, ignorujem.');
     } catch (e) { console.warn('⚠️ Odpoveď z Gemini sa nedala naparsovať ako JSON:', e.message); }
-  }
-
-  const KNOWN_INTENSITIES = ['recovery', 'endurance', 'intensity'];
-  const INTENSITY_LABELS = { recovery: 'Regenerácia', endurance: 'Vytrvalosť', intensity: 'Intenzita' };
-  // Normalizuje a obmedzí to, čo Gemini vrátil pre jeden deň, na max 3 použiteľné alternatívy s
-  // konzistentným tvarom (id/label/intensity/suggestion) - aj keby model vynechal label alebo
-  // poslal neznámu hodnotu intensity, frontend dostane vždy rozumný tvar dát.
-  function normalizeAlternatives(alts) {
-    if (!Array.isArray(alts)) return [];
-    return alts
-      .filter(a => a && a.suggestion)
-      .slice(0, 3)
-      .map((a, i) => {
-        const intensity = KNOWN_INTENSITIES.includes(a.intensity) ? a.intensity : 'endurance';
-        return {
-          id: ['a', 'b', 'c'][i] || String(i),
-          label: a.label || INTENSITY_LABELS[intensity],
-          intensity,
-          suggestion: String(a.suggestion),
-        };
-      });
   }
 
   const output = {
@@ -235,6 +355,7 @@ async function main() {
         tempMin: w.tempMin,
         precipMm: w.precipMm,
         windMaxKmh: w.windMaxKmh,
+        bestWindow: w.bestWindow || null,
         ownNote: hasOwnNote ? note.note : null,
         status: statusByDate[w.date] !== 'active' ? statusByDate[w.date] : null,
         // Dni s vlastným plánom nemajú alternatívy (rovnaká logika ako predtým pri aiSuggestion -
@@ -244,11 +365,72 @@ async function main() {
       };
     }),
   };
-  fs.writeFileSync(path.join(DATA_DIR, 'weather_plan.json'), JSON.stringify(output, null, 1));
+  fs.writeFileSync(PLAN_FILE, JSON.stringify(output, null, 1));
   console.log('✅ Plán podľa počasia uložený do data/weather_plan.json.');
 }
 
+// ---------- Režim 2: úprava existujúceho plánu podľa voľného pokynu ----------
+async function editExistingPlan(instruction) {
+  const existing = loadJsonSafe(PLAN_FILE, null);
+  if (!existing || !Array.isArray(existing.days) || !existing.days.length) {
+    console.warn('⚠️ Neexistuje žiadny vygenerovaný plán na úpravu - generujem nový plán namiesto úpravy pokynom.');
+    return generateNewPlan();
+  }
+
+  let currentSelection = {};
+  const rawSelection = process.env.PLAN_CURRENT_SELECTION || '';
+  if (rawSelection) {
+    try { currentSelection = JSON.parse(rawSelection); }
+    catch (e) { console.warn('⚠️ PLAN_CURRENT_SELECTION sa nedal naparsovať, používam prvú alternatívu pre každý deň:', e.message); }
+  }
+
+  const prompt = buildEditPrompt(existing, currentSelection, instruction);
+  console.log(`Upravujem existujúci plán podľa pokynu: "${instruction}" (Gemini)...`);
+  const result = await callGemini(prompt, { json: true, maxOutputTokens: 2600 });
+  const raw = result ? result.text : null;
+  const usedModel = result ? result.model : (process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL);
+
+  let edits = [];
+  if (raw) {
+    let jsonStr = raw.trim();
+    const fenceMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fenceMatch) jsonStr = fenceMatch[1].trim();
+    try {
+      const parsed = JSON.parse(jsonStr);
+      if (Array.isArray(parsed)) edits = parsed;
+      else console.warn('⚠️ Odpoveď na úpravu nie je JSON pole, ignorujem.');
+    } catch (e) { console.warn('⚠️ Odpoveď na úpravu sa nedala naparsovať ako JSON:', e.message); }
+  }
+  if (!edits.length) {
+    console.warn('⚠️ AI nevrátila žiadne použiteľné úpravy (chyba API, alebo prázdna/nezrozumiteľná odpoveď) - plán ostáva nezmenený.');
+  }
+
+  let changedDates = [];
+  edits.forEach(e => {
+    const day = existing.days.find(d => d.date === e.date);
+    if (!day) { console.warn(`⚠️ AI vrátila úpravu pre neznámy dátum ${e.date}, ignorujem.`); return; }
+    if (day.ownNote) { console.warn(`⚠️ AI sa pokúsila upraviť deň ${e.date}, ktorý má vlastný plán - ignorujem (dni s vlastným plánom sa nikdy neprepisujú).`); return; }
+    const normalized = normalizeAlternatives(e.alternatives);
+    if (normalized.length) { day.alternatives = normalized; changedDates.push(e.date); }
+  });
+
+  existing.generatedAt = new Date().toISOString();
+  existing.model = usedModel;
+  existing.lastEdit = { instruction, at: new Date().toISOString(), changedDates };
+  fs.writeFileSync(PLAN_FILE, JSON.stringify(existing, null, 1));
+  console.log(`✅ Plán upravený podľa pokynu (zmenené dni: ${changedDates.join(', ') || 'žiadne'}) a uložený do data/weather_plan.json.`);
+}
+
+async function main() {
+  const editInstruction = (process.env.PLAN_EDIT_INSTRUCTION || '').trim();
+  if (editInstruction) {
+    await editExistingPlan(editInstruction);
+  } else {
+    await generateNewPlan();
+  }
+}
+
 main().catch(err => {
-  console.error('❌ Chyba pri generovaní plánu:', err.message);
+  console.error('❌ Chyba pri generovaní/úprave plánu:', err.message);
   process.exit(1);
 });

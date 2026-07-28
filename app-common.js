@@ -97,6 +97,90 @@ async function icuPutWellness(date, payload){
 function icuUpdateActivity(id, payload){ return icuRequest(`/activity/${id}`, 'PUT', payload); }
 function icuDeleteActivity(id){ return icuRequest(`/activity/${id}`, 'DELETE'); }
 
+// ---------- Zjednotený "Komentár dňa" (Dashboard / História / Kalendár - jedna a tá istá položka) ----------
+// Dva zdroje toho istého údaja:
+//  1) Intervals.icu wellness.comments — pravidelne sa ťahá do data/wellness_daily.json/
+//     wellness_history.json cez sync.js. Toto je "master" zdroj, historicky tu už bolo veľa
+//     komentárov napísaných priamo v Intervals.icu alebo cez check-in.
+//  2) data/day_notes.json — lokálny cache zapisovaný priamo z prehliadača cez GitHub Contents
+//     API (okamžite, bez čakania na sync beh). Pôvodne slúžil len na budúce plány v Kalendári;
+//     odteraz sa doň zrkadlí presne to isté, čo sa ukladá aj do Intervals.icu, takže funguje aj
+//     ako okamžitý fallback pre dni, ktoré ešte žiadny sync nestihol stiahnuť (typicky budúce dni,
+//     alebo dni tesne po uložení pred najbližším cron behom).
+// Priorita zobrazenia: ak Intervals.icu už niečo má, berie sa TO (je to autoritatívny zdroj a
+// pravidelne sa synchronizuje) - inak sa použije lokálna kópia z day_notes.json.
+function dayCommentFor(wellnessComment, noteText){
+  if(wellnessComment && wellnessComment.trim()) return wellnessComment.trim();
+  if(noteText && noteText.trim()) return noteText.trim();
+  return '';
+}
+
+const DAY_NOTES_URL = 'data/day_notes.json';
+// Rovnaký GitHub token ako pri tlačidle "Token" na Dashboarde (zdieľaný cez localStorage 'gh_pat'
+// naprieč všetkými stránkami - stačí zadať raz).
+function getGhToken(){ return localStorage.getItem('gh_pat') || ''; }
+function setGhToken(t){ localStorage.setItem('gh_pat', t); }
+
+// Uloží komentár/plán na daný deň naraz na OBIDVE miesta, aby si "komentár dňa" v Histórii a
+// "poznámka" v Kalendári boli navždy tá istá položka:
+//  1) data/day_notes.json cez GitHub Contents API - MUSÍ prejsť (inak sa hodí chyba), toto je čo
+//     robí zmenu okamžite viditeľnú na všetkých stránkach appky bez čakania na cron.
+//  2) Intervals.icu wellness.comments cez PUT - best-effort ("synchronizuje sa aj do Intervals.icu",
+//     ale chýbajúci/neplatný API key lokálne uloženie nezablokuje, len sa to nahlási v návratovej
+//     hodnote, aby to vedelo UI zobraziť ako varovanie).
+// status: voliteľný per-deň override Stavu (Kalendár) - ak sa nemení, pošli existujúcu hodnotu,
+// aby sa neprepísala na prázdno len preto, že niekto upravil komentár z inej stránky.
+async function saveDayComment(dateStr, note, status){
+  const token = getGhToken();
+  if(!token) throw new Error('Chýba GitHub token (tlačidlo "Token" na Dashboarde).');
+  const apiUrl = `https://api.github.com/repos/xsklencik/recovery/contents/${DAY_NOTES_URL}`;
+  let sha = null, existing = [];
+  const getRes = await fetch(apiUrl + '?t=' + Date.now(), {
+    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' },
+  });
+  if(getRes.ok){
+    const j = await getRes.json();
+    sha = j.sha;
+    try{ existing = JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g,''))))); }catch(e){ existing = []; }
+  }
+  const idx = existing.findIndex(n=>n.date===dateStr);
+  const isEmpty = note.trim()==='' && !status;
+  if(isEmpty){
+    if(idx>=0) existing.splice(idx,1); // prázdny komentár AJ žiadny stav = zmazať záznam
+  } else {
+    const entry = { date: dateStr, note, status: status || undefined, updatedAt: new Date().toISOString() };
+    if(idx>=0) existing[idx] = entry; else existing.push(entry);
+  }
+  const content = JSON.stringify(existing, null, 1);
+  const b64 = btoa(unescape(encodeURIComponent(content)));
+  const putRes = await fetch(apiUrl, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+    body: JSON.stringify({ message: `Update day note: ${dateStr}`, content: b64, sha: sha || undefined, branch: 'main' }),
+  });
+  if(!putRes.ok){
+    const txt = await putRes.text();
+    throw new Error(`GitHub API ${putRes.status}: ${txt.slice(0,150)}`);
+  }
+
+  // Best-effort synchronizácia smerom do Intervals.icu — len ak sa komentár skutočne mení na
+  // niečo neprázdne (zmazanie tu úmyselne nemažeme aj v Intervals.icu, nech sa lokálna appka
+  // nespráva ako jediný zdroj pravdy pre mazanie dát, ktoré mohli vzniknúť aj mimo nej).
+  let icuOk = false, icuError = null;
+  if(note.trim() !== ''){
+    try{
+      if(!getIcuApiKey()) throw new Error('Chýba Intervals.icu API key (tlačidlo "Intervals kľúč") — uložené len lokálne.');
+      await icuPutWellness(dateStr, { comments: note.trim() });
+      icuOk = true;
+    }catch(e){ icuError = e.message; }
+  }
+
+  return { notes: existing, icuOk, icuError };
+}
+
 // ---------- Priemer poľa cez pole záznamov (ignoruje null/undefined) ----------
 function meanOf(arr, field){
   const vals = arr.map(r=>r[field]).filter(v=>v!=null && !isNaN(v));
@@ -1030,14 +1114,18 @@ function drawChart(svgId, data, series, opts){
 // ---------- História tabuľka + modál dňa ----------
 // rows musí obsahovať aspoň {date, recovery, strain, hrv, restingHR, steps, comments}
 // dayResult sa hľadá priamo v `rows`, takže funguje nezávisle na tom, koľko dní sa práve zobrazuje.
-function drawTable(tableId, rows, activities){
+// notesByDate (voliteľné): Map date -> {note, status, ...} z data/day_notes.json - spolu s
+// dayResult.comments (Intervals.icu) tvorí zjednotený "komentár dňa", pozri dayCommentFor().
+function drawTable(tableId, rows, activities, notesByDate){
+  notesByDate = notesByDate || new Map();
   const table = document.getElementById(tableId);
   if(!table) return;
   let html = '<thead><tr><th>Dátum</th><th>Recovery</th><th>Strain</th><th>Load</th><th>HRV</th><th>TF pokoj.</th><th>TF spánok</th><th>Kroky</th></tr></thead><tbody>';
   rows.forEach(r=>{
     const color = pillColor(r.recovery);
+    const mergedComment = dayCommentFor(r.comments, notesByDate.get(r.date) ? notesByDate.get(r.date).note : null);
     html += `<tr class="history-row" data-date="${r.date}" style="cursor:pointer;">
-      <td>${r.date}${r.comments ? '<span class="comment-dot" title="Má komentár k dňu"></span>' : ''}</td>
+      <td>${r.date}${mergedComment ? '<span class="comment-dot" title="Má komentár k dňu"></span>' : ''}</td>
       <td><span class="pill" style="background:${color}22;color:${color}">${r.recovery!==null? r.recovery+'%':'—'}</span></td>
       <td>${r.strain!=null ? r.strain.toFixed(1) : '—'}</td>
       <td>${r.load!=null ? r.load : '—'}</td>
@@ -1055,7 +1143,9 @@ function drawTable(tableId, rows, activities){
       const date = row.dataset.date;
       const dayResult = rows.find(r=>r.date===date);
       const dayActivities = activities.filter(a=>a.date===date);
-      openDayModal(date, dayResult, dayActivities);
+      openDayModal(date, dayResult, dayActivities, notesByDate, {
+        onSaved: ()=> drawTable(tableId, rows, activities, notesByDate), // prekresli, nech sa hneď ukáže/skryje bodka komentára
+      });
     });
   });
 }
@@ -1131,7 +1221,9 @@ function openActivityModal(a){
   });
 }
 
-function openDayModal(date, dayResult, dayActivities){
+function openDayModal(date, dayResult, dayActivities, notesByDate, opts){
+  notesByDate = notesByDate || new Map();
+  opts = opts || {};
   const content = document.getElementById('day-modal-content');
   const v = dayResult ? verdictFor(dayResult) : null;
 
@@ -1159,6 +1251,8 @@ function openDayModal(date, dayResult, dayActivities){
   }
 
   const tsbZone = dayResult && dayResult.tsb!=null ? formaZoneFor(dayResult.tsb) : null;
+  const noteEntry = notesByDate.get(date);
+  const mergedComment = dayCommentFor(dayResult ? dayResult.comments : null, noteEntry ? noteEntry.note : null);
 
   content.innerHTML = `
     <h3 style="display:flex;justify-content:space-between;align-items:center;">
@@ -1187,12 +1281,14 @@ function openDayModal(date, dayResult, dayActivities){
         ${dayResult.stress!=null?`<div>Stres: <b>${dayResult.stress}/4</b></div>`:''}
       </div>
     ` : ''}
-    ${dayResult && dayResult.comments ? `
-      <div style="margin-bottom:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-3);">
-        <div style="font-size:0.72rem;color:var(--text-faint);margin-bottom:4px;">Komentár dňa</div>
-        <div style="font-size:0.88rem;color:var(--text-dim);white-space:pre-wrap;">${escapeHtml(dayResult.comments)}</div>
+    <div style="margin-bottom:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-3);">
+      <div style="font-size:0.72rem;color:var(--text-faint);margin-bottom:6px;">Komentár dňa <span style="font-weight:400;">— spoločný s Kalendárom, pri uložení sa zapíše aj do Intervals.icu</span></div>
+      <textarea id="day-modal-comment-input" rows="2" style="width:100%;font-family:var(--sans);font-size:0.88rem;">${escapeHtml(mergedComment)}</textarea>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
+        <button class="btn primary" id="day-modal-comment-save" style="padding:7px 14px;font-size:0.78rem;">Uložiť komentár</button>
+        <span id="day-modal-comment-status" style="font-size:0.74rem;color:var(--text-faint);"></span>
       </div>
-    ` : ''}
+    </div>
     <div class="section-title" style="margin:16px 0 10px;">Aktivity</div>
     ${activitiesHtml}
   `;
@@ -1206,6 +1302,39 @@ function openDayModal(date, dayResult, dayActivities){
       if(act) openActivityModal(act);
     });
   });
+  const commentSaveBtn = content.querySelector('#day-modal-comment-save');
+  if(commentSaveBtn){
+    commentSaveBtn.addEventListener('click', async ()=>{
+      const statusEl = content.querySelector('#day-modal-comment-status');
+      const val = content.querySelector('#day-modal-comment-input').value;
+      commentSaveBtn.disabled = true;
+      statusEl.style.color = 'var(--text-faint)';
+      statusEl.textContent = 'Ukladám…';
+      try{
+        const existingStatus = notesByDate.get(date) ? notesByDate.get(date).status : undefined;
+        const res = await saveDayComment(date, val, existingStatus);
+        if(val.trim()===''){ notesByDate.delete(date); }
+        else notesByDate.set(date, { date, note: val, status: existingStatus, updatedAt: new Date().toISOString() });
+        if(dayResult) dayResult.comments = val;
+        if(res.icuOk){
+          statusEl.style.color = 'var(--good)';
+          statusEl.textContent = '✅ Uložené (aj do Intervals.icu)';
+        } else if(res.icuError){
+          statusEl.style.color = 'var(--warn)';
+          statusEl.textContent = '✅ Uložené lokálne — ⚠️ Intervals.icu: ' + res.icuError;
+        } else {
+          statusEl.style.color = 'var(--good)';
+          statusEl.textContent = '✅ Uložené';
+        }
+        if(typeof opts.onSaved === 'function') opts.onSaved(date, val);
+      }catch(e){
+        statusEl.style.color = 'var(--bad)';
+        statusEl.textContent = '⚠️ ' + e.message;
+      }finally{
+        commentSaveBtn.disabled = false;
+      }
+    });
+  }
 }
 
 // zatvorenie modálu kliknutím mimo neho (na tmavé pozadie) — spoločné pre obe stránky
