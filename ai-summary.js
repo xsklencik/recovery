@@ -218,15 +218,25 @@ function buildAiPrompt(wellnessMerged, activitiesMerged, pastSummaries, globalSt
 // free tier k 26.7.2026) - ak by robil problémy, over/skús gemini-3.5-flash ako zálohu.
 const DEFAULT_GEMINI_MODEL = 'gemini-3.6-flash';
 
-// POZOR (zistené 28.7.2026) - "flash" modely v Gemini API majú defaultne zapnuté interné
-// "thinking" (reasoning) tokeny, ktoré sa POČÍTAJU do maxOutputTokens, ale nie sú vidno vo
-// výstupe. Pri nízkom maxOutputTokens (pôvodne 900) sa tak stalo, že model minul takmer celý
-// rozpočet na interné rozmýšľanie a na samotnú (viditeľnú) odpoveď mu ostalo len pár tokenov -
+// POZOR (zistené 28.7.2026, opravené 29.7.2026) - "flash" modely v Gemini API majú defaultne
+// zapnuté interné "thinking" (reasoning) tokeny, ktoré sa POČÍTAJU do maxOutputTokens, ale nie sú
+// vidno vo výstupe. Pri nízkom maxOutputTokens (pôvodne 900) sa tak stalo, že model minul takmer
+// celý rozpočet na interné rozmýšľanie a na samotnú (viditeľnú) odpoveď mu ostalo len pár tokenov -
 // výsledok bol orezaný uprostred JSON-u, spadol do catch-vetvy nižšie (kratky = raw text) a
 // vyzeral ako "len 2 vety, navyše po anglicky" (útržok, nie plnohodnotná odpoveď v slovenčine).
-// Riešenie: 1) thinkingConfig.thinkingBudget=0 vypne interné thinking tokeny úplne, 2) vyšší
-// maxOutputTokens dáva rezervu, 3) finishReason sa nižšie kontroluje - ak model orezal odpoveď
-// (MAX_TOKENS), radšej ju zahodíme ako by sme ukladali polovičatý/nezmyselný súhrn.
+// PRVÁ OPRAVA BOLA CHYBNÁ: poslala `thinkingConfig.thinkingBudget` - to je parameter len pre
+// Gemini 2.5 sériu. Náš model (gemini-3.6-flash, Gemini 3.x séria) používa iný parameter,
+// `thinkingConfig.thinkingLevel` ("low"/"high") - poslanie thinkingBudget na 3.x model Gemini API
+// odmietne s **400 Bad Request** (presne to, čo sa začalo diať po nasadení prvej opravy).
+// Gemini 3 Flash/Flash-Lite navyše thinking úplne vypnúť nevedia - "low" je najnižšia úroveň.
+// Nižšie preto vyberáme správne pole podľa rodiny modelu, aby fungoval aj prípadný GEMINI_MODEL
+// override na staršiu 2.5 sériu. Kontrola finishReason nižšie ostáva ako poistka pre orezané
+// odpovede (MAX_TOKENS) bez ohľadu na to, ktorý thinking parameter sa použil.
+function thinkingConfigFor(model) {
+  if (/^gemini-2\.5/.test(model)) return { thinkingBudget: 0 };
+  return { thinkingLevel: 'low' };
+}
+
 async function callGemini(prompt, opts) {
   opts = opts || {};
   const key = process.env.GEMINI_API_KEY;
@@ -240,7 +250,7 @@ async function callGemini(prompt, opts) {
     const generationConfig = {
       temperature: 0.7,
       maxOutputTokens: opts.maxOutputTokens || 2048,
-      thinkingConfig: { thinkingBudget: 0 },
+      thinkingConfig: thinkingConfigFor(model),
     };
     if (opts.json) generationConfig.responseMimeType = 'application/json';
     const res = await fetch(url, {
