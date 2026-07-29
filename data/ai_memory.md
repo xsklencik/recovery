@@ -9,3 +9,6 @@ Po dvoch dňoch s vysokou záťažou v podobe dlhých jázd v trvaní 160 a 178 
 
 ## 2026-07-28
 14 days, AND explicit user comments (rehab + cabin/badminton all day away today, tomorrow Tatras hike, 130km ride coming
+
+## 2026-07-29
+Dnes si veľmi dobre zregenerovaný. Tvoje HRV 59 ms aj spánkové skóre 89 sú nad dlhodobým priemerom a spánková tepová frekvencia 59 bpm potvrdzuje kvalitný nočný odpočinok. Včerajší deň bez bicykla s miernym pohybom ti pomohol vstrebať záťaž z predchádzajúcich dlhých jázd. Fyziologické dáta ukazujú výbornú pripravenosť na plánovanú celodennú aktivitu.
