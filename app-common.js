@@ -276,6 +276,28 @@ function mean(arr){ return arr.reduce((a,b)=>a+b,0)/arr.length; }
 function stdev(arr){ const m = mean(arr); return Math.sqrt(mean(arr.map(x=>(x-m)**2))); }
 function clamp(x,lo,hi){return Math.max(lo,Math.min(hi,x));}
 
+// ---------- Týždenné najazdené km (bicykel) - pre samostatnú podstránku Histórie ----------
+// Vracia pole VZOSTUPNE zoradené podľa dátumu (najstarší týždeň prvý) v tvare
+// {date: pondelok týždňa (YYYY-MM-DD), km}, priamo použiteľné v drawChart (ten očakáva vzostupne
+// zoradené dáta s poľom .date). Počíta len bicyklové aktivity (BIKE_ACTIVITY_TYPE_RE) - to je to,
+// čo si Adam predstavuje pod "koľko som najazdil". Aktivity bez poľa "distance" (staršie
+// importy do activities_history.json) sa do súčtu nezapočítajú.
+function weeklyBikeKmSeries(activities){
+  const weekMap = new Map(); // pondelok týždňa -> súčet metrov
+  (activities||[]).forEach(a=>{
+    if(!BIKE_ACTIVITY_TYPE_RE.test(a.type||'')) return;
+    if(a.distance==null || isNaN(a.distance)) return;
+    const date = a.date || (a.start_date_local||'').slice(0,10);
+    if(!date) return;
+    const wk = mondayOf(date);
+    weekMap.set(wk, (weekMap.get(wk)||0) + a.distance);
+  });
+  return [...weekMap.keys()].sort().map(wk => ({
+    date: wk,
+    km: Math.round((weekMap.get(wk)/1000) * 10) / 10,
+  }));
+}
+
 // POZOR: nikdy nepoužívaj new Date().toISOString().slice(0,10) na "dnešný dátum" - to prevádza
 // na UTC, čo v skorých ranných hodinách (Slovensko UTC+1/+2) posunie dátum o deň dozadu (presne
 // tento bug spôsoboval, že klik na 26. v kalendári otváral 25.). localDateStr() číta lokálne

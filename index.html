@@ -88,7 +88,7 @@
         <span class="ai-card-date" id="ai-card-date"></span>
       </div>
       <div class="ai-card-text" id="ai-card-text">Zatiaľ nevygenerované. Klikni "🧠 AI súhrn" hore, alebo počkaj na ranný cron beh.</div>
-      <button class="ai-plan-toggle" id="ai-plan-toggle" style="display:none;">Zobraziť podrobný plán na dnes ↓</button>
+      <button class="ai-plan-toggle" id="ai-plan-toggle" style="display:none;">Podrobný plán ↓</button>
       <div class="ai-plan-text" id="ai-plan-text" style="display:none;"></div>
     </div>
 
@@ -153,7 +153,7 @@
     </div>
 
     <div class="section-head">
-      <div class="section-title">Forma (TSB = CTL − ATL)</div>
+      <div class="section-title">Forma (TSB)</div>
       <div class="chart-tabs">
         <button class="tab-btn" data-chart="forma" data-range="30">30D</button>
         <button class="tab-btn active" data-chart="forma" data-range="90">90D</button>
@@ -180,31 +180,31 @@
       <div class="table-scroll"><table id="history-table"></table></div>
     </div>
     <div id="history-note" style="color:var(--text-faint);font-size:0.72rem;font-family:var(--mono);margin-top:8px;">
-      Zobrazených posledných 30 dní · klikni na riadok pre detail dňa (vrátane komentára) · <a class="nav-link" href="history.html">zobraziť celú históriu →</a>
+      Posledných 30 dní · klik = detail dňa · <a class="nav-link" href="history.html">Celá história →</a>
     </div>
 
-    <div class="section-head"><div class="section-title">Metodika</div></div>
-    <div class="methodology">
-      <div class="m-block"><b>Recovery %</b> — počíta sa z ranných fyziologických dát a zo skutočnej tréningovej záťaže, v pomere <b>60&nbsp;% fyziológia · 40&nbsp;% tréningová únava</b>. Huawei Watch Fit 5 dáva iba jedno nočné meranie (HRV/RHR/spánok), ktoré samo osebe nevie spoľahlivo zachytiť viacdňovú kumulovanú únavu — preto má skutočná záťaž (Intervals.icu Load) väčšiu váhu než pri klasických HRV-first modeloch. Fyziológia: HRV 30&nbsp;% · spánková TF 15&nbsp;% · pokojová TF (denná) 10&nbsp;% · spánok 5&nbsp;% (spánková TF má vyššiu váhu než denná, lebo nočný priemer je presnejší signál - rovnaký princíp ako RHR u Whoop/Oura). Vážené z-skóre voči 60-dňovému kĺzavému priemeru, mapované na stupnicu s posunutým stredom — priemerný deň ≈ 63&nbsp;%. Tréningová únava 40&nbsp;% — pozri nižšie.</div>
-      <div class="m-block"><b>Tréningová únava (40 %)</b> — <i>Fatigue Score</i> = súčet Load z posledných 14 dní (T-1 a staršie, nikdy nie z dnešného dňa), každý deň exponenciálne menej váhový (0,70× na deň dozadu) a nelineárne "napenalizovaný" (Load^1,12), aby veľké tréningy dopadli neúmerne viac než malé. Fatigue Score sa porovná s tvojou aktuálnou "kapacitou" (odvodenou z CTL predošlého dňa — vyšší CTL = viac tolerancie na rovnakú záťaž), výsledný pomer sa mapuje na skóre s pevným stredom v 1,0 (nie voči plávajúcemu priemeru — inak by si sa pri chronickom preťažení sám "znecitlivel"). Graf tejto metriky bol odstránený (bol zle vyladený, väčšina dní vychádzala príliš vysoko) - hodnota sa naďalej počíta a vstupuje do Recovery (banner "Tréningová únava" hore), len sa už nezobrazuje ako samostatný graf.</div>
-      <div class="m-block"><b>Strain 0–21</b> — rastie počas dňa. Počíta sa priamo z Intervals.icu <b>Load</b> (spoľahlivá, kalibrovaná záťažová metrika pre každú aktivitu). Kroky sa pripočítajú <b>vždy</b>, ale ak si mal v ten deň pešiu aktivitu (hike/walk/beh, rozpoznané podľa typu alebo chôdzového tempa - nie podľa toho, ako to Intervals.icu náhodou označí), jej odhadnuté kroky sa z denného súčtu najprv odčítajú, aby sa nezapočítali dvakrát (raz cez Load aktivity, raz cez kroky). Súčet sa škáluje logaritmicky, takže pridávanie záťaže pri už vysokom strain rastie čoraz pomalšie.</div>
-      <div class="m-block"><b>Cieľové pásmo Strain</b> (zvýraznený pás na prstenci Strain) — vlastná, transparentná náhrada Whoopovho "target strain range" (presný Whoop vzorec nie je verejný). Stred pásma: <code>2,5 + (Recovery / 100) × 15</code> — pri 0&nbsp;% Recovery vychádza stred 2,5, pri 100&nbsp;% až 17,5. K tomu sa pripočíta jemná fitness korekcia podľa CTL: <code>clamp((CTL − 35) × 0,045; −1,5; +1,5)</code> (vyššie CTL = vyššia natrénovanosť = o niečo vyšší strop). Výsledný stred sa orezáva na 1,5–19,5 a pásmo má pevnú šírku ±2,3. Pod pásmom = netrénuješ na dnešný potenciál, v pásme = zásah, nad pásmom = riziko neprimeranej akútnej záťaže vzhľadom na dnešné Recovery.</div>
-      <div class="m-block"><b>Sleep 0–100</b> — priamo Intervals.icu <i>sleepScore</i> (kombinuje dĺžku aj kvalitu spánku z hodiniek). Farba/verdikt na rovnakej stupnici ako Recovery (červená pod 50, jantárová 50–74, zelená od 75).</div>
-      <div class="m-block"><b>Forma (TSB)</b> — CTL mínus ATL, informačná metrika dlhodobej formy (do Recovery nevstupuje). Počíta sa z <b>dnešných</b> CTL/ATL (nie zo včerajška), takže sa mení počas dňa, akonáhle sa zosynchronizuje nová aktivita - vrátane okamžitého poklesu hneď po tvrdom tréningu (čerstvá záťaž = okamžitá únava, fyziologicky správne). Farebné pásma podľa štandardných zón: <b>Prechod</b> (nad 20, riziko odtrénovania), <b>Svieži</b> (5 až 20), <b>Sivá zóna</b> (-10 až 5, neutrál), <b>Optimálne</b> (-30 až -10, tréningové okno), <b>Vysoké riziko</b> (pod -30, preťaženie/únava).</div>
-      <div class="m-block"><b>Bannery hore</b> (HRV, pokojová/spánková TF, kroky, tréningová únava, CTL/ATL/TSB) — rýchly denný prehľad. Farba hodnoty HRV/TF/krokov ukazuje odchýlku od tvojho vlastného 60-dňového priemeru (zelená = lepšie ako zvyčajne, žltá = mierne horšie, červená = výrazne horšie). Tréningová únava je farebná podľa pásma pomeru (svieži/v norme/zvýšená/vysoká/extrémna). TSB je farebné podľa zóny Forma grafu vyššie. Kliknutím na riadok v histórii uvidíš aj Formu/CTL/ATL daného dňa a kliknutím na aktivitu jej detail (vrátane premenovania/zmazania priamo na Intervals.icu).</div>
-      <div class="m-block" style="color:var(--text-faint);font-size:0.76rem;">Poznámka k HR zónam: čas v jednotlivých zónach (Z1–Z5) sa stále zobrazuje v detaile aktivity ako informačný údaj, no do výpočtu Strain už nevstupuje.</div>
-      <div class="m-block"><b>↻ Aktualizovať</b> spustí GitHub Actions sync na pozadí (stiahne najnovšie aktivity a wellness z Intervals.icu) a po dokončení znovu načíta dáta — po skončení jazdy uvidíš Strain narásť do minúty.</div>
-    </div>
+    <details class="methodology-wrap">
+      <summary class="section-title" style="cursor:pointer;display:inline-block;margin:36px 0 14px;">Metodika (vzorce)</summary>
+      <div class="methodology">
+        <div class="m-block"><b>Recovery</b> — 60&nbsp;% fyziológia (HRV 30 · spánk. TF 15 · pokoj. TF 10 · spánok 5, z-skóre voči 60D priemeru) + 40&nbsp;% tréningová únava. Stred stupnice ≈ 63&nbsp;%.</div>
+        <div class="m-block"><b>Tréningová únava</b> — Fatigue Score (Load posledných 14&nbsp;dní, T-1 a staršie, decay 0,70×/deň, Load<sup>1,12</sup>) ÷ kapacita (z CTL T-1). Stred pomeru = 1,0. Bez vlastného grafu, len vstup do Recovery.</div>
+        <div class="m-block"><b>Strain 0–21</b> — Intervals.icu Load + kroky (kroky z pešej aktivity sa neduplikujú), log škála.</div>
+        <div class="m-block"><b>Cieľové pásmo Strain</b> — stred <code>2,5 + (Recovery/100)×15 + clamp((CTL−35)×0,045; −1,5; +1,5)</code>, orezané na 1,5–19,5, šírka ±2,3.</div>
+        <div class="m-block"><b>Sleep 0–100</b> — Intervals.icu sleepScore.</div>
+        <div class="m-block"><b>Forma (TSB)</b> — dnešné CTL−ATL. Zóny: &gt;20 prechod · 5–20 svieži · −10–5 sivá · −30–−10 optimálne · &lt;−30 riziko.</div>
+        <div class="m-block" style="color:var(--text-faint);font-size:0.76rem;">HR zóny (Z1–Z5) sú len info v detaile aktivity, do Strain nevstupujú.</div>
+      </div>
+    </details>
   </div>
 </div>
 
+
 <div class="modal-backdrop" id="token-modal">
   <div class="modal">
-    <h3>GitHub token pre tlačidlo Aktualizovať</h3>
+    <h3>GitHub token</h3>
     <p>
-      Fine-grained Personal Access Token s prístupom <b>len na tento repozitár</b> a oprávnením
-      <b>Contents: Read and write</b>. Vytvor ho na github.com → Settings → Developer settings →
-      Fine-grained tokens. Token sa uloží len v tomto prehliadači (localStorage), nikam sa neposiela okrem GitHub API.
+      Fine-grained token, prístup len na tento repozitár, oprávnenie <b>Contents: Read and write</b>.
+      GitHub → Settings → Developer settings → Fine-grained tokens. Ukladá sa len lokálne v prehliadači.
     </p>
     <input type="password" id="token-input" placeholder="github_pat_xxxxxxxx">
     <div class="modal-actions">
@@ -502,7 +502,7 @@ document.getElementById('btn-ai-summary').addEventListener('click', async ()=>{
       setTimeout(()=>{ btn.textContent='🧠 AI súhrn'; }, 2500);
     } else {
       btn.textContent = '🧠 AI súhrn';
-      cardText.textContent = '⚠️ Po 4 minútach sa nový súhrn ešte neobjavil. Skontroluj GitHub → Actions → posledný beh "sync.yml": ak tam vôbec nie je nový beh z posledných pár minút, dispatch pravdepodobne zlyhal (skús Token tlačidlo, možno vypršal). Ak beh tam je, otvor jeho log a hľadaj riadky s "AI súhrn" - tam uvidíš presný dôvod (chýba GEMINI_API_KEY / chyba Gemini API / iné). Repo → data/ai_summary_daily.json vieš tiež skontrolovať priamo na GitHube, či reálne existuje.';
+      cardText.textContent = '⚠️ Súhrn sa po 4 min. neobjavil. GitHub → Actions → "sync.yml": chýba nový beh → skús Token (možno vypršal); beh existuje → pozri log "AI súhrn" pre presnú chybu.';
     }
   }catch(err){
     document.getElementById('err').textContent = 'Chyba pri generovaní AI súhrnu: ' + err.message;
@@ -648,7 +648,7 @@ function renderAiSummary(aiSummary, todayDate){
   if(!aiSummary || !aiSummary.summary){
     title.textContent = 'Zhrnutie dňa';
     date.textContent = '';
-    text.textContent = 'Zatiaľ nevygenerované. Klikni "🧠 AI súhrn" hore, alebo počkaj na ranný cron beh. Ak sa to opakuje dlhšie, over si v GitHub → Actions logu posledného behu riadky s "AI súhrn" a či máš nastavený GEMINI_API_KEY secret (pozri NAVOD.md).';
+    text.textContent = 'Zatiaľ nevygenerované. Klikni "🧠 AI súhrn" alebo počkaj na ranný beh. Pretrváva → over GEMINI_API_KEY a log v GitHub Actions.';
     planToggle.style.display = 'none';
     planText.style.display = 'none';
     return;
@@ -659,7 +659,7 @@ function renderAiSummary(aiSummary, todayDate){
   text.textContent = aiSummary.summary;
   if(aiSummary.plan){
     planToggle.style.display = 'inline';
-    planToggle.textContent = 'Zobraziť podrobný plán na dnes ↓';
+    planToggle.textContent = 'Podrobný plán ↓';
     planText.style.display = 'none';
     planText.textContent = aiSummary.plan;
   } else {
@@ -672,7 +672,7 @@ document.getElementById('ai-plan-toggle').addEventListener('click', ()=>{
   const toggle = document.getElementById('ai-plan-toggle');
   const showing = planText.style.display !== 'none';
   planText.style.display = showing ? 'none' : 'block';
-  toggle.textContent = showing ? 'Zobraziť podrobný plán na dnes ↓' : 'Skryť podrobný plán ↑';
+  toggle.textContent = showing ? 'Podrobný plán ↓' : 'Skryť plán ↑';
 });
 
 function render(results, activities, aiSummary){
@@ -744,11 +744,11 @@ function render(results, activities, aiSummary){
     {label:'HRV', val: fmt(today.hrv,1), color:hrvDev.color, sub:hrvDev.sub},
     {label:'Pokojová TF', val: fmt(today.restingHR,0,' bpm'), color:rhrDev.color, sub:rhrDev.sub},
     {label:'Spánková TF', val: fmt(today.avgSleepingHR,0,' bpm'), color:sleepHrDev.color, sub:sleepHrDev.sub},
-    {label:'Kroky dnes', val: today.steps!=null ? today.steps.toLocaleString('sk-SK') : '—', sub: stepsSub},
+    {label:'Kroky', val: today.steps!=null ? today.steps.toLocaleString('sk-SK') : '—', sub: stepsSub},
     {label:'Tréningová únava', val: today.fatigueRatio!=null ? Math.round(today.fatigueRatio*100)+' %' : '—', color: fatigueZone?fatigueZone.color:null, sub: fatigueZone?fatigueZone.label:null},
     {label:'CTL (Fitness)', val: fmt(today.ctl,1)},
     {label:'ATL (Únava)', val: fmt(today.atl,1)},
-    {label:'TSB (Forma, info)', val: today.tsb!=null? today.tsb.toFixed(1): '—', color: tsbZone?tsbZone.color:null, sub: tsbZone?tsbZone.label:null},
+    {label:'TSB (Forma)', val: today.tsb!=null? today.tsb.toFixed(1): '—', color: tsbZone?tsbZone.color:null, sub: tsbZone?tsbZone.label:null},
   ];
   metrics.forEach(m=>{
     const div = document.createElement('div');
@@ -778,15 +778,19 @@ function render(results, activities, aiSummary){
        tooltipFormat:(f,v)=>v.toFixed(1)});
   }
   function renderPhysio(range){
-    // Prerušovaná čiara = ROVNÁ vodorovná čiara = priemer za práve zobrazené obdobie (7D → 7-dňový
-    // priemer, 30D → 30-dňový priemer, 90D → 90-dňový priemer) - nie kĺzavý priemer bod po bode.
-    // Tieňované pásmo okolo = "normálny rozsah" (priemer ± 1 smerodajná odchýlka za rovnaké obdobie),
-    // v duchu grafov ako Bevel Cardio Load.
+    // HRV prerušovaná čiara = FIXNÝ 60-dňový kĺzavý baseline (rovnaký, aký sa používa aj na
+    // výpočet Recovery a v bannerových kartách) - NIE priemer za práve zobrazené obdobie. Predtým
+    // pri 7D zobrazení ukazovala čiara len 7-dňový priemer, čo pri prepínaní rozsahu (7D/30D/90D)
+    // "skákalo" a nedávalo poriadny referenčný bod. RHR a spánková TF nižšie zostávajú na priemere
+    // za zobrazené obdobie (tam si to Adam nežiadal meniť).
+    // Tieňované pásmo okolo = "normálny rozsah" (priemer ± 1 smerodajná odchýlka za rovnaké obdobie).
     const hrvData = results.filter(r => r.date >= NEW_METHOD_CUTOFF).slice(-range);
-    const hrvVals = hrvData.map(r=>r.hrv).filter(v=>v!=null && !isNaN(v));
     const rhrVals = hrvData.map(r=>r.restingHR).filter(v=>v!=null && !isNaN(v));
     const sleepVals = hrvData.map(r=>r.avgSleepingHR).filter(v=>v!=null && !isNaN(v));
-    const hrvAvg = meanOf(hrvData, 'hrv'), hrvStd = hrvVals.length>1 ? stdev(hrvVals) : 0;
+    const hrvBaseline = LATEST_BASELINE.hrv; // {mean, std} za posledných ~60 dní, počítané v computeResults()
+    const hrvVals = hrvData.map(r=>r.hrv).filter(v=>v!=null && !isNaN(v));
+    const hrvAvg = hrvBaseline ? hrvBaseline.mean : meanOf(hrvData, 'hrv');
+    const hrvStd = hrvBaseline ? hrvBaseline.std : (hrvVals.length>1 ? stdev(hrvVals) : 0);
     const rhrAvg = meanOf(hrvData, 'restingHR'), rhrStd = rhrVals.length>1 ? stdev(rhrVals) : 0;
     const sleepAvg = meanOf(hrvData, 'avgSleepingHR'), sleepStd = sleepVals.length>1 ? stdev(sleepVals) : 0;
     const hrvDataWithAvg = hrvData.map(r=>({...r, hrvAvgLine: hrvAvg, rhrAvgLine: rhrAvg, sleepAvgLine: sleepAvg}));
@@ -794,7 +798,7 @@ function render(results, activities, aiSummary){
     drawChart('chart-hrv', hrvDataWithAvg,
       [
         {field:'hrv', color:PALETTE.good, label:'HRV'},
-        {field:'hrvAvgLine', color:PALETTE.avgLine, label:'Priemer ('+range+'D)', dash:true, hideDots:true, width:1.5, straight:true},
+        {field:'hrvAvgLine', color:PALETTE.avgLine, label:'Baseline (60D)', dash:true, hideDots:true, width:1.5, straight:true},
       ],
       {minAtZero:true, tooltipFormat:(f,v)=>v.toFixed(1),
        bands: hrvStd>0 ? [{min:hrvAvg-hrvStd, max:hrvAvg+hrvStd, color:hexToRgba(PALETTE.good,0.10)}] : []});

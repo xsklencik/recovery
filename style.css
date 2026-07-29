@@ -47,6 +47,11 @@ h1{font-size:1.3rem;font-weight:800;margin:0;letter-spacing:-0.02em;}
 .sync-info{color:var(--text-faint);font-size:0.72rem;margin-top:4px;font-family:var(--mono);}
 .nav-link{color:var(--text-dim);font-size:0.78rem;font-family:var(--mono);margin-top:8px;margin-right:14px;display:inline-block;text-decoration:none;border-bottom:1px dashed var(--text-faint);}
 .nav-link:hover{color:var(--text);border-color:var(--text-dim);}
+.breadcrumb{font-family:var(--mono);font-size:0.72rem;color:var(--text-faint);margin-bottom:6px;letter-spacing:.02em;}
+.breadcrumb a{color:var(--text-dim);text-decoration:none;}
+.breadcrumb a:hover{color:var(--text);text-decoration:underline;}
+.breadcrumb .sep{margin:0 6px;color:var(--text-faint);}
+.breadcrumb .current{color:var(--text-dim);}
 
 .btn-group{display:flex;gap:8px;flex-wrap:wrap;}
 .btn{
@@ -290,7 +295,7 @@ body{padding-bottom:78px;}
 
 /* ---------- Mobilné doladenie (väčšie dotykové plochy, menej stlačené rozostupy) ---------- */
 @media (max-width:680px){
-  .wrap{padding:20px 14px 24px;}
+  .wrap{padding:20px 14px calc(90px + env(safe-area-inset-bottom));}
   h1{font-size:1.1rem;}
   .btn-group{flex-wrap:wrap;width:100%;}
   .btn{flex:1 1 auto;justify-content:center;min-height:44px;padding:10px 12px;}

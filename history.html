@@ -13,12 +13,11 @@
 <div class="wrap">
   <div class="top-row">
     <div>
+      <div class="breadcrumb"><a href="index.html">Dashboard</a><span class="sep">›</span><span class="current">História</span></div>
       <div class="brand">
         <h1>Celá história</h1>
       </div>
       <div class="sub">Všetky dni, vrátane komentárov k jednotlivým dňom</div>
-      <a class="nav-link" href="index.html">← späť na dashboard</a>
-      <a class="nav-link" href="checkin.html">📝 Ranný check-in</a>
     </div>
     <div class="btn-group">
       <button class="btn" id="btn-token"><span class="btn-icon">⚙</span> Token</button>
@@ -44,8 +43,10 @@
       <div class="forma-legend" id="forma-legend"></div>
     </div>
 
-    <div class="section-head"><div class="section-title">Týždenný súhrn</div></div>
-    <div id="weekly-summary"></div>
+    <div class="section-head">
+      <div class="section-title">Týždenný súhrn</div>
+      <a class="nav-link" href="history-weekly.html" style="margin:0;">Detail + graf km →</a>
+    </div>
 
     <div class="section-head"><div class="section-title">Všetky dni</div></div>
     <div class="history-filters">
@@ -74,9 +75,8 @@
   <div class="modal">
     <h3>GitHub token</h3>
     <p>
-      Fine-grained Personal Access Token s prístupom <b>len na tento repozitár</b> a oprávnením
-      <b>Contents: Read and write</b>. Potrebný na ukladanie komentárov k dňom. Token sa uloží len
-      v tomto prehliadači (localStorage) - rovnaký, aký sa zadáva na Dashboarde.
+      Fine-grained token, prístup len na tento repozitár, oprávnenie <b>Contents: Read and write</b>.
+      Rovnaký token ako na Dashboarde, ukladá sa len lokálne.
     </p>
     <input type="password" id="token-input" placeholder="github_pat_xxxxxxxx">
     <div class="modal-actions">
@@ -89,7 +89,7 @@
 <div class="modal-backdrop" id="icu-key-modal">
   <div class="modal">
     <h3>Intervals.icu API key</h3>
-    <p>Nájdeš na intervals.icu → Settings → Developer Settings. Potrebný, aby sa komentár k dňu pri uložení zosynchronizoval aj do Intervals.icu. Ukladá sa len v tomto prehliadači.</p>
+    <p>Nájdeš na intervals.icu → Settings → Developer Settings. Ukladá sa len v tomto prehliadači.</p>
     <input type="password" id="icu-key-input" placeholder="tvoj Intervals.icu API key">
     <div class="modal-actions">
       <button class="cancel" id="icu-key-cancel">Zrušiť</button>
@@ -166,7 +166,6 @@ async function main(){
 
   renderFormaLegend('forma-legend');
   renderFormaHistory(results, 365);
-  renderWeeklySummary('weekly-summary', results, activities);
   renderFullTable(ALL_RESULTS_ROWS);
 
   document.querySelectorAll('.tab-btn').forEach(btn=>{

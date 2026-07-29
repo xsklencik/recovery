@@ -49,12 +49,12 @@
 <div class="wrap" style="max-width:680px;">
   <div class="top-row">
     <div>
+      <div class="breadcrumb"><a href="index.html">Dashboard</a><span class="sep">›</span><span class="current">Kalendár</span></div>
       <div class="brand">
         <h1>Kalendár</h1>
       </div>
       <div class="sub" style="color:var(--text-dim);font-size:0.85rem;margin-top:4px;">
-        Aktivity + poznámky/plány na konkrétne dni (aj budúce - dostanú sa do rannej AI analýzy).
-        Komentár dňa je tu ten istý údaj ako "Komentár dňa" v Histórii a na Dashboarde.
+        Aktivity, poznámky a plány na jednotlivé dni. Komentár dňa = rovnaký údaj ako v Histórii a na Dashboarde.
       </div>
     </div>
     <div class="btn-group">
@@ -85,8 +85,17 @@
   <div class="modal">
     <h3 id="day-modal-date">—</h3>
     <div id="day-modal-activities" style="margin-bottom:14px;"></div>
+    <div class="ai-card" id="day-modal-ai-card" style="margin-bottom:14px;display:none;">
+      <div class="ai-card-head">
+        <span class="ai-card-icon">✦</span>
+        <span class="ai-card-title">Zhrnutie dňa (AI)</span>
+      </div>
+      <div class="ai-card-text" id="day-modal-ai-text"></div>
+      <button class="ai-plan-toggle" id="day-modal-ai-plan-toggle" style="display:none;">Podrobný plán ↓</button>
+      <div class="ai-plan-text" id="day-modal-ai-plan-text" style="display:none;"></div>
+    </div>
     <div class="field" style="margin-bottom:10px;">
-      <span class="field-label">Stav na tento deň (voliteľné, prebije všeobecný Stav)</span>
+      <span class="field-label">Stav dňa (prebije všeobecný Stav)</span>
       <div class="status-options" id="day-modal-status" style="margin-top:6px;">
         <button class="status-opt" data-status="active"><span class="status-opt-icon" style="background:var(--good);">🏃</span><span class="status-opt-label">Aktívny</span></button>
         <button class="status-opt" data-status="sick"><span class="status-opt-icon" style="background:var(--warn);">🤒</span><span class="status-opt-label">Chorý</span></button>
@@ -95,7 +104,7 @@
       </div>
     </div>
     <div class="field" style="margin-bottom:14px;">
-      <span class="field-label">Komentár / poznámka / plán na tento deň <span style="font-weight:400;color:var(--text-faint);">— rovnaký údaj ako "Komentár dňa" v Histórii, pri uložení sa zapíše aj do Intervals.icu</span></span>
+      <span class="field-label">Komentár / plán dňa <span style="font-weight:400;color:var(--text-faint);">— zapíše sa aj do Intervals.icu</span></span>
       <textarea id="day-modal-note" rows="3" style="width:100%;" placeholder="napr. idem na túru, chcem voľno, preteky, ako som sa cítil..."></textarea>
     </div>
     <div class="modal-actions" style="align-items:center;gap:10px;">
@@ -119,9 +128,8 @@
   <div class="modal">
     <h3>GitHub token</h3>
     <p>
-      Fine-grained Personal Access Token s prístupom <b>len na tento repozitár</b> a oprávnením
-      <b>Contents: Read and write</b>. Potrebný na ukladanie poznámok/komentárov k dňom. Token sa
-      uloží len v tomto prehliadači (localStorage) - rovnaký, aký sa zadáva na Dashboarde.
+      Fine-grained token, prístup len na tento repozitár, oprávnenie <b>Contents: Read and write</b>.
+      Rovnaký token ako na Dashboarde, ukladá sa len lokálne.
     </p>
     <input type="password" id="token-input" placeholder="github_pat_xxxxxxxx">
     <div class="modal-actions">
@@ -134,7 +142,7 @@
 <div class="modal-backdrop" id="icu-key-modal">
   <div class="modal">
     <h3>Intervals.icu API key</h3>
-    <p>Nájdeš na intervals.icu → Settings → Developer Settings. Potrebný, aby sa komentár k dňu pri uložení zosynchronizoval aj do Intervals.icu. Ukladá sa len v tomto prehliadači.</p>
+    <p>Nájdeš na intervals.icu → Settings → Developer Settings. Ukladá sa len v tomto prehliadači.</p>
     <input type="password" id="icu-key-input" placeholder="tvoj Intervals.icu API key">
     <div class="modal-actions">
       <button class="cancel" id="icu-key-cancel">Zrušiť</button>
@@ -149,6 +157,7 @@ const REPO_OWNER = 'xsklencik';
 const REPO_NAME = 'recovery';
 const NOTES_URL = 'data/day_notes.json';
 const ANALYSES_URL = 'data/activity_analyses.json';
+const AI_SUMMARY_HISTORY_URL = 'data/ai_summary_history.json';
 const ANALYZE_WORKFLOW_FILE = 'analyze-activity.yml';
 
 // ---------- GitHub token / Intervals.icu API key modaly (rovnaké localStorage kľúče ako Dashboard) ----------
@@ -243,13 +252,19 @@ let ANALYSES = {};
 const MONTH_NAMES = ['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December'];
 
 let WELLNESS_BY_DATE = new Map();
+let AI_SUMMARY_BY_DATE = new Map();
 
 async function loadData(){
-  const [actHist, actDaily, notes, analyses, wHist, wDaily] = await Promise.all([
+  const [actHist, actDaily, notes, analyses, wHist, wDaily, aiHistory] = await Promise.all([
     loadJson('data/activities_history.json'), loadJson('data/activities_daily.json'), loadJson(NOTES_URL),
     loadJson('data/activity_analyses.json'),
     loadJson('data/wellness_history.json'), loadJson('data/wellness_daily.json'),
+    loadJson(AI_SUMMARY_HISTORY_URL),
   ]);
+  // ai_summary_history.json je jeden objekt kľúčovaný dátumom ({"2026-07-28": {...}, ...}) -
+  // načíta sa NARAZ (jeden fetch), takže výber dňa v Kalendári nevyvoláva žiadne ďalšie
+  // (prípadne 404) požiadavky za behu - len vyhľadanie v už stiahnutej mape.
+  AI_SUMMARY_BY_DATE = new Map(Object.entries(aiHistory || {}));
   const acts = mergeById(actHist||[], actDaily||[]);
   ACTIVITIES_BY_DATE = new Map();
   acts.forEach(a=>{
@@ -328,20 +343,57 @@ function activityRowHtml(a){
 
 let selectedDayStatus = null;
 
+// AI súhrn dňa (Gemini) pre KONKRÉTNY vybraný deň - číta sa z už načítanej AI_SUMMARY_BY_DATE
+// mapy (žiadny fetch tu, takže žiadne 404 pri prepínaní dní). Pre dni bez vygenerovaného súhrnu
+// (mimo rozsahu histórie, alebo deň v budúcnosti) sa karta jednoducho skryje.
+function renderDayAiSummary(dateStr){
+  const card = document.getElementById('day-modal-ai-card');
+  const text = document.getElementById('day-modal-ai-text');
+  const planToggle = document.getElementById('day-modal-ai-plan-toggle');
+  const planText = document.getElementById('day-modal-ai-plan-text');
+  const entry = AI_SUMMARY_BY_DATE.get(dateStr);
+  if(!entry || !entry.summary){
+    card.style.display = 'none';
+    planToggle.style.display = 'none';
+    planText.style.display = 'none';
+    return;
+  }
+  card.style.display = 'block';
+  text.textContent = entry.summary;
+  if(entry.plan){
+    planToggle.style.display = 'inline';
+    planToggle.textContent = 'Podrobný plán ↓';
+    planText.style.display = 'none';
+    planText.textContent = entry.plan;
+  } else {
+    planToggle.style.display = 'none';
+    planText.style.display = 'none';
+  }
+}
+document.getElementById('day-modal-ai-plan-toggle').addEventListener('click', ()=>{
+  const planText = document.getElementById('day-modal-ai-plan-text');
+  const toggle = document.getElementById('day-modal-ai-plan-toggle');
+  const showing = planText.style.display !== 'none';
+  planText.style.display = showing ? 'none' : 'block';
+  toggle.textContent = showing ? 'Podrobný plán ↓' : 'Skryť plán ↑';
+});
+
 function openDayModal(dateStr){
   currentModalDate = dateStr;
   document.getElementById('day-modal-date').textContent = dateStr;
   const acts = ACTIVITIES_BY_DATE.get(dateStr) || [];
   const actBox = document.getElementById('day-modal-activities');
   if(acts.length){
-    actBox.innerHTML = '<div class="field-label" style="margin-bottom:6px;">Aktivity toho dňa</div>' +
+    actBox.innerHTML = '<div class="field-label" style="margin-bottom:6px;">Aktivity dňa</div>' +
       acts.map(activityRowHtml).join('<div style="height:10px;"></div>');
     actBox.querySelectorAll('.btn-analyze-activity').forEach(btn=>{
       btn.addEventListener('click', ()=> runActivityAnalysis(btn.dataset.activityId, btn));
     });
   } else {
-    actBox.innerHTML = '<div class="field-label">Žiadna zaznamenaná aktivita tento deň.</div>';
+    actBox.innerHTML = '<div class="field-label">Žiadna aktivita.</div>';
   }
+
+  renderDayAiSummary(dateStr);
 
   // Zjednotený "Komentár dňa" - rovnaká hodnota ako v Histórii/na Dashboarde (dayCommentFor
   // v app-common.js): prednosť má Intervals.icu wellness.comments, inak lokálna day_notes.json

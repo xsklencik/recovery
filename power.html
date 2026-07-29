@@ -13,11 +13,12 @@
 <div class="wrap" style="max-width:640px;">
   <div class="top-row">
     <div>
+      <div class="breadcrumb"><a href="index.html">Dashboard</a><span class="sep">›</span><span class="current">Výkon</span></div>
       <div class="brand">
         <h1>Výkon / VO2max / FTP</h1>
       </div>
       <div class="sub" style="color:var(--text-dim);font-size:0.85rem;margin-top:4px;">
-        Odhad z jazdy do kopca na konkrétnom segmente - na porovnanie v čase, nie lab-presné meranie.
+        Odhad z jazdy do kopca — orientačné, nie lab-presné.
       </div>
     </div>
   </div>
@@ -46,7 +47,7 @@
         <input type="number" step="1" id="in-strava-power" placeholder="ak vieš, presnejšie než fyzika" style="width:220px;">
       </div>
     </div>
-    <div class="form-hint">Ak zadáš výkon priamo zo Stravy, použije sa namiesto fyzikálneho výpočtu nižšie (Strava má celú GPX stopu, nie len priemer - je presnejšia).</div>
+    <div class="form-hint">Výkon zo Stravy má prednosť pred fyzikálnym výpočtom (presnejší, celá GPX stopa).</div>
 
     <div class="form-section-label bordered">Dátum a čas na segmente</div>
     <div class="field-row" style="margin-bottom:10px;">
@@ -88,14 +89,12 @@
     </div>
     <div class="field-row">
       <div class="field">
-        <span class="field-label">Tlak (bar, voliteľné - len sa uloží k pokusu)</span>
+        <span class="field-label">Tlak (bar, voliteľné)</span>
         <input type="number" step="0.1" id="in-pressure" placeholder="napr. 2.5" style="width:120px;">
       </div>
     </div>
     <div class="form-hint">
-      Crr pre Tufo Gravel Thundero HD 40C je z laboratórnych testov (bicyclerollingresistance.com),
-      mierne navýšený pre reálny terén (nie hladký bubon). 36C verziu priamo netestovali, ale mala
-      by byť veľmi podobná. Presnejšie tlaky, ktoré bežne používaš, mi pošli a doladím.
+      Crr pre Tufo Gravel Thundero HD 40C: laboratórne testy (bicyclerollingresistance.com), navýšené pre reálny terén. 36C odhadnuté z 40C.
     </div>
   </div>
 

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Týždenný súhrn — Adam</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="top-row">
+    <div>
+      <div class="breadcrumb"><a href="index.html">Dashboard</a><span class="sep">›</span><a href="history.html">História</a><span class="sep">›</span><span class="current">Týždenný súhrn</span></div>
+      <div class="brand">
+        <h1>Týždenný súhrn</h1>
+      </div>
+      <div class="sub">Po týždňoch (pondelok–nedeľa), vrátane km na bicykli.</div>
+    </div>
+  </div>
+
+  <div id="loading" class="loading">načítavam dáta…</div>
+  <div class="err" id="err"></div>
+
+  <div id="app" style="display:none;">
+    <div class="section-head">
+      <div class="section-title">Km po týždňoch (bicykel)</div>
+      <div class="chart-tabs">
+        <button class="tab-btn" data-range="12">12T</button>
+        <button class="tab-btn active" data-range="26">26T</button>
+        <button class="tab-btn" data-range="52">52T</button>
+        <button class="tab-btn" data-range="99999">Celé obdobie</button>
+      </div>
+    </div>
+    <div class="chart-card"><svg id="chart-weekly-km"></svg></div>
+
+    <div class="section-head"><div class="section-title">Týždenný súhrn</div></div>
+    <div id="weekly-summary"></div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <a href="index.html"><span class="bn-icon">📊</span>Dashboard</a>
+  <a href="history.html" class="active"><span class="bn-icon">🗓</span>História</a>
+  <a href="checkin.html"><span class="bn-icon">📝</span>Check-in</a>
+  <a href="power.html"><span class="bn-icon">⚡</span>Výkon</a>
+  <a href="calendar.html"><span class="bn-icon">📅</span>Kalendár</a>
+  <a href="plan.html"><span class="bn-icon">🌦️</span>Plán</a>
+</nav>
+
+<script src="app-common.js"></script>
+<script>
+let WEEKLY_KM_SERIES = [];
+
+async function main(){
+  const [history, daily, actHistory, actDaily] = await Promise.all([
+    loadJson(HISTORY_URL), loadJson(DAILY_URL),
+    loadJson(ACT_HISTORY_URL), loadJson(ACT_DAILY_URL),
+  ]);
+
+  if(!history && !daily){
+    document.getElementById('loading').style.display='none';
+    document.getElementById('err').textContent = 'Nepodarilo sa načítať dáta. Skontroluj či existujú súbory v data/.';
+    return;
+  }
+
+  let recs = mergeById(history, daily);
+  recs.sort((a,b)=> a.date < b.date ? -1 : 1);
+
+  let activities = mergeById(actHistory, actDaily);
+  activities.sort((a,b)=> (a.start_date_local||a.date) < (b.start_date_local||b.date) ? -1 : 1);
+
+  const {results} = computeResults(recs, activities);
+  WEEKLY_KM_SERIES = weeklyBikeKmSeries(activities);
+
+  document.getElementById('loading').style.display='none';
+  document.getElementById('app').style.display='block';
+
+  renderWeeklyKm(26);
+  renderWeeklySummary('weekly-summary', results, activities);
+
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      renderWeeklyKm(parseInt(btn.dataset.range));
+    });
+  });
+}
+
+function renderWeeklyKm(rangeWeeks){
+  const data = WEEKLY_KM_SERIES.slice(-rangeWeeks);
+  drawChart('chart-weekly-km', data, [{field:'km', color:PALETTE.good, label:'Km (bicykel)'}],
+    {minAtZero:true, tooltipFormat:(f,v)=>v.toFixed(1)+' km'});
+}
+
+main();
+</script>
+</body>
+</html>

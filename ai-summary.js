@@ -218,6 +218,15 @@ function buildAiPrompt(wellnessMerged, activitiesMerged, pastSummaries, globalSt
 // free tier k 26.7.2026) - ak by robil problémy, over/skús gemini-3.5-flash ako zálohu.
 const DEFAULT_GEMINI_MODEL = 'gemini-3.6-flash';
 
+// POZOR (zistené 28.7.2026) - "flash" modely v Gemini API majú defaultne zapnuté interné
+// "thinking" (reasoning) tokeny, ktoré sa POČÍTAJU do maxOutputTokens, ale nie sú vidno vo
+// výstupe. Pri nízkom maxOutputTokens (pôvodne 900) sa tak stalo, že model minul takmer celý
+// rozpočet na interné rozmýšľanie a na samotnú (viditeľnú) odpoveď mu ostalo len pár tokenov -
+// výsledok bol orezaný uprostred JSON-u, spadol do catch-vetvy nižšie (kratky = raw text) a
+// vyzeral ako "len 2 vety, navyše po anglicky" (útržok, nie plnohodnotná odpoveď v slovenčine).
+// Riešenie: 1) thinkingConfig.thinkingBudget=0 vypne interné thinking tokeny úplne, 2) vyšší
+// maxOutputTokens dáva rezervu, 3) finishReason sa nižšie kontroluje - ak model orezal odpoveď
+// (MAX_TOKENS), radšej ju zahodíme ako by sme ukladali polovičatý/nezmyselný súhrn.
 async function callGemini(prompt, opts) {
   opts = opts || {};
   const key = process.env.GEMINI_API_KEY;
@@ -228,7 +237,11 @@ async function callGemini(prompt, opts) {
   const model = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
   try {
-    const generationConfig = { temperature: 0.7, maxOutputTokens: opts.maxOutputTokens || 900 };
+    const generationConfig = {
+      temperature: 0.7,
+      maxOutputTokens: opts.maxOutputTokens || 2048,
+      thinkingConfig: { thinkingBudget: 0 },
+    };
     if (opts.json) generationConfig.responseMimeType = 'application/json';
     const res = await fetch(url, {
       method: 'POST',
@@ -241,9 +254,17 @@ async function callGemini(prompt, opts) {
       return null;
     }
     const data = await res.json();
-    const text = data && data.candidates && data.candidates[0] && data.candidates[0].content
-      && data.candidates[0].content.parts && data.candidates[0].content.parts[0]
-      && data.candidates[0].content.parts[0].text;
+    const candidate = data && data.candidates && data.candidates[0];
+    const text = candidate && candidate.content && candidate.content.parts
+      && candidate.content.parts[0] && candidate.content.parts[0].text;
+    const finishReason = candidate && candidate.finishReason;
+    if (finishReason && finishReason !== 'STOP') {
+      // MAX_TOKENS = odpoveď bola orezaná (pozri komentár vyššie) - nedôveryhodná, zahoď.
+      // Iné dôvody (SAFETY, RECITATION...) sú tiež nedôveryhodné pre uloženie.
+      console.warn(`⚠️ Gemini odpoveď má finishReason=${finishReason} (model=${model}) - ` +
+        `pravdepodobne orezaná/nekompletná, preskakujem uloženie tohto behu.`);
+      return null;
+    }
     return text ? text.trim() : null;
   } catch (e) {
     console.warn('⚠️ Chyba pri volaní Gemini API:', e.message);
@@ -255,6 +276,11 @@ async function callGemini(prompt, opts) {
 // ich maximálne drží v samotnom súbore.
 const AI_MEMORY_PROMPT_DAYS = 14;
 const AI_MEMORY_FILE_DAYS = 180;
+// data/ai_summary_history.json - PLNÁ história AI súhrnov (krátky text + podrobný plán),
+// kľúčovaná podľa dátumu ("YYYY-MM-DD" -> {generatedAt, model, summary, plan}). Na rozdiel od
+// ai_memory.md (ktorý drží len krátky text pre kontext do promptu) toto slúži na ZOBRAZENIE v
+// Kalendári pre ľubovoľný vybraný deň, preto drží aj "plan" a drží sa dlhšie dozadu.
+const AI_SUMMARY_HISTORY_FILE_DAYS = 400;
 
 async function main() {
   const wellnessForAi = mergeById(
@@ -289,7 +315,7 @@ async function main() {
   }
 
   console.log('Generujem AI súhrn dňa (Gemini)...');
-  const raw = await callGemini(aiCtx.prompt, { json: true, maxOutputTokens: 900 });
+  const raw = await callGemini(aiCtx.prompt, { json: true, maxOutputTokens: 2048 });
   let kratky = null, podrobny = null;
   if (raw) {
     let jsonStr = raw.trim();
@@ -309,21 +335,40 @@ async function main() {
     return;
   }
 
+  const generatedAt = new Date().toISOString();
+  const model = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
+
+  // ai_summary_daily.json ostáva ako doteraz - rýchly "posledný/dnešný" snapshot pre Dashboard
+  // (index.html ho číta priamo, bez nutnosti prehľadávať históriu).
   fs.writeFileSync(
     aiSummaryFile,
     JSON.stringify({
       date: aiCtx.date,
-      generatedAt: new Date().toISOString(),
-      model: process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL,
+      generatedAt,
+      model,
       summary: kratky,
       plan: podrobny || '',
     }, null, 1)
   );
+
+  // data/ai_summary_history.json - PLNÁ história kľúčovaná podľa dátumu, aby Kalendár vedel pre
+  // ĽUBOVOĽNÝ vybraný deň zobraziť jeho AI súhrn (nielen ten dnešný, ktorý by sa inak zakaždým
+  // prepísal). Objekt namiesto poľa, nech je vyhľadanie podľa dátumu O(1) na strane klienta.
+  const aiSummaryHistoryFile = path.join(DATA_DIR, 'ai_summary_history.json');
+  const historyObj = loadJsonObjectSafe(aiSummaryHistoryFile) || {};
+  historyObj[aiCtx.date] = { generatedAt, model, summary: kratky, plan: podrobny || '' };
+  const trimmedHistory = {};
+  Object.keys(historyObj)
+    .sort()
+    .slice(-AI_SUMMARY_HISTORY_FILE_DAYS)
+    .forEach(d => { trimmedHistory[d] = historyObj[d]; });
+  fs.writeFileSync(aiSummaryHistoryFile, JSON.stringify(trimmedHistory, null, 1));
+
   const updatedMemory = mergeById(
     aiMemoryAll.map(e => ({ ...e, id: e.date })), [{ id: aiCtx.date, date: aiCtx.date, summary: kratky }], 'id'
   ).sort((a, b) => (a.date < b.date ? -1 : 1)).slice(-AI_MEMORY_FILE_DAYS);
   fs.writeFileSync(aiMemoryFile, serializeAiMemoryMd(updatedMemory));
-  console.log('✅ AI súhrn dňa uložený (a pripísaný do ai_memory.md).');
+  console.log('✅ AI súhrn dňa uložený (ai_summary_daily.json, ai_summary_history.json a ai_memory.md).');
 }
 
 main().catch(err => {
