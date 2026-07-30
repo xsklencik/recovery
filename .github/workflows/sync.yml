@@ -39,5 +39,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/wellness_daily.json data/activities_daily.json data/last_sync.json
+          if [ -f data/hr_strain_daily.json ]; then git add data/hr_strain_daily.json; fi
           git diff --staged --quiet || git commit -m "Auto-sync Intervals.icu data $(date -u +%Y-%m-%dT%H:%M:%SZ)"
           git push
