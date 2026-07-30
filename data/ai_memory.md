@@ -6,9 +6,3 @@ Tvoje HRV dosahuje stabilných 56 ms a spánok trval takmer 8 hodín, čo predst
 
 ## 2026-07-27
 Po dvoch dňoch s vysokou záťažou v podobe dlhých jázd v trvaní 160 a 178 minút vykazuje telo kumulovanú únavu. HRV a spánok z predchádzajúcich dní boli stabilné, avšak aktuálne chýbajú ranné biometrické dáta. Vzhľadom na predpoveď dažďa a tvoj plán mať dnes voľno je telo ideálne pripravené na pasívnu regeneráciu. Žiadne špecifické negatívne vzorce sa v dátach neopakujú, no po dvoch náročných dňoch je celkový oddych na místě. S ohľadom na blížiacu sa stotridesiatku a výlet do Tatier je dnes kľúčový úplný reštart.
-
-## 2026-07-28
-14 days, AND explicit user comments (rehab + cabin/badminton all day away today, tomorrow Tatras hike, 130km ride coming
-
-## 2026-07-29
-Dnes si veľmi dobre zregenerovaný. Tvoje HRV 59 ms aj spánkové skóre 89 sú nad dlhodobým priemerom a spánková tepová frekvencia 59 bpm potvrdzuje kvalitný nočný odpočinok. Včerajší deň bez bicykla s miernym pohybom ti pomohol vstrebať záťaž z predchádzajúcich dlhých jázd. Fyziologické dáta ukazujú výbornú pripravenosť na plánovanú celodennú aktivitu.
