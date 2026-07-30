@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-07-30T07:12:48.272Z",
+ "generatedAt": "2026-07-30T15:34:25.113Z",
  "model": "gemini-3.6-flash",
  "location": "Čadca, Slovensko",
  "days": [
@@ -7,10 +7,10 @@
    "date": "2026-07-30",
    "weatherDesc": "jasno",
    "weatherEmoji": "☀️",
-   "tempMax": 32.5,
+   "tempMax": 32.2,
    "tempMin": 17,
    "precipMm": 0,
-   "windMaxKmh": 8.3,
+   "windMaxKmh": 9,
    "bestWindow": {
     "start": "05:00",
     "end": "09:00",
@@ -18,16 +18,35 @@
    },
    "ownNote": null,
    "status": null,
-   "alternatives": []
+   "alternatives": [
+    {
+     "id": "a",
+     "label": "Voľno a strečing",
+     "intensity": "recovery",
+     "suggestion": "Dnes si dopraj úplné voľno alebo iba ľahký 20-minútový strečing či rolovanie, aby si si odpočinul pred nadchádzajúcimi dňami."
+    },
+    {
+     "id": "b",
+     "label": "Ranný vytrvalostný základ",
+     "intensity": "endurance",
+     "suggestion": "Odporúčam vyraziť hneď ráno v čase 05:00-09:00, kým nie je príliš horúco, na 2 až 2.5-hodinovú plynulú jazdu v Z2."
+    },
+    {
+     "id": "c",
+     "label": "Krátke tempo v chládku",
+     "intensity": "intensity",
+     "suggestion": "Využi chladnejšie ráno medzi 05:00 a 09:00 na 60-minútový tréning s 3x8 minútami v záprahovom tempe."
+    }
+   ]
   },
   {
    "date": "2026-07-31",
    "weatherDesc": "zamračené",
    "weatherEmoji": "☁️",
-   "tempMax": 36.2,
-   "tempMin": 20.7,
+   "tempMax": 35.5,
+   "tempMin": 20.9,
    "precipMm": 0,
-   "windMaxKmh": 16.9,
+   "windMaxKmh": 11.9,
    "bestWindow": {
     "start": "05:00",
     "end": "09:00",
@@ -35,16 +54,35 @@
    },
    "ownNote": null,
    "status": null,
-   "alternatives": []
+   "alternatives": [
+    {
+     "id": "a",
+     "label": "Aktívna regenerácia na bicykli",
+     "intensity": "recovery",
+     "suggestion": "Zvoľ si veľmi ľahké 30-45 minútové točenie na rovine v Z1, ideálne ráno do 09:00 pred najväčšími horúčavami."
+    },
+    {
+     "id": "b",
+     "label": "Dlhá aerobná jazda",
+     "intensity": "endurance",
+     "suggestion": "Keďže 3.8. ťa čaká dlhé Námestovo, zameraj sa na objem. Vyraz medzi 05:00 a 09:00 na 3-hodinový aerobný výjazd."
+    },
+    {
+     "id": "c",
+     "label": "Kratšie voľnejšie VO2max",
+     "intensity": "intensity",
+     "suggestion": "Ak chceš ešte poslednú intenzitu, odkrúť si ráno od 05:00 do 09:00 hodinový tréning s 5x3 minútovými vyššími zakmitaniami."
+    }
+   ]
   },
   {
    "date": "2026-08-01",
-   "weatherDesc": "slabé mrholenie",
-   "weatherEmoji": "🌦️",
-   "tempMax": 33,
-   "tempMin": 20.7,
-   "precipMm": 0.1,
-   "windMaxKmh": 15.5,
+   "weatherDesc": "zamračené",
+   "weatherEmoji": "☁️",
+   "tempMax": 31.7,
+   "tempMin": 21.9,
+   "precipMm": 0,
+   "windMaxKmh": 13.3,
    "bestWindow": {
     "start": "05:00",
     "end": "09:00",
@@ -52,33 +90,71 @@
    },
    "ownNote": null,
    "status": null,
-   "alternatives": []
+   "alternatives": [
+    {
+     "id": "a",
+     "label": "Úplný odpočinok",
+     "intensity": "recovery",
+     "suggestion": "Deň bez športu, dopraj svalom regeneráciu a doplň sacharidy pred blíziacim sa dlhým výjazdom."
+    },
+    {
+     "id": "b",
+     "label": "Stredný objem bez intenzity",
+     "intensity": "endurance",
+     "suggestion": "Naplánuj si 2-hodinový rovnomerný beh alebo jazdu v nižších zónach, najlepšie v okne 05:00-09:00 kvôli teplote."
+    },
+    {
+     "id": "c",
+     "label": "Krátené tempové úseky",
+     "intensity": "intensity",
+     "suggestion": "Medzi 05:00 a 09:00 si daj 75 minút s 2x15 minútami v podprahu, bez zbytočného vyčerpania do maxima."
+    }
+   ]
   },
   {
    "date": "2026-08-02",
    "weatherDesc": "búrka",
    "weatherEmoji": "⛈️",
-   "tempMax": 27.8,
-   "tempMin": 19.5,
-   "precipMm": 2.4,
-   "windMaxKmh": 14.4,
+   "tempMax": 28.5,
+   "tempMin": 19,
+   "precipMm": 1.9,
+   "windMaxKmh": 13.1,
    "bestWindow": {
-    "start": "07:00",
-    "end": "11:00",
-    "avgRainProb": 13
+    "start": "06:00",
+    "end": "10:00",
+    "avgRainProb": 7
    },
    "ownNote": null,
    "status": null,
-   "alternatives": []
+   "alternatives": [
+    {
+     "id": "a",
+     "label": "Pred-prípravný oddych",
+     "intensity": "recovery",
+     "suggestion": "Pred zajtrajšou 130 km trasou si daj absolútny pokoj, prípadne len ľahkú prechádzku a krátky strečing."
+    },
+    {
+     "id": "b",
+     "label": "Ľahké pred-závodné roztočenie",
+     "intensity": "endurance",
+     "suggestion": "Využi okno 06:00-10:00 bez búrok na 60-90 minútovú voľnú jazdu pre prebudenie nôh pred Námestovom."
+    },
+    {
+     "id": "c",
+     "label": "Krátke trenažérové aktivácie",
+     "intensity": "intensity",
+     "suggestion": "Vzhľadom na hlásené búrky odjazdi doma na trenažéri 45 minút s 3 krátkymi 30-sekundovými akceleráciami pre aktiváciu."
+    }
+   ]
   },
   {
    "date": "2026-08-03",
    "weatherDesc": "slabé mrholenie",
    "weatherEmoji": "🌦️",
-   "tempMax": 33.3,
-   "tempMin": 18.1,
-   "precipMm": 0.6,
-   "windMaxKmh": 12.6,
+   "tempMax": 33.1,
+   "tempMin": 18,
+   "precipMm": 0.9,
+   "windMaxKmh": 11.9,
    "bestWindow": {
     "start": "05:00",
     "end": "09:00",
@@ -90,12 +166,12 @@
   },
   {
    "date": "2026-08-04",
-   "weatherDesc": "prevažne jasno",
-   "weatherEmoji": "🌤️",
-   "tempMax": 34.5,
-   "tempMin": 19.4,
+   "weatherDesc": "jasno",
+   "weatherEmoji": "☀️",
+   "tempMax": 34,
+   "tempMin": 19.3,
    "precipMm": 0,
-   "windMaxKmh": 10.3,
+   "windMaxKmh": 10.9,
    "bestWindow": {
     "start": "05:00",
     "end": "09:00",
@@ -103,24 +179,62 @@
    },
    "ownNote": null,
    "status": null,
-   "alternatives": []
+   "alternatives": [
+    {
+     "id": "a",
+     "label": "Pozáťažová regenerácia",
+     "intensity": "recovery",
+     "suggestion": "Po včerajších 130 km zaraď len úplné voľno, valcovanie svalov a kvalitný spánok pre regeneráciu fatigue."
+    },
+    {
+     "id": "b",
+     "label": "Vyjazdovanie po výkone",
+     "intensity": "endurance",
+     "suggestion": "Medzi 05:00 a 09:00 si daj veľmi ľahkých 60-90 minút na flat trati v kompenzačnom tempe na vyplavenie únavy."
+    },
+    {
+     "id": "c",
+     "label": "Svižný regeneračný trenažér",
+     "intensity": "intensity",
+     "suggestion": "Ak sa cítiš prekvapivo dobre, daj si ráno 05:00-09:00 45 minút s pár ľahkými zrýchleniami na prek krvi, bez ťažkých intervalov."
+    }
+   ]
   },
   {
    "date": "2026-08-05",
    "weatherDesc": "slabé mrholenie",
    "weatherEmoji": "🌦️",
    "tempMax": 29.7,
-   "tempMin": 23.2,
+   "tempMin": 20.9,
    "precipMm": 1.2,
    "windMaxKmh": 6.3,
    "bestWindow": {
     "start": "05:00",
     "end": "09:00",
-    "avgRainProb": 2
+    "avgRainProb": 3
    },
    "ownNote": null,
    "status": null,
-   "alternatives": []
+   "alternatives": [
+    {
+     "id": "a",
+     "label": "Voľno kvôli počasiu",
+     "intensity": "recovery",
+     "suggestion": "Pre mrholenie a stále prítomnú únavu po objemovom dni zvoľ deň bez tréningu."
+    },
+    {
+     "id": "b",
+     "label": "Ranný stabilný beh/bicykel",
+     "intensity": "endurance",
+     "suggestion": "Využi najlepšie časové okno 05:00-09:00, kedy takmer neprší, na 90-minútový kľudný vytrvalostný tréning."
+    },
+    {
+     "id": "c",
+     "label": "Domáci trenažér - tempo",
+     "intensity": "intensity",
+     "suggestion": "Vyhni sa mokrej ceste a odjazdí si na trenažéri 50 minút vrátane 3x6 minút v SweetSpote."
+    }
+   ]
   },
   {
    "date": "2026-08-06",
@@ -133,11 +247,30 @@
    "bestWindow": {
     "start": "05:00",
     "end": "09:00",
-    "avgRainProb": 3
+    "avgRainProb": 0
    },
    "ownNote": null,
    "status": null,
-   "alternatives": []
+   "alternatives": [
+    {
+     "id": "a",
+     "label": "Svetlý regeneračný deň",
+     "intensity": "recovery",
+     "suggestion": "Daj si 30 minút ľahkého točenia pedálmi na kávičku alebo krátku prechádzku na čerstvom vzduchu."
+    },
+    {
+     "id": "b",
+     "label": "Ranný vytrvalostný návrat",
+     "intensity": "endurance",
+     "suggestion": "Vyraz v príjemnom rannom okne 05:00-09:00 na 2-2.5 hodiny v Z2 na opätovné budovanie základu."
+    },
+    {
+     "id": "c",
+     "label": "Kvalitný intervalový tréning",
+     "intensity": "intensity",
+     "suggestion": "Po regenerácii je čas na námahu. Medzi 05:00 a 09:00 odjazdi 75 minút s 4x5 minútovými intervalmi v Z4."
+    }
+   ]
   }
  ]
 }
