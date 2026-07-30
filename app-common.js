@@ -552,8 +552,37 @@ function parseTags(...texts){
 }
 
 // ---------- Strain calculation ----------
-// HR zóny (z1-z5 secs) sa NEPOUŽÍVAJÚ na výpočet Strain — slúžia len ako doplnkový detail
-// v modáli dňa (bulk API endpoint niekedy vracia neúplné zónové dáta).
+// PÔVODNE sa tu Strain príspevok jednej aktivity počítal z Intervals.icu Load (icu_training_load)
+// - to je ale iná fyzikálna veličina (výkon/tempo/prevýšenie), nie priamo z tepu, takže sa vedelo
+// stať, že aktivita strávená väčšinou v Z1 (napr. dlhá nenáročná túra) ukázala vyšší "Strain
+// príspevok" než zodpovedá reálnej srdcovej záťaži - a nesedelo to s celodenným Strain, ktorý (ak
+// existuje CSV tepu) počíta sync.js z presných HR zón. Teraz sa aj TU použije ROVNAKÝ model ako v
+// sync.js (Banister TRIMP so stredom zóny ako reprezentatívnou TF) - MUSÍ zostať v súlade s
+// zoneSecondsToRaw()/HR_ZONE_MIDPOINT v sync.js, ak sa tam niečo prekalibruje.
+const HR_REST_STRAIN = 60, HR_MAX_STRAIN = 200, HR_TRIMP_B_STRAIN = 1.92;
+const HR_SUBZONE_RATE_STRAIN = 0.045; // raw/min pre čas v Z1 (<143 bpm) počas aktivity
+const HR_STRAIN_SCALE_CLIENT = 1.0;
+const HR_ZONE_MIDPOINT_CLIENT = {2:150.5, 3:164.5, 4:178.5, 5:193};
+function hrTrimpWeight(hr){
+  const hrr = clamp((hr-HR_REST_STRAIN)/(HR_MAX_STRAIN-HR_REST_STRAIN), 0, 1);
+  return hrr * 0.64 * Math.exp(HR_TRIMP_B_STRAIN*hrr);
+}
+// Vráti raw príspevok z presných HR zón (sekundy), alebo null ak aktivita nemá žiadne zónové dáta
+// (vtedy sa použije fallback nižšie).
+function hrZoneSecondsToRawStrain(act){
+  const zoneSecs = [act.hr_z1_secs, act.hr_z2_secs, act.hr_z3_secs, act.hr_z4_secs, act.hr_z5_secs];
+  if(!zoneSecs.some(s => s!=null && s>0)) return null;
+  let raw = 0;
+  if(zoneSecs[0]) raw += (zoneSecs[0]/60) * HR_SUBZONE_RATE_STRAIN;
+  for(let z=2; z<=5; z++){
+    const secs = zoneSecs[z-1];
+    if(!secs) continue;
+    raw += (secs/60) * hrTrimpWeight(HR_ZONE_MIDPOINT_CLIENT[z]) * HR_STRAIN_SCALE_CLIENT;
+  }
+  return raw;
+}
+// Staršia (pred zavedením TRIMP modelu) hrubá zónová váha - už sa nepoužíva priamo, len ako
+// posledný záchranný fallback v loadToRawStrain() nižšie pre prípad úplne chýbajúcich dát.
 function zoneSecsToRawStrain(act){
   const zones = [act.hr_z1_secs, act.hr_z2_secs, act.hr_z3_secs, act.hr_z4_secs, act.hr_z5_secs];
   let total = 0;
@@ -565,7 +594,12 @@ function zoneSecsToRawStrain(act){
   });
   return total;
 }
+// Poradie priorít pre raw Strain príspevok jednej aktivity: 1) presné HR zóny (TRIMP, rovnaký
+// model ako celodenný Strain) → 2) Intervals.icu Load (aktivity bez zónových dát, napr. veľmi
+// staré/nekompletné) → 3) hrubý zónový odhad ako posledná záchrana.
 function loadToRawStrain(act){
+  const hrBased = hrZoneSecondsToRawStrain(act);
+  if(hrBased!=null) return hrBased;
   if(act.icu_training_load!=null && act.icu_training_load>0) return act.icu_training_load;
   return zoneSecsToRawStrain(act) * 0.35;
 }

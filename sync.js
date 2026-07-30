@@ -100,6 +100,16 @@ const HR_SUBZONE_RATE = 0.045; // raw/min pre bdenie pod 143 bpm (bežný denný
 // ak sa Strain "necíti" správne (>1 = vyšší Strain za tú istú intenzitu, <1 = nižší).
 const HR_STRAIN_SCALE = 1.0;
 
+// PRESNOSŤ POČAS AKTIVÍT: Intervals.icu pozná pre KAŽDÚ zosynchronizovanú aktivitu presný počet
+// SEKÚND strávených v každej zóne (hr_z1_secs..hr_z5_secs, z bicyklového počítača/hodiniek -
+// oveľa jemnejšie ako 1 riadok/minútu z Huawei Health CSV). Preto: pre časové okno KAŽDEJ
+// aktivity, ktorá tieto zónové dáta má, sa Strain počíta PRIAMO z nich (zoneSecondsToRaw nižšie)
+// - a zodpovedajúce minúty z CSV sa PRESKOČIA (aby sa nezapočítali dvakrát). Pre zvyšok dňa (mimo
+// zaznamenaných aktivít) sa použije minútový CSV tep ako doteraz - tam presnejšie dáta nemáme.
+// Reprezentatívna TF pre zóny 2-5 = stred zóny (Z1 v aktivite ide cez rovnakú plochú sadzbu ako
+// mimo aktivity - je to stále "pod tréningovou hranicou", či už ide o rozjazdenie/cool-down).
+const HR_ZONE_MIDPOINT = { 2: 150.5, 3: 164.5, 4: 178.5, 5: 193 };
+
 // MUSÍ zostať v súlade s rawToStrain() v app-common.js (rovnaká škála 0-21).
 function hrRawToStrain(raw) {
   if (raw <= 0) return 0;
@@ -107,10 +117,42 @@ function hrRawToStrain(raw) {
 }
 function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
 
+function trimpWeight(hr) {
+  const hrr = clamp((hr - HR_REST) / (HR_MAX - HR_REST), 0, 1);
+  return hrr * 0.64 * Math.exp(HR_TRIMP_B * hrr);
+}
+// zoneSecs = [z1,z2,z3,z4,z5] v sekundách (jednotlivé polia môžu byť null - staršie/neúplné dáta).
+function zoneSecondsToRaw(zoneSecs) {
+  let raw = 0;
+  if (zoneSecs[0]) raw += (zoneSecs[0] / 60) * HR_SUBZONE_RATE; // Z1
+  for (let z = 2; z <= 5; z++) {
+    const secs = zoneSecs[z - 1];
+    if (!secs) continue;
+    raw += (secs / 60) * trimpWeight(HR_ZONE_MIDPOINT[z]) * HR_STRAIN_SCALE;
+  }
+  return raw;
+}
+// Časové okno aktivity v rámci JEJ dňa, v sekundách od polnoci (napr. 14:32:10 -> 52330).
+// Nerieši aktivity presahujúce cez polnoc (moving_time by musel byť >zvyšok dňa) - u bežných
+// tréningov/výletov zanedbateľný okrajový prípad.
+function activityWindowSecs(act) {
+  if (!act.start_date_local || !act.moving_time) return null;
+  const timePart = act.start_date_local.split('T')[1];
+  if (!timePart) return null;
+  const [hh, mm, ss] = timePart.split(':').map(Number);
+  const startSec = hh * 3600 + mm * 60 + (ss || 0);
+  return [startSec, startSec + act.moving_time];
+}
+function timeToSecs(hhmmss) {
+  const [hh, mm, ss] = hhmmss.split(':').map(Number);
+  return hh * 3600 + mm * 60 + (ss || 0);
+}
+
 // Očakávaný formát (Huawei Health export): Date\tTime\tHeart rate\tSource, napr.
 // "2026.07.29 00:00:00\t00:00:00\t58\t". Podporuje tabulátor aj čiarku. Riadky s prázdnym/
 // neplatným tepom sa preskočia (watch nenasadené/nabíjanie) - menej meraných minút v daný deň
-// jednoducho znamená menší (nie skreslený) súčet.
+// jednoducho znamená menší (nie skreslený) súčet. Vracia aj čas (nie len TF), aby sa dala minúta
+// priradiť/vylúčiť podľa časového okna aktivity (viď vyššie).
 function parseHrCsv(filePath) {
   const raw = fs.readFileSync(filePath, 'utf8');
   const lines = raw.split(/\r?\n/).filter(l => l.trim().length > 0);
@@ -131,35 +173,50 @@ function parseHrCsv(filePath) {
     if (!dateRaw || !hrRaw) continue;
     const hr = parseFloat(hrRaw);
     if (!isFinite(hr) || hr <= 0) continue;
-    const isoDate = dateRaw.split(' ')[0].replace(/\./g, '-'); // "2026.07.29 ..." -> "2026-07-29"
+    const [datePart, timePart] = dateRaw.split(' '); // "2026.07.29 00:00:00" -> ["2026.07.29","00:00:00"]
+    const isoDate = (datePart || '').replace(/\./g, '-');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) continue;
-    rows.push({ date: isoDate, hr });
+    rows.push({ date: isoDate, time: timePart || '00:00:00', hr });
   }
   return rows;
 }
-function dayTrimp(hrValues) {
-  let raw = 0, sum = 0, max = 0;
-  for (const hr of hrValues) {
-    if (hr > HR_REST) {
-      if (hr < HR_Z1_Z2_BOUNDARY) {
-        raw += HR_SUBZONE_RATE;
-      } else {
-        const hrr = clamp((hr - HR_REST) / (HR_MAX - HR_REST), 0, 1);
-        const weight = 0.64 * Math.exp(HR_TRIMP_B * hrr);
-        raw += hrr * weight * HR_STRAIN_SCALE;
-      }
-    }
+
+// dayRows: [{time,hr}, ...] pre daný deň z CSV. dayActivities: aktivity toho istého dňa (z
+// activities_daily.json) - tie, čo MAJÚ aspoň jedno hr_zX_secs pole, sa spočítajú presne zo
+// sekúnd (a ich minúty sa v CSV preskočia); ostatné (bez zónových dát) ostanú pokryté cez CSV.
+function dayTrimp(dayRows, dayActivities) {
+  const windows = [];
+  let activityRaw = 0, activitySecondsUsed = 0;
+  for (const act of (dayActivities || [])) {
+    const zoneSecs = [act.hr_z1_secs, act.hr_z2_secs, act.hr_z3_secs, act.hr_z4_secs, act.hr_z5_secs];
+    if (!zoneSecs.some(s => s != null && s > 0)) continue; // bez zónových dát - necháme spracovať cez CSV
+    const win = activityWindowSecs(act);
+    if (!win) continue;
+    windows.push(win);
+    activityRaw += zoneSecondsToRaw(zoneSecs);
+    activitySecondsUsed += win[1] - win[0];
+  }
+
+  let csvRaw = 0, sum = 0, max = 0;
+  for (const { time, hr } of dayRows) {
     sum += hr;
     if (hr > max) max = hr;
+    const t = timeToSecs(time);
+    if (windows.some(([s, e]) => t >= s && t < e)) continue; // presne spočítané vyššie zo sekúnd
+    if (hr > HR_REST) {
+      csvRaw += hr < HR_Z1_Z2_BOUNDARY ? HR_SUBZONE_RATE : trimpWeight(hr) * HR_STRAIN_SCALE;
+    }
   }
   return {
-    raw,
-    minutes: hrValues.length,
-    avgHR: hrValues.length ? Math.round((sum / hrValues.length) * 10) / 10 : null,
-    maxHR: hrValues.length ? max : null,
+    raw: activityRaw + csvRaw,
+    minutes: dayRows.length,
+    avgHR: dayRows.length ? Math.round((sum / dayRows.length) * 10) / 10 : null,
+    maxHR: dayRows.length ? max : null,
+    activitySecondsUsed,
   };
 }
-function processHeartRateCsvs() {
+
+function processHeartRateCsvs(activitiesMerged) {
   if (!fs.existsSync(RAW_HR_DIR)) {
     console.log('ℹ️ data/heart_rate_raw/ neexistuje - preskakujem HR-based Strain.');
     return;
@@ -175,24 +232,34 @@ function processHeartRateCsvs() {
     const rows = parseHrCsv(path.join(RAW_HR_DIR, file));
     if (rows.length === 0) continue;
     filesRead++;
-    for (const { date, hr } of rows) {
-      if (!byDate.has(date)) byDate.set(date, []);
-      byDate.get(date).push(hr);
+    for (const r of rows) {
+      if (!byDate.has(r.date)) byDate.set(r.date, []);
+      byDate.get(r.date).push({ time: r.time, hr: r.hr });
     }
   }
   console.log(`💓 HR CSV: spracovaných súborov ${filesRead}/${files.length}, dní s dátami: ${byDate.size}`);
+
+  const activitiesByDate = new Map();
+  (activitiesMerged || []).forEach(act => {
+    if (!act.date) return;
+    if (!activitiesByDate.has(act.date)) activitiesByDate.set(act.date, []);
+    activitiesByDate.get(act.date).push(act);
+  });
+
   const existing = loadJsonSafe(HR_STRAIN_FILE);
   const existingObj = Array.isArray(existing) ? {} : existing; // loadJsonSafe defaultuje na [], tu chceme objekt
-  for (const [date, hrValues] of byDate.entries()) {
-    const { raw, minutes, avgHR, maxHR } = dayTrimp(hrValues);
+  for (const [date, dayRows] of byDate.entries()) {
+    const dayActivities = activitiesByDate.get(date) || [];
+    const { raw, minutes, avgHR, maxHR, activitySecondsUsed } = dayTrimp(dayRows, dayActivities);
     existingObj[date] = {
       strain: Math.round(hrRawToStrain(raw) * 10) / 10,
       raw: Math.round(raw * 10) / 10,
       minutes, avgHR, maxHR,
+      preciseActivityMinutes: Math.round(activitySecondsUsed / 60),
       source: 'heart_rate_csv',
       computedAt: new Date().toISOString(),
     };
-    console.log(`  ${date}: ${minutes} min, Ø${avgHR} max${maxHR} bpm → Strain ${existingObj[date].strain}`);
+    console.log(`  ${date}: ${minutes} min CSV (${existingObj[date].preciseActivityMinutes} min presne zo zón aktivity), Ø${avgHR} max${maxHR} bpm → Strain ${existingObj[date].strain}`);
   }
   const sorted = {};
   Object.keys(existingObj).sort().forEach(d => { sorted[d] = existingObj[d]; });
@@ -302,7 +369,7 @@ async function main() {
   // Samostatný try/catch - ak sa CSV spracovanie pokazí (napr. zlý formát súboru), Intervals.icu
   // sync vyššie je už bezpečne uložený a beh sa neoznačí ako zlyhaný kvôli tomuto.
   try {
-    processHeartRateCsvs();
+    processHeartRateCsvs(activitiesMerged);
   } catch (e) {
     console.warn('⚠️ Spracovanie heart_rate_raw CSV zlyhalo (Intervals.icu sync vyššie je v poriadku):', e.message);
   }
