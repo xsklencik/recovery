@@ -1,196 +1,141 @@
 {
- "generatedAt": "2026-07-27T19:50:13.949Z",
+ "generatedAt": "2026-07-30T07:12:48.272Z",
  "model": "gemini-3.6-flash",
  "location": "Čadca, Slovensko",
  "days": [
   {
-   "date": "2026-07-27",
-   "weatherDesc": "dážď",
-   "weatherEmoji": "🌧️",
-   "tempMax": 22.6,
-   "tempMin": 15,
-   "precipMm": 5.2,
-   "windMaxKmh": 15.5,
-   "ownNote": "asi bude prsat cize budem mat volno",
-   "status": "break",
-   "alternatives": []
-  },
-  {
-   "date": "2026-07-28",
-   "weatherDesc": "dážď",
-   "weatherEmoji": "🌧️",
-   "tempMax": 21.9,
-   "tempMin": 12.3,
-   "precipMm": 5.3,
-   "windMaxKmh": 7.6,
-   "ownNote": null,
-   "status": null,
-   "alternatives": [
-    {
-     "id": "a",
-     "label": "Regenerácia doma a strečing",
-     "intensity": "recovery",
-     "suggestion": "Vzhľadom na silnejší dážď si dopraj úplné voľno, strečing a pošetri sily pred zajtrajšou celodennou túrou."
-    },
-    {
-     "id": "b",
-     "label": "Ľahká jazda na trenažéri",
-     "intensity": "endurance",
-     "suggestion": "Daj si 50-60 minút veľmi ľahkého točenia v Zóne 1 na trenažéri bez moknutia, aby si rozhýbal nohy."
-    },
-    {
-     "id": "c",
-     "label": "Aktivácia na trenažéri",
-     "intensity": "intensity",
-     "suggestion": "35 minút na trenažéri s 5x30 sekundovými svižnými akceleráciami pre udržanie tonusu bez zbytočnej únavy."
-    }
-   ]
-  },
-  {
-   "date": "2026-07-29",
-   "weatherDesc": "polooblačno",
-   "weatherEmoji": "⛅",
-   "tempMax": 27.6,
-   "tempMin": 12.8,
-   "precipMm": 0,
-   "windMaxKmh": 9.7,
-   "ownNote": "ideme na celodennu turu do tatier",
-   "status": null,
-   "alternatives": []
-  },
-  {
    "date": "2026-07-30",
-   "weatherDesc": "zamračené",
-   "weatherEmoji": "☁️",
-   "tempMax": 30.4,
-   "tempMin": 15.5,
+   "weatherDesc": "jasno",
+   "weatherEmoji": "☀️",
+   "tempMax": 32.5,
+   "tempMin": 17,
    "precipMm": 0,
-   "windMaxKmh": 13.5,
+   "windMaxKmh": 8.3,
+   "bestWindow": {
+    "start": "05:00",
+    "end": "09:00",
+    "avgRainProb": 0
+   },
    "ownNote": null,
    "status": null,
-   "alternatives": [
-    {
-     "id": "a",
-     "label": "Vyjazdovanie po túre",
-     "intensity": "recovery",
-     "suggestion": "Po včerajšej túre v Tatrách zvoľ 30-minútovú kompenzačnú prechádzku alebo úplný oddych na regeneráciu nôh."
-    },
-    {
-     "id": "b",
-     "label": "Pohodový vytrvalostný beh",
-     "intensity": "endurance",
-     "suggestion": "Dopraj si 45 minút ľahkého behu v nízkych tepoch (Z1/Z2) na vyplavenie únavy z horskej turistiky."
-    },
-    {
-     "id": "c",
-     "label": "Kratšie tempo na bicykli",
-     "intensity": "intensity",
-     "suggestion": "45 minút na bicykli vrátane 3x3 minút v Zóne 3 pre prebudenie dynamiky po celodennom chodení."
-    }
-   ]
+   "alternatives": []
   },
   {
    "date": "2026-07-31",
-   "weatherDesc": "polooblačno",
-   "weatherEmoji": "⛅",
-   "tempMax": 32.8,
-   "tempMin": 18.5,
+   "weatherDesc": "zamračené",
+   "weatherEmoji": "☁️",
+   "tempMax": 36.2,
+   "tempMin": 20.7,
    "precipMm": 0,
-   "windMaxKmh": 13.7,
+   "windMaxKmh": 16.9,
+   "bestWindow": {
+    "start": "05:00",
+    "end": "09:00",
+    "avgRainProb": 0
+   },
    "ownNote": null,
    "status": null,
-   "alternatives": [
-    {
-     "id": "a",
-     "label": "Doplnenie sil a valcovanie",
-     "intensity": "recovery",
-     "suggestion": "Daj si voľný deň zameraný na hydratáciu a penový valec pred nadchádzajúcim víkendovým objemom."
-    },
-    {
-     "id": "b",
-     "label": "Letný objem na ceste",
-     "intensity": "endurance",
-     "suggestion": "Využi teplé počasie na 2,5 až 3-hodinovú plynulú vytrvalostnú jazdu v Zóne 2."
-    },
-    {
-     "id": "c",
-     "label": "Intervaly v kopci",
-     "intensity": "intensity",
-     "suggestion": "90-minútový tréning so 4x6 minútami v Zóne 4 v miernom stúpaní, ideálne v suchom teplom počasí."
-    }
-   ]
+   "alternatives": []
   },
   {
    "date": "2026-08-01",
    "weatherDesc": "slabé mrholenie",
    "weatherEmoji": "🌦️",
-   "tempMax": 31.7,
-   "tempMin": 18.6,
-   "precipMm": 0.6,
-   "windMaxKmh": 16,
+   "tempMax": 33,
+   "tempMin": 20.7,
+   "precipMm": 0.1,
+   "windMaxKmh": 15.5,
+   "bestWindow": {
+    "start": "05:00",
+    "end": "09:00",
+    "avgRainProb": 0
+   },
    "ownNote": null,
    "status": null,
-   "alternatives": [
-    {
-     "id": "a",
-     "label": "Predvíkendový odpočinok",
-     "intensity": "recovery",
-     "suggestion": "Smerom k dlhej jazde na Námestovo zvoľ úplný odpočinok a kvalitný spánok."
-    },
-    {
-     "id": "b",
-     "label": "Objem v miernom mrholení",
-     "intensity": "endurance",
-     "suggestion": "2 hodiny v stabilnom Z2 tempe; jemné mrholenie pri 32°C prinesie príjemné osvieženie."
-    },
-    {
-     "id": "c",
-     "label": "Krátke mikrovýbuchy",
-     "intensity": "intensity",
-     "suggestion": "50 minút jazdy s 8x15 sekundovými šprintmi pre stimuláciu nervového systému bez vyčerpania zásoby glykogénu."
-    }
-   ]
+   "alternatives": []
   },
   {
    "date": "2026-08-02",
-   "weatherDesc": "mrholenie",
-   "weatherEmoji": "🌦️",
-   "tempMax": 26.7,
-   "tempMin": 18.1,
-   "precipMm": 1.8,
-   "windMaxKmh": 13.5,
+   "weatherDesc": "búrka",
+   "weatherEmoji": "⛈️",
+   "tempMax": 27.8,
+   "tempMin": 19.5,
+   "precipMm": 2.4,
+   "windMaxKmh": 14.4,
+   "bestWindow": {
+    "start": "07:00",
+    "end": "11:00",
+    "avgRainProb": 13
+   },
    "ownNote": null,
    "status": null,
-   "alternatives": [
-    {
-     "id": "a",
-     "label": "Predštartový relax",
-     "intensity": "recovery",
-     "suggestion": "Dnes maj úplné voľno, zameraj sa na sacharidovú kompenzáciu a prípravu bicykla na zajtrajšiu 130 km trasu."
-    },
-    {
-     "id": "b",
-     "label": "Roztočenie nôh Z1",
-     "intensity": "endurance",
-     "suggestion": "Daj si len 30-45 minút veľmi ľahkej vyjazdovacej jazdy v Zóne 1 na prekrvenie svalov pred veľkým dňom."
-    },
-    {
-     "id": "c",
-     "label": "Krátka aktivácia 3x1 min",
-     "intensity": "intensity",
-     "suggestion": "30 minút jazdy s 3x1 minútou vo svižnom tempe jazdy, aby si prebudil nohy a nezničil sa na zajtra."
-    }
-   ]
+   "alternatives": []
   },
   {
    "date": "2026-08-03",
-   "weatherDesc": "polooblačno",
-   "weatherEmoji": "⛅",
-   "tempMax": 34.3,
-   "tempMin": 20.1,
-   "precipMm": 0,
-   "windMaxKmh": 9.5,
+   "weatherDesc": "slabé mrholenie",
+   "weatherEmoji": "🌦️",
+   "tempMax": 33.3,
+   "tempMin": 18.1,
+   "precipMm": 0.6,
+   "windMaxKmh": 12.6,
+   "bestWindow": {
+    "start": "05:00",
+    "end": "09:00",
+    "avgRainProb": 0
+   },
    "ownNote": "planujeme tu dat Namestovo co je asi 130km. cize dovtedy nechcem asi ziadne intenzity ale iba objem",
+   "status": null,
+   "alternatives": []
+  },
+  {
+   "date": "2026-08-04",
+   "weatherDesc": "prevažne jasno",
+   "weatherEmoji": "🌤️",
+   "tempMax": 34.5,
+   "tempMin": 19.4,
+   "precipMm": 0,
+   "windMaxKmh": 10.3,
+   "bestWindow": {
+    "start": "05:00",
+    "end": "09:00",
+    "avgRainProb": 0
+   },
+   "ownNote": null,
+   "status": null,
+   "alternatives": []
+  },
+  {
+   "date": "2026-08-05",
+   "weatherDesc": "slabé mrholenie",
+   "weatherEmoji": "🌦️",
+   "tempMax": 29.7,
+   "tempMin": 23.2,
+   "precipMm": 1.2,
+   "windMaxKmh": 6.3,
+   "bestWindow": {
+    "start": "05:00",
+    "end": "09:00",
+    "avgRainProb": 2
+   },
+   "ownNote": null,
+   "status": null,
+   "alternatives": []
+  },
+  {
+   "date": "2026-08-06",
+   "weatherDesc": "jasno",
+   "weatherEmoji": "☀️",
+   "tempMax": 32,
+   "tempMin": 21.1,
+   "precipMm": 0,
+   "windMaxKmh": 8,
+   "bestWindow": {
+    "start": "05:00",
+    "end": "09:00",
+    "avgRainProb": 3
+   },
+   "ownNote": null,
    "status": null,
    "alternatives": []
   }
