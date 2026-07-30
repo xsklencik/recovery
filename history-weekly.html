@@ -55,9 +55,9 @@
 let WEEKLY_KM_SERIES = [];
 
 async function main(){
-  const [history, daily, actHistory, actDaily] = await Promise.all([
+  const [history, daily, actHistory, actDaily, hrStrainByDate] = await Promise.all([
     loadJson(HISTORY_URL), loadJson(DAILY_URL),
-    loadJson(ACT_HISTORY_URL), loadJson(ACT_DAILY_URL),
+    loadJson(ACT_HISTORY_URL), loadJson(ACT_DAILY_URL), loadHrStrainMap(),
   ]);
 
   if(!history && !daily){
@@ -72,7 +72,7 @@ async function main(){
   let activities = mergeById(actHistory, actDaily);
   activities.sort((a,b)=> (a.start_date_local||a.date) < (b.start_date_local||b.date) ? -1 : 1);
 
-  const {results} = computeResults(recs, activities);
+  const {results} = computeResults(recs, activities, hrStrainByDate);
   WEEKLY_KM_SERIES = weeklyBikeKmSeries(activities);
 
   document.getElementById('loading').style.display='none';

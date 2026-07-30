@@ -188,7 +188,8 @@
       <div class="methodology">
         <div class="m-block"><b>Recovery</b> — 60&nbsp;% fyziológia (HRV 30 · spánk. TF 15 · pokoj. TF 10 · spánok 5, z-skóre voči 60D priemeru) + 40&nbsp;% tréningová únava. Stred stupnice ≈ 63&nbsp;%.</div>
         <div class="m-block"><b>Tréningová únava</b> — Fatigue Score (Load posledných 14&nbsp;dní, T-1 a staršie, decay 0,70×/deň, Load<sup>1,12</sup>) ÷ kapacita (z CTL T-1). Stred pomeru = 1,0. Bez vlastného grafu, len vstup do Recovery.</div>
-        <div class="m-block"><b>Strain 0–21</b> — Intervals.icu Load + kroky (kroky z pešej aktivity sa neduplikujú), log škála.</div>
+        <div class="m-block"><b>Strain 0–21</b> — ak existuje CSV tepu (data/heart_rate_raw/): celodenný Banister TRIMP z minútového tepu (pod 143 bpm plochá sadzba, nad 143 bpm exponenciála), log škála. Bez CSV (staršie dni): Intervals.icu Load + kroky.</div>
+        <div class="m-block" style="color:var(--text-faint);font-size:0.76rem;">HR-based Strain (heart-strain.js): HRrest 60 · HRmax 200 · hranica Z1/Z2 143 bpm · TRIMP b=1,92 · SUBZONE_RATE 0,045/min. Vzorce/konštanty pozri priamo v súbore.</div>
         <div class="m-block"><b>Cieľové pásmo Strain</b> — stred <code>2,5 + (Recovery/100)×15 + clamp((CTL−35)×0,045; −1,5; +1,5)</code>, orezané na 1,5–19,5, šírka ±2,3.</div>
         <div class="m-block"><b>Sleep 0–100</b> — Intervals.icu sleepScore.</div>
         <div class="m-block"><b>Forma (TSB)</b> — dnešné CTL−ATL. Zóny: &gt;20 prechod · 5–20 svieži · −10–5 sivá · −30–−10 optimálne · &lt;−30 riziko.</div>
@@ -599,10 +600,10 @@ let STEPS_BASELINE_BY_DATE = new Map();
 let NOTES_BY_DATE_D = new Map(); // data/day_notes.json — zdieľané s Kalendárom/Históriou, pozri app-common.js
 
 async function main(){
-  const [history, daily, sync, actHistory, actDaily, aiSummary, dayNotes] = await Promise.all([
+  const [history, daily, sync, actHistory, actDaily, aiSummary, dayNotes, hrStrainByDate] = await Promise.all([
     loadJson(HISTORY_URL), loadJson(DAILY_URL), loadJson(SYNC_URL),
     loadJson(ACT_HISTORY_URL), loadJson(ACT_DAILY_URL), loadJson(AI_SUMMARY_URL),
-    loadJson(DAY_NOTES_URL)
+    loadJson(DAY_NOTES_URL), loadHrStrainMap()
   ]);
 
   if(!history && !daily){
@@ -628,7 +629,7 @@ async function main(){
 
   document.getElementById('loading').style.display='none';
 
-  const {results, strainByDate, latestBaseline, stepsBaselineByDate} = computeResults(recs, activities);
+  const {results, strainByDate, latestBaseline, stepsBaselineByDate} = computeResults(recs, activities, hrStrainByDate);
   STRAIN_BY_DATE = strainByDate;
   LATEST_BASELINE = latestBaseline;
   STEPS_BASELINE_BY_DATE = stepsBaselineByDate;

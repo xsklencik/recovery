@@ -55,6 +55,7 @@ const ACT_HISTORY_URL = 'data/activities_history.json';
 const ACT_DAILY_URL = 'data/activities_daily.json';
 // Denný AI súhrn (Gemini) generovaný v sync.js počas GitHub Actions behu - pozri tam.
 const AI_SUMMARY_URL = 'data/ai_summary_daily.json';
+const HR_STRAIN_URL = 'data/hr_strain_daily.json';
 
 // ---------- Zápis do Intervals.icu z prehliadača ----------
 // /api/v1/ endpointy Intervals.icu podporujú CORS (na rozdiel od starších /api/ bez v1), takže
@@ -316,6 +317,14 @@ async function loadJson(url){
     if(!res.ok) return null;
     return await res.json();
   }catch(e){ return null; }
+}
+// data/hr_strain_daily.json je objekt kľúčovaný dátumom (viď heart-strain.js) - táto pomocná
+// funkcia ho premení na Map, ktorú computeResults()/computeDailyStrain() vedia priamo použiť.
+// Ak súbor ešte neexistuje (napr. pred prvým behom heart-strain.js), vráti prázdnu Map -
+// výpočet Strain potom jednoducho použije pôvodný Load+kroky spôsob pre všetky dni.
+async function loadHrStrainMap(){
+  const data = await loadJson(HR_STRAIN_URL);
+  return new Map(Object.entries(data || {}));
 }
 function mergeById(a, b){
   const map = new Map();
@@ -605,7 +614,12 @@ function estimateActivitySteps(act){
   if(!act.distance || !isFootActivity(act)) return 0;
   return act.distance / STEP_STRIDE_METERS;
 }
-function computeDailyStrain(activities, wellnessByDate, stepsBaselineByDate){
+// hrStrainByDate: Map<date, {strain, raw, minutes, avgHR, maxHR}> z heart-strain.js (spracované
+// z Huawei Health CSV exportov, viď data/hr_strain_daily.json). Pre dni, kde tieto dáta existujú,
+// POUŽIJEME priamo hotové Strain číslo namiesto výpočtu z Load/krokov nižšie - reálny nepretržitý
+// tep celého dňa je presnejší signál záťaže než odvodzovanie z počtu krokov. Pre staršie dni (bez
+// CSV, napr. pred 18.7.2026) sa naďalej použije pôvodný Load+kroky výpočet, aby história nezmizla.
+function computeDailyStrain(activities, wellnessByDate, stepsBaselineByDate, hrStrainByDate){
   const rawByDate = new Map();
   const footStepsByDate = new Map();
   for(const act of activities){
@@ -615,8 +629,12 @@ function computeDailyStrain(activities, wellnessByDate, stepsBaselineByDate){
     if(footSteps>0) footStepsByDate.set(act.date, (footStepsByDate.get(act.date)||0) + footSteps);
   }
   const strainByDate = new Map();
-  const allDates = new Set([...rawByDate.keys(), ...Object.keys(wellnessByDate)]);
+  const allDates = new Set([...rawByDate.keys(), ...Object.keys(wellnessByDate), ...(hrStrainByDate ? hrStrainByDate.keys() : [])]);
   for(const date of allDates){
+    if(hrStrainByDate && hrStrainByDate.has(date)){
+      strainByDate.set(date, hrStrainByDate.get(date).strain);
+      continue;
+    }
     let raw = rawByDate.get(date) || 0;
     const w = wellnessByDate[date];
     // OPRAVA: predtým sa kroky do strain započítali LEN ak v ten deň nebola žiadna aktivita
@@ -723,7 +741,7 @@ function rollingStats(recs, field, methodBoundaryDate, window){
 }
 
 // ---------- Hlavný výpočet: wellness+aktivity -> results (recovery/strain/tsb pre každý deň) ----------
-function computeResults(recs, activities){
+function computeResults(recs, activities, hrStrainByDate){
   // Nahradíme r.hrv efektívnou hodnotou (od HRV_SDNN_MANUAL_CUTOFF berieme manuálne zadané SDNN
   // namiesto rMSSD prepísaného hodinkami) - odteraz sa v celom výpočte aj zobrazení (tabuľky,
   // karty, AI kontext) používa už len toto zjednotené pole r.hrv.
@@ -801,7 +819,7 @@ function computeResults(recs, activities){
   const stepsBaselineByDate = new Map();
   recs.forEach((r,i)=>{ if(stepsStats[i]) stepsBaselineByDate.set(r.date, stepsStats[i].mean); });
 
-  const strainByDate = computeDailyStrain(activities, wellnessByDate, stepsBaselineByDate);
+  const strainByDate = computeDailyStrain(activities, wellnessByDate, stepsBaselineByDate, hrStrainByDate);
   const resultsWithStrain = results.map(r => ({...r, strain: strainByDate.has(r.date) ? strainByDate.get(r.date) : null}));
 
   const latestBaseline = {

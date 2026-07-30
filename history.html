@@ -138,10 +138,10 @@ document.getElementById('icu-key-save').addEventListener('click', ()=>{
 });
 
 async function main(){
-  const [history, daily, actHistory, actDaily, dayNotes] = await Promise.all([
+  const [history, daily, actHistory, actDaily, dayNotes, hrStrainByDate] = await Promise.all([
     loadJson(HISTORY_URL), loadJson(DAILY_URL),
     loadJson(ACT_HISTORY_URL), loadJson(ACT_DAILY_URL),
-    loadJson(DAY_NOTES_URL),
+    loadJson(DAY_NOTES_URL), loadHrStrainMap(),
   ]);
 
   if(!history && !daily){
@@ -158,7 +158,7 @@ async function main(){
   ALL_ACTIVITIES_H = activities;
   NOTES_BY_DATE_H = new Map((dayNotes||[]).map(n=>[n.date, n]));
 
-  const {results} = computeResults(recs, activities);
+  const {results} = computeResults(recs, activities, hrStrainByDate);
   ALL_RESULTS_ROWS = results.slice().reverse(); // najnovšie prvé
 
   document.getElementById('loading').style.display='none';
