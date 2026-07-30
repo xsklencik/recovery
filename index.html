@@ -92,51 +92,31 @@
       <div class="ai-plan-text" id="ai-plan-text" style="display:none;"></div>
     </div>
 
-    <div class="status-card">
-      <div class="status-card-head">
-        <span class="status-card-title">Stav</span>
-        <span class="status-card-note" id="status-card-note"></span>
+    <details class="status-collapsed">
+      <summary>
+        <span id="status-summary-icon">🏃</span>
+        <span id="status-summary-label">Stav: Aktívny</span>
+      </summary>
+      <div class="status-card">
+        <div class="status-card-head">
+          <span class="status-card-title">Stav</span>
+          <span class="status-card-note" id="status-card-note"></span>
+        </div>
+        <div class="status-options">
+          <button class="status-opt" data-status="active"><span class="status-opt-icon" style="background:var(--good);">🏃</span><span class="status-opt-label">Aktívny</span></button>
+          <button class="status-opt" data-status="sick"><span class="status-opt-icon" style="background:var(--warn);">🤒</span><span class="status-opt-label">Chorý</span></button>
+          <button class="status-opt" data-status="injured"><span class="status-opt-icon" style="background:var(--bad);">🤕</span><span class="status-opt-label">Zranený</span></button>
+          <button class="status-opt" data-status="break"><span class="status-opt-icon" style="background:var(--data);">🧘</span><span class="status-opt-label">Pauza</span></button>
+        </div>
       </div>
-      <div class="status-options">
-        <button class="status-opt" data-status="active"><span class="status-opt-icon" style="background:var(--good);">🏃</span><span class="status-opt-label">Aktívny</span></button>
-        <button class="status-opt" data-status="sick"><span class="status-opt-icon" style="background:var(--warn);">🤒</span><span class="status-opt-label">Chorý</span></button>
-        <button class="status-opt" data-status="injured"><span class="status-opt-icon" style="background:var(--bad);">🤕</span><span class="status-opt-label">Zranený</span></button>
-        <button class="status-opt" data-status="break"><span class="status-opt-icon" style="background:var(--data);">🧘</span><span class="status-opt-label">Pauza</span></button>
-      </div>
-    </div>
+    </details>
 
-    <div class="section-head">
-      <div class="section-title">Dnešné aktivity</div>
-    </div>
-    <div class="activity-list" id="activity-list"></div>
-
-    <div class="chart-card" style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
-      <div>
-        <div style="font-weight:600;margin-bottom:2px;">📝 Ranný check-in</div>
-        <div style="color:var(--text-faint);font-size:0.76rem;">Nálada, bolestivosť, únava, stres + nočná TF/HRV — samostatná stránka bez recovery čísla, nech ju otvárať priamo (bookmark).</div>
+    <div id="today-activities-section">
+      <div class="section-head">
+        <div class="section-title">Dnešné aktivity</div>
       </div>
-      <a class="btn primary" href="checkin.html">Otvoriť check-in →</a>
+      <div class="activity-list" id="activity-list"></div>
     </div>
-
-    <div class="section-head">
-      <div class="section-title">Recovery trend</div>
-      <div class="chart-tabs">
-        <button class="tab-btn active" data-chart="recovery" data-range="7">7D</button>
-        <button class="tab-btn" data-chart="recovery" data-range="30">30D</button>
-        <button class="tab-btn" data-chart="recovery" data-range="90">90D</button>
-      </div>
-    </div>
-    <div class="chart-card"><svg id="chart-recovery"></svg></div>
-
-    <div class="section-head">
-      <div class="section-title">Strain trend</div>
-      <div class="chart-tabs">
-        <button class="tab-btn active" data-chart="strain" data-range="7">7D</button>
-        <button class="tab-btn" data-chart="strain" data-range="30">30D</button>
-        <button class="tab-btn" data-chart="strain" data-range="90">90D</button>
-      </div>
-    </div>
-    <div class="chart-card"><svg id="chart-strain"></svg></div>
 
     <div class="section-head">
       <div class="section-title">HRV · pokojová TF · spánková TF</div>
@@ -153,7 +133,27 @@
     </div>
 
     <div class="section-head">
-      <div class="section-title">Forma (TSB)</div>
+      <div class="section-title">Recovery trend</div>
+      <div class="chart-tabs">
+        <button class="tab-btn active" data-chart="recovery" data-range="7">7D</button>
+        <button class="tab-btn" data-chart="recovery" data-range="30">30D</button>
+        <button class="tab-btn" data-chart="recovery" data-range="90">90D</button>
+      </div>
+    </div>
+    <div class="chart-card chart-card-sm"><svg id="chart-recovery"></svg></div>
+
+    <div class="section-head">
+      <div class="section-title">Strain trend</div>
+      <div class="chart-tabs">
+        <button class="tab-btn active" data-chart="strain" data-range="7">7D</button>
+        <button class="tab-btn" data-chart="strain" data-range="30">30D</button>
+        <button class="tab-btn" data-chart="strain" data-range="90">90D</button>
+      </div>
+    </div>
+    <div class="chart-card chart-card-sm"><svg id="chart-strain"></svg></div>
+
+    <div class="section-head">
+      <div class="section-title">Forma (TSB · CTL · ATL)</div>
       <div class="chart-tabs">
         <button class="tab-btn" data-chart="forma" data-range="30">30D</button>
         <button class="tab-btn active" data-chart="forma" data-range="90">90D</button>
@@ -164,16 +164,7 @@
       <div class="chart-card"><svg id="chart-forma"></svg></div>
       <div class="forma-legend" id="forma-legend"></div>
     </div>
-
-    <div class="section-head">
-      <div class="section-title">Fitness / Únava (CTL · ATL)</div>
-      <div class="chart-tabs">
-        <button class="tab-btn" data-chart="load" data-range="30">30D</button>
-        <button class="tab-btn active" data-chart="load" data-range="90">90D</button>
-        <button class="tab-btn" data-chart="load" data-range="180">180D</button>
-      </div>
-    </div>
-    <div class="chart-card"><svg id="chart-load"></svg></div>
+    <div class="chart-card" style="margin-top:10px;"><div class="chart-card-title">Fitness (CTL) / Únava (ATL)</div><svg id="chart-load"></svg></div>
 
     <div class="section-head"><div class="section-title">História</div></div>
     <div class="chart-card" style="padding:0; overflow-x:auto;">
@@ -182,20 +173,6 @@
     <div id="history-note" style="color:var(--text-faint);font-size:0.72rem;font-family:var(--mono);margin-top:8px;">
       Posledných 30 dní · klik = detail dňa · <a class="nav-link" href="history.html">Celá história →</a>
     </div>
-
-    <details class="methodology-wrap">
-      <summary class="section-title" style="cursor:pointer;display:inline-block;margin:36px 0 14px;">Metodika (vzorce)</summary>
-      <div class="methodology">
-        <div class="m-block"><b>Recovery</b> — 60&nbsp;% fyziológia (HRV 30 · spánk. TF 15 · pokoj. TF 10 · spánok 5, z-skóre voči 60D priemeru) + 40&nbsp;% tréningová únava. Stred stupnice ≈ 63&nbsp;%.</div>
-        <div class="m-block"><b>Tréningová únava</b> — Fatigue Score (Load posledných 14&nbsp;dní, T-1 a staršie, decay 0,70×/deň, Load<sup>1,12</sup>) ÷ kapacita (z CTL T-1). Stred pomeru = 1,0. Bez vlastného grafu, len vstup do Recovery.</div>
-        <div class="m-block"><b>Strain 0–21</b> — ak existuje CSV tepu (data/heart_rate_raw/): celodenný Banister TRIMP z minútového tepu (pod 143 bpm plochá sadzba, nad 143 bpm exponenciála), log škála. Bez CSV (staršie dni): Intervals.icu Load + kroky.</div>
-        <div class="m-block" style="color:var(--text-faint);font-size:0.76rem;">HR-based Strain (heart-strain.js): HRrest 60 · HRmax 200 · hranica Z1/Z2 143 bpm · TRIMP b=1,92 · SUBZONE_RATE 0,045/min. Vzorce/konštanty pozri priamo v súbore.</div>
-        <div class="m-block"><b>Cieľové pásmo Strain</b> — stred <code>2,5 + (Recovery/100)×15 + clamp((CTL−35)×0,045; −1,5; +1,5)</code>, orezané na 1,5–19,5, šírka ±2,3.</div>
-        <div class="m-block"><b>Sleep 0–100</b> — Intervals.icu sleepScore.</div>
-        <div class="m-block"><b>Forma (TSB)</b> — dnešné CTL−ATL. Zóny: &gt;20 prechod · 5–20 svieži · −10–5 sivá · −30–−10 optimálne · &lt;−30 riziko.</div>
-        <div class="m-block" style="color:var(--text-faint);font-size:0.76rem;">HR zóny (Z1–Z5) sú len info v detaile aktivity, do Strain nevstupujú.</div>
-      </div>
-    </details>
   </div>
 </div>
 
@@ -551,6 +528,14 @@ function renderActivityStatus(s){
   const note = document.getElementById('status-card-note');
   note.textContent = (s && s.updatedAt) ? ('od ' + s.updatedAt.slice(0,16).replace('T',' ')) : 'predvolené';
 
+  const STATUS_META = {
+    active: {icon:'🏃', label:'Aktívny'}, sick: {icon:'🤒', label:'Chorý'},
+    injured: {icon:'🤕', label:'Zranený'}, break: {icon:'🧘', label:'Pauza'},
+  };
+  const meta = STATUS_META[status] || STATUS_META.active;
+  document.getElementById('status-summary-icon').textContent = meta.icon;
+  document.getElementById('status-summary-label').textContent = 'Stav: ' + meta.label;
+
   // Viditeľný banner pri hornej časti stránky, nielen skrytý kontext pre AI - "stav" má takto
   // reálny efekt na to, čo vidno na dashboarde, nielen na to, čo si AI text napíše.
   const banner = document.getElementById('status-banner');
@@ -583,6 +568,19 @@ document.querySelectorAll('.status-opt').forEach(btn=>{
     try{
       await saveActivityStatus(status, token);
       note.textContent = 'uložené ✓';
+      const STATUS_META = {active:{icon:'🏃',label:'Aktívny'}, sick:{icon:'🤒',label:'Chorý'}, injured:{icon:'🤕',label:'Zranený'}, break:{icon:'🧘',label:'Pauza'}};
+      const meta = STATUS_META[status] || STATUS_META.active;
+      document.getElementById('status-summary-icon').textContent = meta.icon;
+      document.getElementById('status-summary-label').textContent = 'Stav: ' + meta.label;
+      const banner = document.getElementById('status-banner');
+      const bannerText = {sick:'🤒 Nastavený stav: Chorý', injured:'🤕 Nastavený stav: Zranený', break:'🧘 Nastavený stav: Pauza'};
+      if(bannerText[status]){
+        banner.className = 'status-banner ' + status;
+        banner.textContent = bannerText[status];
+        banner.style.display = 'flex';
+      } else {
+        banner.style.display = 'none';
+      }
     }catch(e){
       note.textContent = '⚠️ ' + e.message;
     }
@@ -764,12 +762,12 @@ function render(results, activities, aiSummary){
   function renderRecovery(range){
     drawChart('chart-recovery', results.slice(-range), [{field:'recovery', color:PALETTE.accent, label:'Recovery'}],
       {fixedMin:0, fixedMax:100, gridValues:[0,25,50,75,100], dotColorFn: pillColor,
-       tooltipFormat:(f,v)=>v+'%'});
+       tooltipFormat:(f,v)=>v+'%', height:120});
   }
   function renderStrain(range){
     drawChart('chart-strain', results.slice(-range), [{field:'strain', color:PALETTE.data, label:'Strain'}],
       {fixedMin:0, fixedMax:21, gridValues:[0,7,14,21],
-       tooltipFormat:(f,v)=>v.toFixed(1)});
+       tooltipFormat:(f,v)=>v.toFixed(1), height:120});
   }
   function renderForma(range){
     drawChart('chart-forma', results.slice(-range), [{field:'tsb', color:PALETTE.neutral, label:'TSB'}],
@@ -777,6 +775,7 @@ function render(results, activities, aiSummary){
        dotColorFn: v => { const z = formaZoneFor(v); return z ? z.color : PALETTE.neutral; },
        bands: FORMA_ZONES.map(z=>({min: Math.max(z.min,-40), max: Math.min(z.max,25), color: hexToRgba(z.color, 0.14)})),
        tooltipFormat:(f,v)=>v.toFixed(1)});
+    renderLoad(range); // rovnaké rozsahové taby ovládajú aj CTL/ATL graf pod tým - patria do tej istej "Forma" skupiny
   }
   function renderPhysio(range){
     // HRV prerušovaná čiara = FIXNÝ 60-dňový kĺzavý baseline (rovnaký, aký sa používa aj na
@@ -824,11 +823,10 @@ function render(results, activities, aiSummary){
       {minAtZero:true, hideDots:true, tooltipFormat:(f,v)=>v.toFixed(1)});
   }
 
+  renderPhysio(7);
   renderRecovery(7);
   renderStrain(7);
-  renderForma(90);
-  renderPhysio(7);
-  renderLoad(90);
+  renderForma(90); // vnútri zavolá aj renderLoad(90) pre CTL/ATL graf
   drawTable('history-table', results.slice().reverse().slice(0,30), activities, NOTES_BY_DATE_D);
 
   document.querySelectorAll('.tab-btn').forEach(btn=>{
@@ -841,18 +839,19 @@ function render(results, activities, aiSummary){
       else if(chartName==='strain') renderStrain(range);
       else if(chartName==='forma') renderForma(range);
       else if(chartName==='physio') renderPhysio(range);
-      else if(chartName==='load') renderLoad(range);
     });
   });
 }
 
 function renderActivityList(activities, todayDate){
+  const section = document.getElementById('today-activities-section');
   const list = document.getElementById('activity-list');
   const todays = activities.filter(a => a.date === todayDate);
   if(todays.length===0){
-    list.innerHTML = `<div class="activity-empty">Dnes zatiaľ žiadna aktivita. Klikni "Aktualizovať" po skončení jazdy.</div>`;
+    section.style.display = 'none';
     return;
   }
+  section.style.display = 'block';
   list.innerHTML = '';
   todays.forEach(a=>{
     const raw = loadToRawStrain(a);
