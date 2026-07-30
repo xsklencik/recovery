@@ -164,7 +164,6 @@
       <div class="chart-card"><svg id="chart-forma"></svg></div>
       <div class="forma-legend" id="forma-legend"></div>
     </div>
-    <div class="chart-card" style="margin-top:10px;"><div class="chart-card-title">Fitness (CTL) / Únava (ATL)</div><svg id="chart-load"></svg></div>
 
     <div class="section-head"><div class="section-title">História</div></div>
     <div class="chart-card" style="padding:0; overflow-x:auto;">
@@ -770,12 +769,22 @@ function render(results, activities, aiSummary){
        tooltipFormat:(f,v)=>v.toFixed(1), height:120});
   }
   function renderForma(range){
-    drawChart('chart-forma', results.slice(-range), [{field:'tsb', color:PALETTE.neutral, label:'TSB'}],
-      {fixedMin:-40, fixedMax:25, gridValues:[20,5,-10,-30],
+    const data = results.slice(-range);
+    // CTL/ATL zvyčajne presahujú TSB rozsah (-40..25) - hornú hranicu osi preto počítame
+    // dynamicky (nikdy menej než 25, aby zóny TSB ostali celé viditeľné), aby sa čiary CTL/ATL
+    // v grafe nikdy neorezali.
+    const ctlAtlVals = data.flatMap(d=>[d.ctl, d.atl]).filter(v=>v!=null && !isNaN(v));
+    const fixedMax = ctlAtlVals.length ? Math.max(25, Math.ceil(Math.max(...ctlAtlVals)*1.1)) : 25;
+    drawChart('chart-forma', data,
+      [
+        {field:'tsb', color:PALETTE.neutral, label:'TSB'},
+        {field:'ctl', color:PALETTE.data, label:'CTL', hideDots:true, width:1.8},
+        {field:'atl', color:PALETTE.bad, label:'ATL', hideDots:true, width:1.8},
+      ],
+      {fixedMin:-40, fixedMax, gridValues:[20,5,-10,-30],
        dotColorFn: v => { const z = formaZoneFor(v); return z ? z.color : PALETTE.neutral; },
-       bands: FORMA_ZONES.map(z=>({min: Math.max(z.min,-40), max: Math.min(z.max,25), color: hexToRgba(z.color, 0.14)})),
+       bands: FORMA_ZONES.map(z=>({min: Math.max(z.min,-40), max: Math.min(z.max,fixedMax), color: hexToRgba(z.color, 0.14)})),
        tooltipFormat:(f,v)=>v.toFixed(1)});
-    renderLoad(range); // rovnaké rozsahové taby ovládajú aj CTL/ATL graf pod tým - patria do tej istej "Forma" skupiny
   }
   function renderPhysio(range){
     // HRV prerušovaná čiara = FIXNÝ 60-dňový kĺzavý baseline (rovnaký, aký sa používa aj na
@@ -817,16 +826,11 @@ function render(results, activities, aiSummary){
       {minAtZero:true, tooltipFormat:(f,v)=>Math.round(v)+' bpm',
        bands: sleepStd>0 ? [{min:sleepAvg-sleepStd, max:sleepAvg+sleepStd, color:hexToRgba(PALETTE.purple,0.10)}] : []});
   }
-  function renderLoad(range){
-    drawChart('chart-load', results.slice(-range),
-      [{field:'ctl', color:PALETTE.data, label:'CTL'}, {field:'atl', color:PALETTE.bad, label:'ATL'}],
-      {minAtZero:true, hideDots:true, tooltipFormat:(f,v)=>v.toFixed(1)});
-  }
 
   renderPhysio(7);
   renderRecovery(7);
   renderStrain(7);
-  renderForma(90); // vnútri zavolá aj renderLoad(90) pre CTL/ATL graf
+  renderForma(90);
   drawTable('history-table', results.slice().reverse().slice(0,30), activities, NOTES_BY_DATE_D);
 
   document.querySelectorAll('.tab-btn').forEach(btn=>{

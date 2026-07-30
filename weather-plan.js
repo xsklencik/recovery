@@ -136,9 +136,29 @@ async function fetchWeather() {
   }));
 }
 
+// POZOR (rovnaký koreň problému ako v ai-summary.js/sync.js, zistené 30.7.2026): Gemini 3.x
+// modely (flash aj flash-lite) majú defaultne zapnuté interné "thinking" tokeny, ktoré sa
+// POČÍTAJÚ do maxOutputTokens, ale nie sú vidno vo výstupe. Tento skript pýta výrazne väčší JSON
+// než ai-summary.js (8 dní × 3 alternatívy), takže aj pri maxOutputTokens 2600 sa dalo ľahko stať,
+// že model minul rozpočet na neviditeľné rozmýšľanie a viditeľný JSON sa orezal uprostred -
+// JSON.parse zlyhal, suggestions=[] a ÚPLNE VŠETKY dni skončili ako "Bez návrhu". Riešenie:
+// 1) thinkingConfig.thinkingLevel='low' (Gemini 3.x - NIE thinkingBudget, to je len pre 2.5 sériu
+//    a na 3.x model by vrátilo 400 Bad Request), 2) vyšší maxOutputTokens ako rezerva, 3) kontrola
+//    finishReason - ak model odpoveď orezal (MAX_TOKENS), NEPOUŽIJE sa jeho (nevalidný) text, ale
+//    hodí sa chyba, aby to callGemini() nižšie skúsilo s ďalším záložným modelom namiesto toho,
+//    aby sa jeden orezaný pokus vydával za konečný výsledok pre všetky dni naraz.
+function thinkingConfigFor(model) {
+  if (/^gemini-2\.5/.test(model)) return { thinkingBudget: 0 };
+  return { thinkingLevel: 'low' };
+}
+
 async function callGeminiOnce(model, key, prompt, opts) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-  const generationConfig = { temperature: 0.7, maxOutputTokens: opts.maxOutputTokens || 1200 };
+  const generationConfig = {
+    temperature: 0.7,
+    maxOutputTokens: opts.maxOutputTokens || 1200,
+    thinkingConfig: thinkingConfigFor(model),
+  };
   if (opts.json) generationConfig.responseMimeType = 'application/json';
   const res = await fetch(url, {
     method: 'POST',
@@ -150,9 +170,13 @@ async function callGeminiOnce(model, key, prompt, opts) {
     throw new Error(`Gemini API ${res.status} (model=${model}): ${txt.slice(0, 300)}`);
   }
   const data = await res.json();
-  const text = data && data.candidates && data.candidates[0] && data.candidates[0].content
-    && data.candidates[0].content.parts && data.candidates[0].content.parts[0]
-    && data.candidates[0].content.parts[0].text;
+  const candidate = data && data.candidates && data.candidates[0];
+  const text = candidate && candidate.content && candidate.content.parts
+    && candidate.content.parts[0] && candidate.content.parts[0].text;
+  const finishReason = candidate && candidate.finishReason;
+  if (finishReason && finishReason !== 'STOP') {
+    throw new Error(`Gemini (model=${model}) finishReason=${finishReason} - odpoveď pravdepodobne orezaná/nekompletná`);
+  }
   return text ? text.trim() : null;
 }
 
@@ -320,10 +344,11 @@ async function generateNewPlan() {
 
   const prompt = buildPlanPrompt(weatherDays, wellnessMerged, dayNotes, statusByDate);
   console.log('Generujem plán (Gemini)...');
-  // Vyššie maxOutputTokens ako predtým (1200 -> 2600) - odkedy sa pre každý deň pýtame na 3
-  // alternatívy namiesto 1 návrhu, je výstupný JSON cca 3x dlhší a pri starom limite by sa
-  // Gemini odpoveď mohla orezať uprostred JSON-u a celá sa nedala naparsovať (=> opäť "bez návrhu").
-  const result = await callGemini(prompt, { json: true, maxOutputTokens: 2600 });
+  // maxOutputTokens 4096 (bolo 2600) + thinkingConfig v callGeminiOnce() - skutočná príčina
+  // "Bez návrhu pre všetky dni" bola, že neviditeľné "thinking" tokeny (počítajú sa do
+  // maxOutputTokens, ale nie sú vidno vo výstupe) zjedli veľkú časť rozpočtu na tomto veľkom
+  // 8-dni×3-alternatívy JSON-e, odpoveď sa orezala uprostred a nedala sa naparsovať.
+  const result = await callGemini(prompt, { json: true, maxOutputTokens: 4096 });
   const raw = result ? result.text : null;
   const usedModel = result ? result.model : (process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL);
   let suggestions = [];
@@ -386,7 +411,7 @@ async function editExistingPlan(instruction) {
 
   const prompt = buildEditPrompt(existing, currentSelection, instruction);
   console.log(`Upravujem existujúci plán podľa pokynu: "${instruction}" (Gemini)...`);
-  const result = await callGemini(prompt, { json: true, maxOutputTokens: 2600 });
+  const result = await callGemini(prompt, { json: true, maxOutputTokens: 4096 });
   const raw = result ? result.text : null;
   const usedModel = result ? result.model : (process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL);
 
