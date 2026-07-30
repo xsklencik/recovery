@@ -1,0 +1,37 @@
+name: Process heart rate CSV → Strain
+
+# Spustí sa automaticky, keď pushneš nový/aktualizovaný CSV do data/heart_rate_raw/
+# (stačí tam commitnúť "Heart rate YYYY.MM.DD Huawei Health.csv" z Google Drive a pushnúť -
+# netreba nič ďalšie spúšťať ručne). workflow_dispatch je pre prípad, že chceš prepočítať znova
+# bez toho, aby si musel niečo meniť/pushovať.
+on:
+  push:
+    paths:
+      - 'data/heart_rate_raw/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run heart-strain script
+        run: node heart-strain.js
+
+      - name: Commit and push updated Strain data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/hr_strain_daily.json
+          git diff --staged --quiet || git commit -m "Auto: prepočet HR-based Strain z CSV $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push
