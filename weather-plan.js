@@ -59,11 +59,40 @@ function describeWeather(code) { return WEATHER_CODES[code] || ['neznáme', '❓
 const TRAINING_WINDOW_HOURS = 4;
 const TRAINING_DAY_START_HOUR = 5;
 const TRAINING_DAY_END_HOUR = 22;
+// OPRAVA 30.7.2026 (nahlásené Adamom): hľadanie okna predtým prehľadávalo celý deň 5:00-22:00 a
+// vždy vyhralo okno s najnižšou šancou dažďa bez ohľadu na dennú dobu - v praxi to takmer vždy
+// vyšlo na skoré ráno (napr. "05:00-09:00, šanca dažďa 0%"), keďže skoro ráno býva štatisticky
+// najstabilnejšie počasie. Adam ale v tom čase nikdy netrénuje (raňajkuje okolo 8:00) - chce
+// primárne poobedné okno. Preto sa teraz hľadá NAJPRV len v PREFERRED rozsahu (poobede/podvečer);
+// na celý pôvodný rozsah (FALLBACK, vrátane rána) sa siahne LEN ak v preferovanom okne vôbec nie
+// je dosť hodinových dát alebo by tam priemerná šanca dažďa bola vyslovene zlá (nad
+// FALLBACK_RAIN_THRESHOLD %) a mimo neho je preukázateľne podstatne lepšie okno - aby aj v daždivé
+// dni Adam dostal aspoň nejaké odporúčanie, len jasne označené, že je mimo jeho zvyčajného času.
+const PREFERRED_WINDOW_START_HOUR = 12;
+const PREFERRED_WINDOW_END_HOUR = 21;
+const FALLBACK_RAIN_THRESHOLD = 50; // % - nad touto hranicou sa oplatí pozrieť aj mimo preferovaného rozsahu
 
-// Z hodinovej pravdepodobnosti zrážok (Open-Meteo `precipitation_probability`, v %) nájde pre
-// daný deň najlepšie súvislé okno dĺžky TRAINING_WINDOW_HOURS s najnižšou priemernou šancou
-// dažďa, v rámci rozumného denného času. Vráti null, ak pre daný deň chýbajú hodinové dáta
-// (napr. posledný deň 8-dňového okna môže mať neúplné hodiny).
+// Z hodinovej pravdepodobnosti zrážok (Open-Meteo `precipitation_probability`, v %) nájde pre daný
+// deň najlepšie súvislé okno dĺžky TRAINING_WINDOW_HOURS s najnižšou priemernou šancou dažďa, v
+// zadanom rozsahu hodín. Vráti null, ak pre daný deň/rozsah chýbajú/nestačia hodinové dáta.
+function bestWindowInRange(dayHours, startHour, endHour) {
+  const inRange = dayHours.filter(h => h.hour >= startHour && h.hour <= endHour);
+  if (inRange.length < TRAINING_WINDOW_HOURS) return null;
+  let best = null;
+  for (let i = 0; i <= inRange.length - TRAINING_WINDOW_HOURS; i++) {
+    const slice = inRange.slice(i, i + TRAINING_WINDOW_HOURS);
+    const contiguous = slice.every((h, idx) => idx === 0 || h.hour === slice[idx - 1].hour + 1);
+    if (!contiguous) continue; // medzera v dátach (chýbajúca hodina) - okno nie je naozaj súvislé
+    const avg = slice.reduce((s, h) => s + h.prob, 0) / slice.length;
+    if (!best || avg < best.avg) {
+      best = { startHour: slice[0].hour, endHour: slice[slice.length - 1].hour + 1, avg };
+    }
+  }
+  return best;
+}
+
+// Vráti { start, end, avgRainProb, outsidePreferred } - posledné pole true, ak sa muselo siahnuť
+// mimo preferovaného poobedného rozsahu (frontend/prompt to môže dať najavo, napr. iným textom).
 function bestWindowForDay(hourlyTimes, hourlyProb, date) {
   const dayHours = [];
   for (let i = 0; i < hourlyTimes.length; i++) {
@@ -75,23 +104,49 @@ function bestWindowForDay(hourlyTimes, hourlyProb, date) {
     }
   }
   dayHours.sort((a, b) => a.hour - b.hour);
-  if (dayHours.length < TRAINING_WINDOW_HOURS) return null;
-  let best = null;
-  for (let i = 0; i <= dayHours.length - TRAINING_WINDOW_HOURS; i++) {
-    const slice = dayHours.slice(i, i + TRAINING_WINDOW_HOURS);
-    const contiguous = slice.every((h, idx) => idx === 0 || h.hour === slice[idx - 1].hour + 1);
-    if (!contiguous) continue; // medzera v dátach (chýbajúca hodina) - okno nie je naozaj súvislé
-    const avg = slice.reduce((s, h) => s + h.prob, 0) / slice.length;
-    if (!best || avg < best.avg) {
-      best = { startHour: slice[0].hour, endHour: slice[slice.length - 1].hour + 1, avg };
+
+  const preferred = bestWindowInRange(dayHours, PREFERRED_WINDOW_START_HOUR, PREFERRED_WINDOW_END_HOUR);
+  const fallback = bestWindowInRange(dayHours, TRAINING_DAY_START_HOUR, TRAINING_DAY_END_HOUR);
+
+  let chosen = preferred;
+  let outsidePreferred = false;
+  if (!preferred) {
+    chosen = fallback; // v preferovanom rozsahu nič (napr. koniec 8-dňového okna má neúplné dáta)
+    outsidePreferred = !!fallback;
+  } else if (fallback && preferred.avg > FALLBACK_RAIN_THRESHOLD && fallback.avg < preferred.avg - 15) {
+    // Poobedie je vyslovene zlé (>50 % šanca dažďa) a mimo neho je citeľne lepšie okno - ponúkni
+    // radšej to, len označené ako mimo zvyčajného času, namiesto vnucovania zlého poobedia.
+    chosen = fallback;
+    outsidePreferred = true;
+  }
+  if (!chosen) return null;
+  return {
+    start: String(chosen.startHour).padStart(2, '0') + ':00',
+    end: String(chosen.endHour).padStart(2, '0') + ':00',
+    avgRainProb: Math.round(chosen.avg),
+    outsidePreferred,
+  };
+}
+
+// Kompletný hodinový rozpis daného dňa (5:00-22:00) - šanca dažďa a teplota za každú hodinu, na
+// zobrazenie po kliknutí na deň (plan.html). Netreba filtrovať/vyberať okno, frontend si zobrazí
+// všetko a Adam sám vidí, kedy presne prší/neprší.
+function hourlyBreakdownForDay(hourlyTimes, hourlyProb, hourlyTemp, date) {
+  const hours = [];
+  for (let i = 0; i < hourlyTimes.length; i++) {
+    if (hourlyTimes[i].slice(0, 10) === date) {
+      const hour = parseInt(hourlyTimes[i].slice(11, 13), 10);
+      if (hour >= TRAINING_DAY_START_HOUR && hour <= TRAINING_DAY_END_HOUR) {
+        hours.push({
+          hour,
+          rainProb: hourlyProb[i] != null ? hourlyProb[i] : null,
+          temp: hourlyTemp && hourlyTemp[i] != null ? Math.round(hourlyTemp[i] * 10) / 10 : null,
+        });
+      }
     }
   }
-  if (!best) return null;
-  return {
-    start: String(best.startHour).padStart(2, '0') + ':00',
-    end: String(best.endHour).padStart(2, '0') + ':00',
-    avgRainProb: Math.round(best.avg),
-  };
+  hours.sort((a, b) => a.hour - b.hour);
+  return hours;
 }
 
 // Open-Meteo dokumentácia je v rôznych zdrojoch nekonzistentná v pomenovaní denných parametrov
@@ -101,7 +156,7 @@ function bestWindowForDay(hourlyTimes, hourlyProb, date) {
 // `precipitation_probability` má stabilný názov naprieč verziami, tá fallback nepotrebuje.
 async function fetchWeatherWithParams(dailyParams) {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
-    `&daily=${dailyParams}&hourly=precipitation_probability&timezone=Europe/Bratislava&forecast_days=8`;
+    `&daily=${dailyParams}&hourly=precipitation_probability,temperature_2m&timezone=Europe/Bratislava&forecast_days=8`;
   const res = await fetch(url);
   if (!res.ok) {
     const txt = await res.text().catch(() => '');
@@ -123,6 +178,7 @@ async function fetchWeather() {
   const h = data.hourly || {};
   const hourlyTimes = h.time || [];
   const hourlyProb = h.precipitation_probability || [];
+  const hourlyTemp = h.temperature_2m || [];
   const weatherCodeArr = d.weather_code || d.weathercode || [];
   const windArr = d.wind_speed_10m_max || d.windspeed_10m_max || [];
   return d.time.map((date, i) => ({
@@ -133,6 +189,7 @@ async function fetchWeather() {
     windMaxKmh: windArr[i],
     weatherCode: weatherCodeArr[i],
     bestWindow: bestWindowForDay(hourlyTimes, hourlyProb, date),
+    hourly: hourlyBreakdownForDay(hourlyTimes, hourlyProb, hourlyTemp, date),
   }));
 }
 
@@ -230,15 +287,32 @@ function normalizeAlternatives(alts) {
     });
 }
 
-function weatherLineFor(date, weatherDesc, tempMin, tempMax, precipMm, windMaxKmh, planLabel, statusTxt, bestWindow) {
+function weatherLineFor(date, weatherDesc, tempMin, tempMax, precipMm, windMaxKmh, planLabel, statusTxt, bestWindow, doneActivitiesTxt) {
   const windowTxt = bestWindow
-    ? ` [najlepšie okno: ${bestWindow.start}-${bestWindow.end}, šanca dažďa ${bestWindow.avgRainProb}%]`
+    ? ` [najlepšie okno: ${bestWindow.start}-${bestWindow.end}, šanca dažďa ${bestWindow.avgRainProb}%` +
+      `${bestWindow.outsidePreferred ? ', mimo zvyčajného poobedného času' : ''}]`
     : '';
+  const doneTxt = doneActivitiesTxt ? ` [UŽ ABSOLVOVANÉ DNES: ${doneActivitiesTxt}]` : '';
   return `- ${date}: ${weatherDesc}, ${Math.round(tempMin)}-${Math.round(tempMax)}°C, zrážky ${precipMm}mm, ` +
-    `vietor do ${Math.round(windMaxKmh)}km/h [${planLabel}]${statusTxt}${windowTxt}`;
+    `vietor do ${Math.round(windMaxKmh)}km/h [${planLabel}]${statusTxt}${windowTxt}${doneTxt}`;
 }
 
-function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate) {
+// Krátky ľudsky čitateľný súhrn už zaznamenaných aktivít pre daný deň (napr. "30min Ride (Z2,
+// Load 9), 5min Run" ) - použité najmä pre DNEŠNÝ deň, aby AI vedelo, že časť/celý tréning už
+// reálne prebehol a nenavrhovalo duplicitne ďalší plnohodnotný tréning, akoby sa deň ešte
+// nezačal. Pre staršie dni v okne (zajtra a ďalej) toto typicky bude prázdne.
+function doneActivitiesSummary(dayActivities) {
+  if (!dayActivities || !dayActivities.length) return '';
+  return dayActivities.map(a => {
+    const mins = a.moving_time ? Math.round(a.moving_time / 60) : null;
+    const loadTxt = a.icu_training_load != null ? `, Load ${Math.round(a.icu_training_load)}` : '';
+    const hrTxt = a.average_heartrate ? `, Ø${Math.round(a.average_heartrate)}bpm` : '';
+    return `${mins != null ? mins + 'min ' : ''}${a.type || a.name || 'aktivita'}${loadTxt}${hrTxt}`;
+  }).join('; ');
+}
+
+function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate, activitiesByDate) {
+  const todayDate = weatherDays.length ? weatherDays[0].date : null;
   const lines = [];
   lines.push(
     'Si osobný cyklistický/bežecký kouč. Na základe počasia a aktuálnej formy nižšie navrhni pre ' +
@@ -253,7 +327,21 @@ function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate) {
     'formy (napr. pred/po náročnom dni uprav, čo dáva zmysel odporučiť). Ak je pri dni uvedené ' +
     '"najlepšie okno" (súvislý časový úsek s najnižšou pravdepodobnosťou dažďa), zohľadni ho a v ' +
     'texte návrhu (najmä pri "endurance"/"intensity" variante, kde je dĺžka vonku dlhšia) stručne ' +
-    'spomeň orientačný čas, kedy je najvhodnejšie ísť trénovať. Odpovedz IBA validným JSON poľom ' +
+    'spomeň orientačný čas, kedy je najvhodnejšie ísť trénovať - toto okno je zámerne hľadané ' +
+    'prednostne v poobedných/podvečerných hodinách (Adam ráno väčšinou netrénuje), takže ak nie je ' +
+    'označené ako "mimo zvyčajného poobedného času", NENAVRHUJ radšej skoré ráno len preto, že by ' +
+    'tam bola o pár % nižšia šanca dažďa.\n' +
+    `DÔLEŽITÉ - AK je pri dni uvedené "UŽ ABSOLVOVANÉ DNES" (týka sa to prakticky vždy len ` +
+    `dnešného dňa, ${todayDate || 'prvý deň v zozname'}): túto aktivitu už reálne vykonal, deň sa ` +
+    'pre neho z tréningového hľadiska už čiastočne/úplne odohral - NENAVRHUJ žiadnu z troch ' +
+    'alternatív ako keby sa deň ešte len začínal. Namiesto toho: ak už absolvovaná aktivita svojím ' +
+    'objemom/záťažou zodpovedá plnohodnotnému tréningu dňa, "recovery" alternatíva nech je ' +
+    'jednoducho pochvala/potvrdenie že už má odtrénované a odporučanie oddychu do konca dňa, a ' +
+    '"endurance"/"intensity" alternatívy nech sú buď ĽAHKÝ DOPLNOK (nie duplicitný plnohodnotný ' +
+    'druhý tréning) alebo návrh dokedy ešte dnes prípadne pridať niečo malé, ak by chcel. Text ' +
+    'návrhu nech explicitne spomenie, že už dnes niečo absolvoval (napr. "keďže si už dnes ' +
+    'odjazdil X min, ..."). Pre dni BEZ poznámky "UŽ ABSOLVOVANÉ" postupuj úplne štandardne. ' +
+    'Odpovedz IBA validným JSON poľom ' +
     '(žiadny markdown, žiadne ```), presne v tvare:\n' +
     '[{"date":"YYYY-MM-DD","alternatives":[' +
     '{"label":"krátky názov 2-4 slová","intensity":"recovery","suggestion":"1-2 vety, konkrétne"},' +
@@ -269,7 +357,8 @@ function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate) {
     const status = statusByDate[w.date];
     const planLabel = (note && note.note && note.note.trim()) ? `MÁ VLASTNÝ PLÁN: "${note.note.trim()}"` : 'BEZ VLASTNÉHO PLÁNU';
     const statusTxt = status && status !== 'active' ? ' [stav: ' + status + ']' : '';
-    lines.push(weatherLineFor(w.date, desc, w.tempMin, w.tempMax, w.precipMm, w.windMaxKmh, planLabel, statusTxt, w.bestWindow));
+    const doneTxt = doneActivitiesSummary(activitiesByDate ? activitiesByDate[w.date] : null);
+    lines.push(weatherLineFor(w.date, desc, w.tempMin, w.tempMax, w.precipMm, w.windMaxKmh, planLabel, statusTxt, w.bestWindow, doneTxt));
   });
   lines.push('');
   if (wellnessRecent.length) {
@@ -334,6 +423,21 @@ async function generateNewPlan() {
     loadJsonSafe(path.join(DATA_DIR, 'wellness_history.json'), []),
     loadJsonSafe(path.join(DATA_DIR, 'wellness_daily.json'), []), 'id'
   ).sort((a, b) => (a.date < b.date ? -1 : 1));
+
+  // Už zaznamenané aktivity v rámci dní pokrytých predpoveďou (v praxi relevantné hlavne pre DNES
+  // - viď komentár v buildPlanPrompt) - aby AI vedelo, že časť dňa sa už reálne odohrala, a
+  // nenavrhovalo duplicitný plnohodnotný tréning, ako keby deň ešte len začínal.
+  const activitiesMerged = mergeById(
+    loadJsonSafe(path.join(DATA_DIR, 'activities_history.json'), []),
+    loadJsonSafe(path.join(DATA_DIR, 'activities_daily.json'), []), 'id'
+  );
+  const forecastDates = new Set(weatherDays.map(w => w.date));
+  const activitiesByDate = {};
+  activitiesMerged.forEach(a => {
+    if (!a.date || !forecastDates.has(a.date)) return;
+    (activitiesByDate[a.date] = activitiesByDate[a.date] || []).push(a);
+  });
+
   const dayNotes = loadJsonSafe(path.join(DATA_DIR, 'day_notes.json'), []);
   const globalStatus = loadJsonSafe(path.join(DATA_DIR, 'status.json'), null);
   const statusByDate = {};
@@ -342,7 +446,7 @@ async function generateNewPlan() {
     statusByDate[w.date] = (note && note.status) ? note.status : (globalStatus && globalStatus.status) || 'active';
   });
 
-  const prompt = buildPlanPrompt(weatherDays, wellnessMerged, dayNotes, statusByDate);
+  const prompt = buildPlanPrompt(weatherDays, wellnessMerged, dayNotes, statusByDate, activitiesByDate);
   console.log('Generujem plán (Gemini)...');
   // maxOutputTokens 4096 (bolo 2600) + thinkingConfig v callGeminiOnce() - skutočná príčina
   // "Bez návrhu pre všetky dni" bola, že neviditeľné "thinking" tokeny (počítajú sa do
@@ -381,6 +485,8 @@ async function generateNewPlan() {
         precipMm: w.precipMm,
         windMaxKmh: w.windMaxKmh,
         bestWindow: w.bestWindow || null,
+        hourly: w.hourly || [],
+        alreadyDone: doneActivitiesSummary(activitiesByDate ? activitiesByDate[w.date] : null) || null,
         ownNote: hasOwnNote ? note.note : null,
         status: statusByDate[w.date] !== 'active' ? statusByDate[w.date] : null,
         // Dni s vlastným plánom nemajú alternatívy (rovnaká logika ako predtým pri aiSuggestion -

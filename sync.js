@@ -100,6 +100,40 @@ const HR_SUBZONE_RATE = 0.045; // raw/min pre bdenie pod 143 bpm (bežný denný
 // ak sa Strain "necíti" správne (>1 = vyšší Strain za tú istú intenzitu, <1 = nižší).
 const HR_STRAIN_SCALE = 1.0;
 
+// OPRAVA 30.7.2026 (nahlásené Adamom - deň s 5h48min túrou/33k krokmi vyšiel na rovnaký Strain
+// ako deň s 2h40min jazdou na bicykli/4k krokmi, "nezdalo sa mu to správne"): SUBZONE_RATE vyššie
+// je PLOCHÁ sadzba pre CELÝ rozsah pod 143 bpm - t.j. sediaci pokoj pri 65 bpm a takmer-tréningová
+// intenzita pri 140 bpm (napr. dlhé stúpanie na túre/jazde) dostanú ROVNAKÝ príspevok za minútu,
+// zatiaľ čo hneď pri 143 bpm príspevok skokovo vzrastie ~26x (na trimpWeight(143), pozri nižšie).
+// Reálne dáta z oboch spomínaných dní (Velké Hincovo pleso túra 29.7. aj Afternoon Ride 25.7.)
+// ukázali, že prevažná väčšina ich "Z1" minút bola v rozmedzí 120-142 bpm - teda skutočná,
+// sústredená záťaž (nie sedenie), ktorá si touto plochou sadzbou zaslúži viac než 0.045/min, ale
+// zároveň nesmie skočiť rovno na plnú Banister exponenciálu (to by naopak nafúklo Strain aj bežné
+// dni bez tréningu, presne problém, ktorý SUBZONE_RATE pôvodne riešil - overené na syntetickom
+// dni aj spätne na reálnych dátach).
+// Riešenie: PLOCHÁ sadzba ostáva pre bežný deň (mimo zaznamenaných aktivít - NEAT/bežný pohyb),
+// ALE počas zaznamenanej AKTIVITY sa časť pod 143 bpm už nepočíta paušálne zo zónových sekúnd
+// (tie vedia len "koľko sekúnd bolo pod 143", nie AKO VYSOKO pod touto hranicou) - namiesto toho
+// sa použije stupňovaná váha (hrSubzoneWeightGraded nižšie) aplikovaná na SKUTOČNÝ minútový tep z
+// CSV v danom časovom okne (ten k dispozícii máme, len sa doteraz počas aktivity ignoroval).
+// Mimo aktivít (bežný deň) sa nič nemení - tam CSV naďalej dostáva plochú SUBZONE_RATE, aby sa
+// nezačali "tréningovo" počítať bežné výkyvy tepu cez deň (schody, chôdza na vlak a pod.).
+const HR_Z1_RAMP_START = 100; // pod touto hranicou (60-100 bpm): stále plochá NEAT sadzba
+function hrTrimpWeightRaw(hr) { // bez HR_STRAIN_SCALE - pomocná funkcia len pre HR_W_Z1_BOUND nižšie
+  const hrr = clamp((hr - HR_REST) / (HR_MAX - HR_REST), 0, 1);
+  return hrr * 0.64 * Math.exp(HR_TRIMP_B * hrr);
+}
+const HR_W_Z1_BOUND = hrTrimpWeightRaw(143); // váha presne na hranici 143 bpm - koniec rampy
+function hrSubzoneWeightGraded(hr) {
+  if (hr <= HR_REST) return 0;
+  if (hr <= HR_Z1_RAMP_START) return HR_SUBZONE_RATE;
+  if (hr < 143) {
+    const frac = (hr - HR_Z1_RAMP_START) / (143 - HR_Z1_RAMP_START);
+    return HR_SUBZONE_RATE + (HR_W_Z1_BOUND - HR_SUBZONE_RATE) * frac; // lineárna rampa, žiadny skok pri 143
+  }
+  return hrTrimpWeightRaw(hr) * HR_STRAIN_SCALE;
+}
+
 // PRESNOSŤ POČAS AKTIVÍT: Intervals.icu pozná pre KAŽDÚ zosynchronizovanú aktivitu presný počet
 // SEKÚND strávených v každej zóne (hr_z1_secs..hr_z5_secs, z bicyklového počítača/hodiniek -
 // oveľa jemnejšie ako 1 riadok/minútu z Huawei Health CSV). Preto: pre časové okno KAŽDEJ
@@ -124,7 +158,10 @@ function trimpWeight(hr) {
 // zoneSecs = [z1,z2,z3,z4,z5] v sekundách (jednotlivé polia môžu byť null - staršie/neúplné dáta).
 function zoneSecondsToRaw(zoneSecs) {
   let raw = 0;
-  if (zoneSecs[0]) raw += (zoneSecs[0] / 60) * HR_SUBZONE_RATE; // Z1
+  // Z1 (< 143 bpm) sa TU už nepočíta paušálne z hrubých sekúnd zóny - tie vedia len "koľko
+  // sekúnd bolo pod 143", nie AKO VYSOKO pod touto hranicou to bolo. Namiesto toho sa Z1 časť
+  // aktivity počíta v dayTrimp() nižšie priamo zo skutočného minútového CSV tepu v danom okne,
+  // cez stupňovanú váhu hrSubzoneWeightGraded() - presnejšie a bez umelého skoku pri 143 bpm.
   for (let z = 2; z <= 5; z++) {
     const secs = zoneSecs[z - 1];
     if (!secs) continue;
@@ -193,7 +230,7 @@ function dayTrimp(dayRows, dayActivities) {
     const win = activityWindowSecs(act);
     if (!win) continue;
     windows.push(win);
-    activityRaw += zoneSecondsToRaw(zoneSecs);
+    activityRaw += zoneSecondsToRaw(zoneSecs); // len Z2-Z5 (presné zo zón) - Z1 rieši CSV nižšie
     activitySecondsUsed += win[1] - win[0];
   }
 
@@ -202,7 +239,14 @@ function dayTrimp(dayRows, dayActivities) {
     sum += hr;
     if (hr > max) max = hr;
     const t = timeToSecs(time);
-    if (windows.some(([s, e]) => t >= s && t < e)) continue; // presne spočítané vyššie zo sekúnd
+    const inActivity = windows.some(([s, e]) => t >= s && t < e);
+    if (inActivity) {
+      // Z2-Z5 časť okna je už presne spočítaná vyššie zo zónových sekúnd (nepridávaj znova).
+      // Z1 časť (< 143 bpm) ale zóny nevedia rozlíšiť "sedenie na bicykli" od "takmer na hranici
+      // Z2" - tak sa použije stupňovaná váha priamo zo skutočného minútového tepu.
+      if (hr > HR_REST && hr < HR_Z1_Z2_BOUNDARY) csvRaw += hrSubzoneWeightGraded(hr);
+      continue;
+    }
     if (hr > HR_REST) {
       csvRaw += hr < HR_Z1_Z2_BOUNDARY ? HR_SUBZONE_RATE : trimpWeight(hr) * HR_STRAIN_SCALE;
     }
@@ -375,7 +419,11 @@ async function main() {
   }
 }
 
-main().catch(err => {
-  console.error('❌ Chyba pri synchronizácii:', err.message);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch(err => {
+    console.error('❌ Chyba pri synchronizácii:', err.message);
+    process.exit(1);
+  });
+}
+
+module.exports = { processHeartRateCsvs };

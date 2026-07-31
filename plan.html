@@ -10,11 +10,23 @@
 <link rel="stylesheet" href="style.css">
 <style>
   .plan-day{background:var(--surface);border-radius:16px;box-shadow:var(--shadow-card);padding:14px 16px;margin-bottom:10px;}
-  .plan-day-head{display:flex;align-items:center;gap:10px;}
+  .plan-day-head{display:flex;align-items:center;gap:10px;cursor:pointer;}
   .plan-day-emoji{font-size:1.4rem;}
   .plan-day-date{font-family:var(--mono);font-weight:700;font-size:0.85rem;}
   .plan-day-weather{font-size:0.76rem;color:var(--text-faint);margin-left:auto;text-align:right;}
   .plan-day-window{display:block;font-size:0.72rem;color:var(--accent);margin-top:2px;}
+  .plan-day-window.outside{color:var(--text-faint);}
+  .plan-day-expand{font-size:0.7rem;color:var(--text-faint);flex-shrink:0;transition:transform .15s;}
+  .plan-day.open .plan-day-expand{transform:rotate(180deg);}
+  .plan-day-done{display:inline-block;margin-top:6px;font-size:0.72rem;padding:3px 9px;border-radius:6px;background:var(--accent-dim);color:var(--accent);font-weight:600;}
+  .plan-hourly{display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);}
+  .plan-day.open .plan-hourly{display:block;}
+  .plan-hourly-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(52px, 1fr));gap:6px;}
+  .plan-hourly-cell{text-align:center;font-family:var(--mono);font-size:0.68rem;padding:6px 2px;border-radius:8px;background:var(--surface-2);}
+  .plan-hourly-hour{color:var(--text-dim);font-weight:600;}
+  .plan-hourly-rain{margin-top:2px;}
+  .plan-hourly-temp{margin-top:2px;color:var(--text-faint);}
+  .plan-hourly-cell.preferred{background:var(--accent-dim);}
   .plan-day-body{margin-top:8px;font-size:0.85rem;color:var(--text);line-height:1.55;}
   .plan-day-own{color:var(--accent);font-weight:600;}
   .plan-day-status{display:inline-block;margin-top:6px;font-size:0.7rem;padding:2px 8px;border-radius:6px;background:var(--surface-2);color:var(--text-dim);}
@@ -50,7 +62,7 @@
         <h1>Počasie a AI plán</h1>
       </div>
       <div class="sub" style="color:var(--text-dim);font-size:0.85rem;margin-top:4px;">
-        Počasie a AI plán na 8 dní. Klik na alternatívu prispôsobí susedné dni.
+        Počasie a AI plán na 8 dní. Klik na alternatívu prispôsobí susedné dni. Klik na deň zobrazí hodinovú predpoveď.
       </div>
     </div>
     <button class="btn primary" id="btn-generate">🔄 Vygenerovať plán</button>
@@ -212,26 +224,55 @@ function renderPlan(plan){
     } else {
       body = '<span style="color:var(--text-faint);">Bez návrhu.</span>';
     }
+    const outside = d.bestWindow && d.bestWindow.outsidePreferred;
     const windowHtml = d.bestWindow
-      ? `<span class="plan-day-window">☂️ najlepšie okno ${d.bestWindow.start}–${d.bestWindow.end} (šanca dažďa ${d.bestWindow.avgRainProb}%)</span>`
+      ? `<span class="plan-day-window${outside?' outside':''}">☂️ ${outside?'najlepšie dostupné okno (mimo poobedia)':'najlepšie okno'} ${d.bestWindow.start}–${d.bestWindow.end} (šanca dažďa ${d.bestWindow.avgRainProb}%)</span>`
       : '';
+    const doneHtml = d.alreadyDone ? `<div><span class="plan-day-done">✅ už absolvované: ${escapeHtml(d.alreadyDone)}</span></div>` : '';
+    const hourlyHtml = renderHourlyGrid(d.hourly);
     return `
-      <div class="plan-day">
-        <div class="plan-day-head">
+      <div class="plan-day" data-date="${d.date}">
+        <div class="plan-day-head" data-toggle="${d.date}">
           <span class="plan-day-emoji">${d.weatherEmoji||'❓'}</span>
           <span class="plan-day-date">${d.date}</span>
           <span class="plan-day-weather">${d.weatherDesc||''}, ${Math.round(d.tempMin)}–${Math.round(d.tempMax)}°C${d.precipMm?', 🌧️'+d.precipMm+'mm':''}${windowHtml}</span>
+          <span class="plan-day-expand">▾</span>
         </div>
+        ${doneHtml}
         <div class="plan-day-body">${body}</div>
         ${altsHtml}
         ${d.status ? `<span class="plan-day-status">stav: ${escapeHtml(d.status)}</span>` : ''}
+        <div class="plan-hourly">${hourlyHtml}</div>
       </div>
     `;
   }).join('');
 
   daysBox.querySelectorAll('.plan-alt').forEach(btn=>{
-    btn.addEventListener('click', ()=> pickAlternative(btn.dataset.date, parseInt(btn.dataset.i, 10)));
+    btn.addEventListener('click', (ev)=>{ ev.stopPropagation(); pickAlternative(btn.dataset.date, parseInt(btn.dataset.i, 10)); });
   });
+  daysBox.querySelectorAll('.plan-day-head').forEach(head=>{
+    head.addEventListener('click', ()=>{
+      head.closest('.plan-day').classList.toggle('open');
+    });
+  });
+}
+
+// Hodinová mriežka pre jeden deň - hodina / šanca dažďa / teplota. Bunky v preferovanom poobednom
+// rozsahu (12-21h, viď PREFERRED_WINDOW_* v weather-plan.js) jemne zvýraznené, aby bolo vidno,
+// kde AI hľadá "najlepšie okno" prednostne.
+function renderHourlyGrid(hourly){
+  if(!hourly || !hourly.length) return '<div style="font-size:0.72rem;color:var(--text-faint);">Hodinová predpoveď nie je k dispozícii (vygeneruj plán znova).</div>';
+  const cells = hourly.map(h=>{
+    const preferred = h.hour>=12 && h.hour<=21;
+    const rainTxt = h.rainProb!=null ? h.rainProb+'%' : '—';
+    const tempTxt = h.temp!=null ? Math.round(h.temp)+'°' : '—';
+    return `<div class="plan-hourly-cell${preferred?' preferred':''}">
+      <div class="plan-hourly-hour">${String(h.hour).padStart(2,'0')}h</div>
+      <div class="plan-hourly-rain">☂️${rainTxt}</div>
+      <div class="plan-hourly-temp">${tempTxt}</div>
+    </div>`;
+  }).join('');
+  return `<div class="plan-hourly-grid">${cells}</div>`;
 }
 
 document.getElementById('btn-reset-choices').addEventListener('click', resetChoices);

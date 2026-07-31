@@ -567,13 +567,25 @@ function hrTrimpWeight(hr){
   const hrr = clamp((hr-HR_REST_STRAIN)/(HR_MAX_STRAIN-HR_REST_STRAIN), 0, 1);
   return hrr * 0.64 * Math.exp(HR_TRIMP_B_STRAIN*hrr);
 }
+// OPRAVA 30.7.2026 (viď rovnaký dátovaný komentár v sync.js pre plné vysvetlenie): plochá
+// HR_SUBZONE_RATE_STRAIN pre CELÝ rozsah pod 143bpm dávala rovnaký "Strain príspevok" aktivite,
+// kde bola väčšina Z1 času pri 65bpm, aj aktivite, kde bola väčšina Z1 času pri 140bpm (reálne
+// dáta ukázali, že pri skutočnom tréningu je to takmer vždy to druhé). sync.js to teraz rieši
+// presne - zo skutočného minútového tepu v okne aktivity. Tento súbor (prehliadač) nemá k
+// dispozícii surové minútové CSV dáta, len súhrnné sekundy v zóne, takže namiesto plochej sadzby
+// použije REPREZENTATÍVNU TF pre "Z1 počas aktivity" (rovnaký princíp ako zónové stredy Z2-Z5
+// nižšie) - 125bpm, čo zodpovedá priemeru reálne nameraného rozloženia Z1 minút počas
+// tréningových aktivít (overené na dátach z 25.7. a 29.7.2026). Toto číslo je len pre zobrazenie
+// orientačného príspevku jednej aktivity v UI - autoritatívny denný Strain vždy počíta presnejšie
+// sync.js z minútového CSV (data/hr_strain_daily.json).
+const HR_Z1_ACTIVITY_MIDPOINT_CLIENT = 125;
 // Vráti raw príspevok z presných HR zón (sekundy), alebo null ak aktivita nemá žiadne zónové dáta
 // (vtedy sa použije fallback nižšie).
 function hrZoneSecondsToRawStrain(act){
   const zoneSecs = [act.hr_z1_secs, act.hr_z2_secs, act.hr_z3_secs, act.hr_z4_secs, act.hr_z5_secs];
   if(!zoneSecs.some(s => s!=null && s>0)) return null;
   let raw = 0;
-  if(zoneSecs[0]) raw += (zoneSecs[0]/60) * HR_SUBZONE_RATE_STRAIN;
+  if(zoneSecs[0]) raw += (zoneSecs[0]/60) * hrTrimpWeight(HR_Z1_ACTIVITY_MIDPOINT_CLIENT) * HR_STRAIN_SCALE_CLIENT;
   for(let z=2; z<=5; z++){
     const secs = zoneSecs[z-1];
     if(!secs) continue;
