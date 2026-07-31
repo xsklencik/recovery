@@ -311,7 +311,7 @@ function doneActivitiesSummary(dayActivities) {
   }).join('; ');
 }
 
-function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate, activitiesByDate) {
+function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate, activitiesByDate, recentPastDays) {
   const todayDate = weatherDays.length ? weatherDays[0].date : null;
   const lines = [];
   lines.push(
@@ -340,7 +340,19 @@ function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate, ac
     '"endurance"/"intensity" alternatívy nech sú buď ĽAHKÝ DOPLNOK (nie duplicitný plnohodnotný ' +
     'druhý tréning) alebo návrh dokedy ešte dnes prípadne pridať niečo malé, ak by chcel. Text ' +
     'návrhu nech explicitne spomenie, že už dnes niečo absolvoval (napr. "keďže si už dnes ' +
-    'odjazdil X min, ..."). Pre dni BEZ poznámky "UŽ ABSOLVOVANÉ" postupuj úplne štandardne. ' +
+    'odjazdil X min, ..."). Pre dni BEZ poznámky "UŽ ABSOLVOVANÉ" postupuj úplne štandardne.\n' +
+    'DÔLEŽITÉ - CELÉ OBDOBIE POSUDZUJ SPOLU, NIE DEŇ PO DNI IZOLOVANE: pozri sa na VŠETKY dni ' +
+    'nižšie naraz (aj na "Posledných X dní" - čo už reálne predchádzalo, ak je uvedené) a dbaj, ' +
+    'aby odporúčania medzi dňami dávali zmysel ako celok. Konkrétne: NEODPORÚČAJ recovery/voľno ' +
+    'ako jedinú reálne zmysluplnú možnosť (teda že aj endurance/intensity varianty sú fakticky ' +
+    'tiež len o oddychu/veľmi ľahkom pohybe) na 3 a viac dní PO SEBE, pokiaľ to jasne nevyžaduje ' +
+    'kontext (napr. bezprostredne pred tým niekoľko veľmi náročných dní za sebou, choroba/extrémna ' +
+    'únava spomenutá v poznámke). Zlé počasie viac dní po sebe (horúčava, dážď) NIE JE samo o sebe ' +
+    'dôvod na viacdňové voľno - namiesto toho ponúkni realistickú DOMA/INDOOR alternatívu ' +
+    '(trenažér/rolky, silový tréning, plávanie, beh na páse a pod.) ako plnohodnotný "endurance" ' +
+    'alebo "intensity" variant, nie len ako poznámku vedľa "radšej voľno". Ak z kontextu (nedávna ' +
+    'záťaž, "Posledných X dní") vyplýva, že si už oddýchol, uprednostni v takom prípade skôr ' +
+    'endurance/indoor možnosť pred ďalším recovery dňom, aj keď vonku prší.\n' +
     'Odpovedz IBA validným JSON poľom ' +
     '(žiadny markdown, žiadne ```), presne v tvare:\n' +
     '[{"date":"YYYY-MM-DD","alternatives":[' +
@@ -350,7 +362,20 @@ function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate, ac
     ']}]'
   );
   lines.push('');
-  lines.push('Predpoveď počasia (Čadca, Slovensko):');
+  if (recentPastDays && recentPastDays.length) {
+    lines.push(
+      `Posledných ${recentPastDays.length} dní PRED dnešným dňom (už sa odohrali - iba pre ` +
+      'kontext ohľadom formy/únavy/toho, koľko oddychu už mal, NIE je to súčasť plánovaného ' +
+      'obdobia a nič sa tu nenavrhuje):'
+    );
+    recentPastDays.forEach(p => {
+      const strainTxt = p.strain != null ? `Strain ${p.strain}` : 'Strain —';
+      const actTxt = p.activitiesTxt ? `, aktivity: ${p.activitiesTxt}` : ', bez zaznamenanej aktivity';
+      lines.push(`- ${p.date}: ${strainTxt}${actTxt}`);
+    });
+    lines.push('');
+  }
+  lines.push('Predpoveď počasia (Čadca, Slovensko) - toto JE plánované obdobie:');
   weatherDays.forEach(w => {
     const [desc] = describeWeather(w.weatherCode);
     const note = dayNotes.find(n => n.date === w.date);
@@ -438,6 +463,30 @@ async function generateNewPlan() {
     (activitiesByDate[a.date] = activitiesByDate[a.date] || []).push(a);
   });
 
+  // OPRAVA 31.7.2026 (nahlásené Adamom - plán 4x po sebe navrhol "voľno/oddych", keďže počasie
+  // bolo viac dní po sebe zlé, a AI pri každom dni rozhodovalo izolovane bez vedomia, koľko dní
+  // oddychu/tréningu už reálne predchádzalo): priprav aj súhrn POSLEDNÝCH ~10 DNÍ PRED dnešným
+  // dňom (mimo predpovedaného okna) - skutočné aktivity + Strain z hr_strain_daily.json - aby AI
+  // vedelo posúdiť, či si už oddýchol/nabral únavu predtým, než navrhne ďalšie voľno.
+  const strainByDate = loadJsonSafe(path.join(DATA_DIR, 'hr_strain_daily.json'), {});
+  const todayForHistory = weatherDays.length ? weatherDays[0].date : null;
+  const recentPastDays = [];
+  if (todayForHistory) {
+    for (let i = 10; i >= 1; i--) {
+      const d = new Date(todayForHistory + 'T00:00:00');
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().slice(0, 10);
+      const acts = activitiesMerged.filter(a => a.date === dateStr);
+      const strainEntry = strainByDate[dateStr];
+      if (!acts.length && !strainEntry) continue; // žiadne dáta pre tento deň - vynechaj, nerobiť šum
+      recentPastDays.push({
+        date: dateStr,
+        strain: strainEntry ? strainEntry.strain : null,
+        activitiesTxt: doneActivitiesSummary(acts),
+      });
+    }
+  }
+
   const dayNotes = loadJsonSafe(path.join(DATA_DIR, 'day_notes.json'), []);
   const globalStatus = loadJsonSafe(path.join(DATA_DIR, 'status.json'), null);
   const statusByDate = {};
@@ -446,7 +495,7 @@ async function generateNewPlan() {
     statusByDate[w.date] = (note && note.status) ? note.status : (globalStatus && globalStatus.status) || 'active';
   });
 
-  const prompt = buildPlanPrompt(weatherDays, wellnessMerged, dayNotes, statusByDate, activitiesByDate);
+  const prompt = buildPlanPrompt(weatherDays, wellnessMerged, dayNotes, statusByDate, activitiesByDate, recentPastDays);
   console.log('Generujem plán (Gemini)...');
   // maxOutputTokens 4096 (bolo 2600) + thinkingConfig v callGeminiOnce() - skutočná príčina
   // "Bez návrhu pre všetky dni" bola, že neviditeľné "thinking" tokeny (počítajú sa do
