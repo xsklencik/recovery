@@ -9,3 +9,6 @@ Po dvoch dňoch s vysokou záťažou v podobe dlhých jázd v trvaní 160 a 178 
 
 ## 2026-07-30
 Dnešné HRV kleslo na 49 ms, čo je o 6.9 ms menej ako tvoj priemer, a pokojová TF stúpla o 3.6 bpm na 61 bpm. Po včerajšej náročnej celodennej túre v Tatrách s 33 839 krokmi a tréningovou záťažou 163 vykazuje tvoje telo zvýšenú únavu a potrebuje regeneráciu. Spánok bol s dĺžkou 7.7 hodiny a skóre 82 dostatočný, no zvýšená spánková TF 62 bpm potvrdzuje prebiehajúcu fyziologickú regeneráciu. Vzhľadom na biometriu a výrazný včerajší objem dnes nie si v stave podávať vysoké výkony.
+
+## 2026-07-31
+Dnes si fyziologicky veľmi dobre zregenerovaný. Tvoje ranné HRV stúplo na 64 ms (+8,4 ms nad priemer) a spánkové skóre dosiahlo vynikajúcich 88 bodov pri 8,0 hodinách spánku. Pokojová aj spánková tepová frekvencia sa vrátili na stabilné hodnoty, čo naznačuje, že telo úspešne spracovalo únavu z náročnej tatranskej túry z 29. júla. Po včerajšom poklese HRV na 49 ms ide o výrazný pozitívny skok a ideálny stav na návrat k tréningovému objemu.
