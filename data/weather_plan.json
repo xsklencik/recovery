@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-07-31T05:42:16.705Z",
+ "generatedAt": "2026-07-31T06:02:15.202Z",
  "model": "gemini-3.6-flash",
  "location": "Čadca, Slovensko",
  "days": [
@@ -7,10 +7,10 @@
    "date": "2026-07-31",
    "weatherDesc": "zamračené",
    "weatherEmoji": "☁️",
-   "tempMax": 34.2,
-   "tempMin": 20.3,
+   "tempMax": 35.1,
+   "tempMin": 19.7,
    "precipMm": 0,
-   "windMaxKmh": 13,
+   "windMaxKmh": 8.6,
    "bestWindow": {
     "start": "12:00",
     "end": "16:00",
@@ -21,92 +21,92 @@
     {
      "hour": 5,
      "rainProb": 0,
-     "temp": 20.3
+     "temp": 19.7
     },
     {
      "hour": 6,
      "rainProb": 0,
-     "temp": 20.5
+     "temp": 19.9
     },
     {
      "hour": 7,
      "rainProb": 0,
-     "temp": 21.8
+     "temp": 21.4
     },
     {
      "hour": 8,
      "rainProb": 0,
-     "temp": 23.6
+     "temp": 23.8
     },
     {
      "hour": 9,
      "rainProb": 0,
-     "temp": 25.7
+     "temp": 26
     },
     {
      "hour": 10,
      "rainProb": 0,
-     "temp": 27.9
+     "temp": 27.7
     },
     {
      "hour": 11,
      "rainProb": 0,
-     "temp": 30.5
+     "temp": 30.2
     },
     {
      "hour": 12,
      "rainProb": 0,
-     "temp": 31.8
+     "temp": 31.6
     },
     {
      "hour": 13,
      "rainProb": 0,
-     "temp": 33
+     "temp": 32.7
     },
     {
      "hour": 14,
      "rainProb": 0,
-     "temp": 34.1
+     "temp": 33.7
     },
     {
      "hour": 15,
      "rainProb": 0,
-     "temp": 34.1
+     "temp": 34.9
     },
     {
      "hour": 16,
      "rainProb": 0,
-     "temp": 32.2
+     "temp": 35.1
     },
     {
      "hour": 17,
      "rainProb": 0,
-     "temp": 34.1
+     "temp": 34.9
     },
     {
      "hour": 18,
      "rainProb": 1,
-     "temp": 34.2
+     "temp": 34.5
     },
     {
      "hour": 19,
      "rainProb": 2,
-     "temp": 33.6
+     "temp": 33.7
     },
     {
      "hour": 20,
      "rainProb": 2,
-     "temp": 31.7
+     "temp": 31.9
     },
     {
      "hour": 21,
      "rainProb": 2,
-     "temp": 28.9
+     "temp": 28.6
     },
     {
      "hour": 22,
      "rainProb": 1,
-     "temp": 27.2
+     "temp": 26.9
     }
    ],
    "alreadyDone": null,
@@ -115,32 +115,32 @@
    "alternatives": [
     {
      "id": "a",
-     "label": "Úplný relax a strečing",
+     "label": "Pasívny oddych",
      "intensity": "recovery",
-     "suggestion": "Dnes je skvelé počasie na regeneráciu, dopraj si voľno alebo len ľahký 15-minútový strečing."
+     "suggestion": "Dopraj si plný úprk a regeneráciu po predošlých dňoch. Ideálny čas na ľahký strečing alebo prechádzku v príjemnom počasí."
     },
     {
      "id": "b",
-     "label": "Ľahký vytrvalostný základ",
+     "label": "Vytrvalostná jazda",
      "intensity": "endurance",
-     "suggestion": "Využi ideálne okno medzi 12:00 a 16:00 na pohodových 60-90 minút jazdy v Z2 pred nadchádzajúcim víkendom."
+     "suggestion": "Využi ideálne podmienky a vyraz na 90-120 minútovú plynulú jazdu v Z2. Najlepšie okno na tréning je medzi 12:00 a 16:00, kedy je nulová šanca zrážok."
     },
     {
      "id": "c",
-     "label": "Krátke tempo v teple",
+     "label": "Krátke tempo/intervaly",
      "intensity": "intensity",
-     "suggestion": "Vyraz medzi 12:00 a 16:00 na 60 minút s 3x5 minútami v tempe (Z3), keďže dážď nehrozí a vietor je slabý."
+     "suggestion": "Odtrénuj 60-75 minút s 3-4 úsekmi v záprahovom tempe pre stimuláciu pred víkendom. Zvoľ čas medzi 12:00 a 16:00, kedy bude najstálejšie počasie."
     }
    ]
   },
   {
    "date": "2026-08-01",
-   "weatherDesc": "zamračené",
-   "weatherEmoji": "☁️",
-   "tempMax": 35.3,
-   "tempMin": 22,
-   "precipMm": 0,
-   "windMaxKmh": 17.6,
+   "weatherDesc": "slabé mrholenie",
+   "weatherEmoji": "🌦️",
+   "tempMax": 35.2,
+   "tempMin": 21.5,
+   "precipMm": 0.3,
+   "windMaxKmh": 16.2,
    "bestWindow": {
     "start": "12:00",
     "end": "16:00",
@@ -161,7 +161,7 @@
     {
      "hour": 7,
      "rainProb": 0,
-     "temp": 23.8
+     "temp": 23.9
     },
     {
      "hour": 8,
@@ -176,67 +176,67 @@
     {
      "hour": 10,
      "rainProb": 1,
-     "temp": 30.5
+     "temp": 31
     },
     {
      "hour": 11,
      "rainProb": 2,
-     "temp": 32.6
+     "temp": 33.1
     },
     {
      "hour": 12,
      "rainProb": 1,
-     "temp": 33.4
+     "temp": 34
     },
     {
      "hour": 13,
      "rainProb": 0,
-     "temp": 34.6
+     "temp": 34.5
     },
     {
      "hour": 14,
      "rainProb": 2,
-     "temp": 35
+     "temp": 34.8
     },
     {
      "hour": 15,
      "rainProb": 9,
-     "temp": 35.1
+     "temp": 35.2
     },
     {
      "hour": 16,
      "rainProb": 19,
-     "temp": 35.3
+     "temp": 34.3
     },
     {
      "hour": 17,
      "rainProb": 27,
-     "temp": 33.6
+     "temp": 33.4
     },
     {
      "hour": 18,
      "rainProb": 31,
-     "temp": 31.7
+     "temp": 32.8
     },
     {
      "hour": 19,
      "rainProb": 33,
-     "temp": 25.9
+     "temp": 24.4
     },
     {
      "hour": 20,
      "rainProb": 33,
-     "temp": 24.4
+     "temp": 23.6
     },
     {
      "hour": 21,
      "rainProb": 32,
-     "temp": 22.8
+     "temp": 22.5
     },
     {
      "hour": 22,
      "rainProb": 29,
-     "temp": 22.3
+     "temp": 21.8
     }
    ],
    "alreadyDone": null,
@@ -245,21 +245,21 @@
    "alternatives": [
     {
      "id": "a",
-     "label": "Pasívny oddych",
+     "label": "Regeneračná prechádzka",
      "intensity": "recovery",
-     "suggestion": "Vzhľadom na vysoké teploty až 35°C si dopraj plnohodnotné voľno a šetri sily."
+     "suggestion": "Ľahkých 30-45 minút voľnej chôdze alebo úplný oddych pred blížiacim sa dlhým výjazdom."
     },
     {
      "id": "b",
-     "label": "Dlhý objem v nižšej zóne",
+     "label": "Ľahký objem v Z2",
      "intensity": "endurance",
-     "suggestion": "Ideálne okno na jazdu je 12:00-16:00, daj si 2,5 až 3 hodiny v Z2. Mysli na dostatok tekutín kvôli horúčave."
+     "suggestion": "Pohodových 90 minút na bicykli v nízkej intenzite pre udržanie aeróbnej základne. Vyraz v najlepšom okne 12:00-16:00, kedy je hrozba mrholenia minimálna."
     },
     {
      "id": "c",
-     "label": "Mierne zvlnené tempo",
+     "label": "Doma na trenažéri / Mierne tempo",
      "intensity": "intensity",
-     "suggestion": "V čase 12:00-16:00 absolvuj 75 minút vrátane 2x10 minút svižnejšieho tempa do kopca."
+     "suggestion": "Ak nechceš riskovať mrholenie, zvoľ 50 minút na trenažéri s krátkymi zrýchleniami, alebo vyraz von medzi 12:00 a 16:00 na kratší rezký tréning."
     }
    ]
   },
@@ -268,9 +268,9 @@
    "weatherDesc": "mrholenie",
    "weatherEmoji": "🌦️",
    "tempMax": 28.2,
-   "tempMin": 18.8,
-   "precipMm": 1.3,
-   "windMaxKmh": 13.2,
+   "tempMin": 18.5,
+   "precipMm": 1.08,
+   "windMaxKmh": 11.9,
    "bestWindow": {
     "start": "12:00",
     "end": "16:00",
@@ -281,57 +281,57 @@
     {
      "hour": 5,
      "rainProb": 4,
-     "temp": 18.8
+     "temp": 18.5
     },
     {
      "hour": 6,
      "rainProb": 6,
-     "temp": 18.8
+     "temp": 18.7
     },
     {
      "hour": 7,
      "rainProb": 11,
-     "temp": 19.3
+     "temp": 18.6
     },
     {
      "hour": 8,
      "rainProb": 14,
-     "temp": 19.6
+     "temp": 19.5
     },
     {
      "hour": 9,
      "rainProb": 14,
-     "temp": 20.3
+     "temp": 20.8
     },
     {
      "hour": 10,
      "rainProb": 13,
-     "temp": 21.8
+     "temp": 22.4
     },
     {
      "hour": 11,
      "rainProb": 12,
-     "temp": 23.5
+     "temp": 23.9
     },
     {
      "hour": 12,
      "rainProb": 9,
-     "temp": 25
+     "temp": 25.3
     },
     {
      "hour": 13,
      "rainProb": 5,
-     "temp": 26.8
+     "temp": 26.5
     },
     {
      "hour": 14,
      "rainProb": 8,
-     "temp": 27.7
+     "temp": 27.4
     },
     {
      "hour": 15,
      "rainProb": 25,
-     "temp": 28
+     "temp": 27.9
     },
     {
      "hour": 16,
@@ -375,21 +375,21 @@
    "alternatives": [
     {
      "id": "a",
-     "label": "Pred-náročná regenerácia",
+     "label": "Pred-vytrvalostný relax",
      "intensity": "recovery",
-     "suggestion": "Zajtra teba čaká 130 km do Námestova, preto dnes radšej len odpočívaj a priprav si výbavu."
+     "suggestion": "Zajtra ťa čaká náročných 130 km do Námestova, dnes si dopraj úplné voľno a kvalitnú regeneráciu s hydratáciou."
     },
     {
      "id": "b",
-     "label": "Pred-prípravné roztočenie nôh",
+     "label": "Ľahké roztočenie nôh",
      "intensity": "endurance",
-     "suggestion": "Vyraz v najlepšom okne 12:00-16:00 na maximálne 60 minút veľmi ľahkej vytrvalosti, aby si prekrvil nohy pred zajtrajškom."
+     "suggestion": "Veľmi ľahkých 45-60 minút na rovine pre rozprúdenie krvi pred zajtrajškom. Ideálne medzi 12:00 a 16:00, kedy je nižšia pravdepodobnosť zrážok."
     },
     {
      "id": "c",
-     "label": "Ľahké aktivácie bez únavy",
+     "label": "Aktivácia nôh",
      "intensity": "intensity",
-     "suggestion": "Medzi 12:00 a 16:00 si daj 45 minút jazdy s 3x30 sekundovými rovinkami na vysokú kadenciu, bez veľkého zaťaženia."
+     "suggestion": "Krátky 40-minútový tréning s 3x1 minútou vo svižnejšom tempe na aktiváciu svalov pred dlhou etapou. Využi okno 12:00-16:00 pre najlepšie podmienky."
     }
    ]
   },
@@ -616,21 +616,21 @@
    "alternatives": [
     {
      "id": "a",
-     "label": "Po-objemový celodenný oddych",
+     "label": "Po-vytrvalostná regenerácia",
      "intensity": "recovery",
-     "suggestion": "Po včerajších 130 km do Námestova si dopraj úplné voľno a venuj sa dôkladnej regenerácii."
+     "suggestion": "Po včerajšej 130 km etape je čas na zaslúžený oddych, rolovanie a regeneračný deň bez záťaže."
     },
     {
      "id": "b",
-     "label": "Ľahké vyjazdenie uvoľnenia",
+     "label": "Regeneračné vyjazdenie",
      "intensity": "endurance",
-     "suggestion": "Medzi 12:00 a 16:00 absolvuj 60-70 minút veľmi ľahkej jazdy na vyjazdenie únavy zo včerajšieho dlhého dňa."
+     "suggestion": "Ľahkých 60 minút točenia pedálov na úplnú pohodu v Z1/Z2 na vyjazdenie únavy. Využi slnečné počasie v čase 12:00-16:00."
     },
     {
      "id": "c",
-     "label": "Krátky trenažér / kadencia",
+     "label": "Krátky trenažér / Silový tréning",
      "intensity": "intensity",
-     "suggestion": "Ak chceš trochu rozhýbať telo, daj si 45 minút s pár ľahkými zrýchleniami vo vetranom prostredí alebo na trenažéri."
+     "suggestion": "Dopraj si 45 minút ľahkej silovo-stabilizačnej prípravy trupu (core) alebo krátkych variácií kadencie na trenažéri v chládku."
     }
    ]
   },
@@ -746,21 +746,21 @@
    "alternatives": [
     {
      "id": "a",
-     "label": "Regeneračný deň",
+     "label": "Ľahký deň",
      "intensity": "recovery",
-     "suggestion": "Dopraj si deň bez tréningu, opäť budú vysoké teploty až 36°C."
+     "suggestion": "Volno alebo krátka prechádzka pre udržanie čerstvosti v horúcom letnom dni."
     },
     {
      "id": "b",
-     "label": "Stredne dlhá vytrvalosť",
+     "label": "Stredný objem vonku",
      "intensity": "endurance",
-     "suggestion": "Využi najlepšie okno 12:00-16:00 na 90-120 minút plynulej jazdy v Z2 zóne."
+     "suggestion": "90-120 minút plynulej jazdy v Z2. Vzhľadom na vysoké teploty nezabudni na hydratáciu a vyraz v okne 12:00-16:00."
     },
     {
      "id": "c",
-     "label": "Kratšie voľnejšie intervaly",
+     "label": "Tempo intervaly",
      "intensity": "intensity",
-     "suggestion": "Medzi 12:00 a 16:00 zaraď 60 minút tréning s 4x4 minútami v zóne 3/4 na precvičenie kapacity."
+     "suggestion": "Kratší tréning (60-75 min) s 3x8 minútami v svižnom tempe. Naplánuj si ho v najlepšom okne 12:00-16:00, kým je stály vzduch."
     }
    ]
   },
@@ -876,21 +876,21 @@
    "alternatives": [
     {
      "id": "a",
-     "label": "Sledovanie počasia a voľno",
+     "label": "Oddych a strečing",
      "intensity": "recovery",
-     "suggestion": "Vzhľadom na hrozbu mrholenia si daj pauzu a zameraj sa na penu či strečing doma."
+     "suggestion": "Volný deň zameraný na mobilizáciu tela a regeneráciu."
     },
     {
      "id": "b",
-     "label": "Ľahká vytrvalosť s blatníkmi",
+     "label": "Aeróbny beh alebo trenažér",
      "intensity": "endurance",
-     "suggestion": "Medzi 12:00 a 16:00 je najnižšia šanca dažďa, daj si 60-80 minút v zónach 1-2."
+     "suggestion": "Pri slabom mrholení zvoľ 50-60 minút ľahkého behu alebo trenažér doma. Ak chceš von, zvoľ okno 12:00-16:00 s najnižšou šancou dažďa."
     },
     {
      "id": "c",
-     "label": "Domáci trenažér / voľný indoor",
+     "label": "Vo-vnútri: VO2max intervaly",
      "intensity": "intensity",
-     "suggestion": "Kvôli zrážkam si daj 50 minút na trenažéri s 5x3 minútami vo vyššom tempe bez rizika zmoknutia."
+     "suggestion": "Kvalitná 45-50 minútová sesia na trenažéri/rolkách s krátkymi intenzívnymi intervalmi (napr. 5x2 min), aby si nemusel riešiť mokrú cestu."
     }
    ]
   },
@@ -1006,21 +1006,21 @@
    "alternatives": [
     {
      "id": "a",
-     "label": "Regenerácia v daždivý deň",
+     "label": "Regenerácia pred víkendom",
      "intensity": "recovery",
-     "suggestion": "Očakáva sa výdatnejší dážď (5.4mm), ideálny čas na plnohodnotný oddych."
+     "suggestion": "Užij si voľný deň, ideálny pre regeneráciu nôh pred víkendovými aktivitami."
     },
     {
      "id": "b",
-     "label": "Mokrá vytrvalosť alebo indoor",
+     "label": "Indoor trenažér / Zóna 2",
      "intensity": "endurance",
-     "suggestion": "V okne 12:00-16:00 skús 60 minút na trenažéri alebo vonku, ak sa zrážky na chvíľu utíšia."
+     "suggestion": "Keďže sa očakáva výdatnejšie mrholenie (5.4mm), zvoľ 75-90 minút plynulej jazdy na trenažéri doma, prípadne zvoľ okno 12:00-16:00 pre najmenšie riziko zrážok vonku."
     },
     {
      "id": "c",
-     "label": "Kratšia intenzita doma",
+     "label": "Indoor silový tréning / Beh",
      "intensity": "intensity",
-     "suggestion": "Keďže vonku prší, zvoľ 45 minút na trenažéri s pyramídovými intervalmi na udržanie kondície."
+     "suggestion": "Odtrénuj 45 minút silovo-dynamického tréningu doma alebo kratší 40-minútový beh v tempovom nasadení napriek počasiu."
     }
    ]
   }
