@@ -523,7 +523,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-01T11:45:36.989Z"
+  "syncedAt": "2026-08-01T12:01:00.420Z"
  },
  {
   "id": "2026-07-30",
@@ -544,7 +544,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-01T11:45:36.989Z"
+  "syncedAt": "2026-08-01T12:01:00.420Z"
  },
  {
   "id": "2026-07-31",
@@ -565,7 +565,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-01T11:45:36.989Z"
+  "syncedAt": "2026-08-01T12:01:00.420Z"
  },
  {
   "id": "2026-08-01",
@@ -576,9 +576,9 @@
   "avgSleepingHR": 62,
   "sleepScore": 89,
   "sleepSecs": 29280,
-  "steps": 727,
-  "ctl": 38.28658,
-  "atl": 45.430405,
+  "steps": 961,
+  "ctl": 41.839355,
+  "atl": 65.531845,
   "weight": null,
   "comments": "Asi pôjdem tak max 180min max zónu 2",
   "mood": null,
@@ -586,6 +586,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-01T11:45:36.989Z"
+  "syncedAt": "2026-08-01T12:01:00.420Z"
  }
 ]
