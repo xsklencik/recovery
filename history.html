@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Nastaví data-theme skôr, než prehliadač čokoľvek vykreslí, aby stránka nebliklo v zlej téme
+     (svetlá/tmavá voľba sa inak aplikuje až z app-common.js na konci <body>). -->
+<script>(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 <title>Celá história — Recovery / Strain — Adam</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -185,9 +188,9 @@ async function main(){
 
 function renderFormaHistory(results, range){
   const data = results.slice(-range);
-  drawChart('chart-forma-history', data, [{field:'tsb', color:'#7a7f89', label:'TSB'}],
+  drawChart('chart-forma-history', data, [{field:'tsb', color:PALETTE.neutral, label:'TSB'}],
     {fixedMin:-40, fixedMax:25, gridValues:[20,5,-10,-30],
-     dotColorFn: v => { const z = formaZoneFor(v); return z ? z.color : '#7a7f89'; },
+     dotColorFn: v => { const z = formaZoneFor(v); return z ? z.color : PALETTE.neutral; },
      bands: FORMA_ZONES.map(z=>({min: Math.max(z.min,-40), max: Math.min(z.max,25), color: hexToRgba(z.color, 0.14)})),
      tooltipFormat:(f,v)=>v.toFixed(1)});
 }

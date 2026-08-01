@@ -4,7 +4,13 @@
 
 // Jediný zdroj pravdy pre farby použité priamo v JS (SVG grafy, pill/hex+alpha triky, kde CSS
 // premenné nejdú použiť napr. kvôli reťazeniu "farba22" pre priehľadnosť). Musí zostať v súlade
-// s :root premennými v style.css - ak zmeníš jedno, zmeň aj druhé.
+// s :root/[data-theme="dark"] premennými v style.css - ak zmeníš jedno, zmeň aj druhé.
+// POZOR: "chrome" farby (bg/surface*/line*/text*/chartGrid/chartCrosshair/avgLine) sa menia
+// medzi light/dark - pozri applyPaletteForTheme() nižšie. Sémantické farby (accent/data/good/
+// warn/bad/neutral/purple) sú ZÁMERNE identické v oboch témach, pretože RECOVERY_GRADIENT,
+// STRAIN_GRADIENT, FORMA_ZONES a FATIGUE_RATIO_ZONES nižšie ich čítajú len raz pri načítaní
+// skriptu a ukladajú si ich HODNOTU (nie live referenciu) - keby sa sémantické farby menili
+// podľa témy, tieto polia by po prepnutí témy zobrazovali starú farbu až do reloadu stránky.
 const PALETTE = {
   bg: '#EEF1F5',
   surface: '#FFFFFF',
@@ -26,6 +32,100 @@ const PALETTE = {
   chartGrid: '#E7E9ED',
   chartCrosshair: '#B9BFC8',
 };
+
+// ---------- Dark mode ----------
+// Jediné miesto, ktoré rozhoduje o svetlej/tmavej téme pre všetky stránky. Princíp:
+// 1) Malý inline <script> úplne na začiatku <head> každej stránky nastaví data-theme atribút
+//    na <html> ešte pred prvým vykreslením (podľa localStorage, inak podľa OS preferencie) -
+//    to isté sa deje aj tu nižšie (setThemeAttribute), aby PALETTE sedela s tým, čo si CSS už
+//    vybralo skôr, než ktorákoľvek stránka začne kresliť grafy/gauge.
+// 2) CSS premenné (var(--bg) atď.) sa prepnú samé cez [data-theme="dark"] v style.css.
+// 3) SVG grafy/gauge kreslené touto stránkou používajú PALETTE (hex reťazce, nie CSS premenné),
+//    preto sa PALETTE musí prepísať na tú istú farebnú sadu skôr, než main()/render funkcie na
+//    danej stránke začnú kresliť.
+// 4) Prepnutie témy (toggleTheme) uloží voľbu a spraví location.reload() - namiesto prekresľovania
+//    každého grafu na každej stránke zvlášť (rôzne render funkcie na rôznych stránkach) sa spolieha
+//    na to, že reload + krok 1 vždy vykreslí všetko konzistentne v novej téme na prvý pokus.
+const THEME_STORAGE_KEY = 'theme';
+
+function getStoredTheme(){
+  try{ const t = localStorage.getItem(THEME_STORAGE_KEY); return (t === 'light' || t === 'dark') ? t : null; }
+  catch(e){ return null; }
+}
+
+function getPreferredTheme(){
+  const stored = getStoredTheme();
+  if(stored) return stored;
+  return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+}
+
+// Prepíše "chrome" farby v PALETTE podľa témy. Sémantické farby sa nedotýkajú (viď komentár
+// vyššie) - preto tento objekt nemá good/warn/bad/accent/data/neutral/purple kľúče vôbec.
+function applyPaletteForTheme(theme){
+  const dark = theme === 'dark';
+  Object.assign(PALETTE, {
+    bg: dark ? '#10131A' : '#EEF1F5',
+    surface: dark ? '#181C24' : '#FFFFFF',
+    surface2: dark ? '#1F242E' : '#F6F7F9',
+    surface3: dark ? '#262C38' : '#EDEFF3',
+    line: dark ? '#2C3240' : '#E3E6EB',
+    lineSoft: dark ? '#232833' : '#ECEEF2',
+    text: dark ? '#EDEFF3' : '#171A1F',
+    textDim: dark ? '#9BA3B0' : '#666D78',
+    textFaint: dark ? '#6B7383' : '#9199A6',
+    avgLine: dark ? '#78818F' : '#ADB3BD',
+    chartGrid: dark ? '#262C38' : '#E7E9ED',
+    chartCrosshair: dark ? '#4A5262' : '#B9BFC8',
+  });
+}
+
+function setThemeAttribute(theme){
+  document.documentElement.setAttribute('data-theme', theme);
+  applyPaletteForTheme(theme);
+}
+
+// Aplikuje sa hneď pri načítaní tohto skriptu - skôr, než akákoľvek stránka-špecifická <script>
+// časť za ním začne volať drawChart()/renderRingGauge() a čítať PALETTE.
+setThemeAttribute(getPreferredTheme());
+
+function setTheme(theme){
+  try{ localStorage.setItem(THEME_STORAGE_KEY, theme); }catch(e){}
+  setThemeAttribute(theme);
+  // Reload namiesto ručného prekresľovania - pozri komentár vyššie, bod 4.
+  location.reload();
+}
+
+function toggleTheme(){
+  const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  setTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+// Vloží prepínač témy do .top-row na aktuálnej stránke (do existujúceho .btn-group, ak tam je,
+// inak si vlastný .btn-group vytvorí). Volá sa raz nižšie, keď sa tento skript načíta - v tom
+// bode je .top-row v DOM už vždy prítomný, keďže <script src="app-common.js"> je na každej
+// stránke až za obsahom <body>.
+function initThemeToggle(){
+  const topRow = document.querySelector('.top-row');
+  if(!topRow) return;
+  const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'btn';
+  btn.id = 'theme-toggle-btn';
+  btn.setAttribute('aria-label', 'Prepnúť tmavý/svetlý režim');
+  btn.innerHTML = theme === 'dark'
+    ? '<span class="btn-icon">☀️</span> Svetlý režim'
+    : '<span class="btn-icon">🌙</span> Tmavý režim';
+  btn.addEventListener('click', toggleTheme);
+  let group = topRow.querySelector('.btn-group');
+  if(!group){
+    group = document.createElement('div');
+    group.className = 'btn-group';
+    topRow.appendChild(group);
+  }
+  group.appendChild(btn);
+}
+initThemeToggle();
 
 const NEW_METHOD_CUTOFF = '2026-06-07'; // zmena meracej metódy/senzora HRV a spánkovej TF
 
@@ -190,16 +290,21 @@ function meanOf(arr, field){
 }
 
 // ---------- Týždenný súhrn (zoskupenie podľa týždňa, pondelok = začiatok) ----------
+// POZOR na rovnaký bug, aký rieši komentár pri localDateStr() nižšie: new Date(dateStr+'T00:00:00')
+// bez 'Z' sa parsuje ako MIESTNA polnoc, ale d.toISOString() ju späť prevedie na UTC - v Bratislave
+// (UTC+1/+2) to polnoc posunie o deň naspäť. Preto tu (na rozdiel od pôvodnej verzie) pracujeme
+// výhradne v UTC - presne ako už správne robí dateAddDays() nižšie - aby žiadny lokálny/UTC prechod
+// dátum nezmenil. Overené: mondayOf('2026-07-31') musí vrátiť '2026-07-27', nie '2026-07-26'.
 function mondayOf(dateStr){
-  const d = new Date(dateStr+'T00:00:00');
-  const day = d.getDay(); // 0=Ne,1=Po,...
+  const d = new Date(dateStr+'T00:00:00Z');
+  const day = d.getUTCDay(); // 0=Ne,1=Po,...
   const diff = (day===0 ? -6 : 1-day);
-  d.setDate(d.getDate()+diff);
+  d.setUTCDate(d.getUTCDate()+diff);
   return d.toISOString().slice(0,10);
 }
 function addDaysStr(dateStr, days){
-  const d = new Date(dateStr+'T00:00:00');
-  d.setDate(d.getDate()+days);
+  const d = new Date(dateStr+'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate()+days);
   return d.toISOString().slice(0,10);
 }
 function fmtHM(totalSeconds){

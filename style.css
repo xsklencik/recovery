@@ -14,7 +14,11 @@
 
   /* Signal — same warm accent as before (continuity across the redesign), plus a cool
      data-blue for load/strain. Kept intentionally NOT Bevel's green: the two axes read as
-     distinct instruments, and the accent carries the brand across light/dark. */
+     distinct instruments, and the accent carries the brand across light/dark. Semantic
+     colors (accent/data/good/warn/bad) are deliberately IDENTICAL in light and dark mode -
+     see PALETTE / applyPaletteForTheme() in app-common.js, where the same constraint holds
+     for the exact same reason (RECOVERY_GRADIENT/FORMA_ZONES etc. capture these by value
+     once at load time, so they must never change after the fact). */
   --accent:#FF6A3D;
   --accent-dim:#FF6A3D22;
   --data:#2F7BE0;
@@ -27,14 +31,59 @@
   --shadow-card: 0 1px 2px rgba(23,26,31,0.04), 0 4px 14px rgba(23,26,31,0.06);
   --shadow-pop: 0 8px 30px rgba(23,26,31,0.16);
 
+  /* Modal/day-modal dimming layer - kept as its own variable (not a literal rgba() inline
+     in .modal-backdrop) purely so dark mode can punch it up below without another
+     light/dark-only override block. */
+  --overlay: rgba(23,26,31,0.45);
+  /* Dimmed label colour inside .chart-tooltip (e.g. the date line). The tooltip's own
+     background/text are already theme-safe (background:var(--text); color:var(--bg) - an
+     intentional inversion that always contrasts against whatever the current theme is), so
+     this dim variant must track the same inversion instead of being a hardcoded white -
+     see .chart-tooltip .tt-date below. */
+  --tooltip-dim: rgba(255,255,255,0.55);
+
   --mono: 'IBM Plex Mono', ui-monospace, monospace;
   --sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ---------- Dark mode ----------
+   Toggled by setting data-theme="dark" on <html> (see the tiny inline script at the top of
+   <head> in every page, plus initThemeToggle()/setTheme() in app-common.js). Only the
+   "chrome" tokens (surfaces/lines/text) actually change - accent/data/good/warn/bad stay
+   fixed on purpose (see comment above), which keeps every place that captured one of those
+   colors by value at load time (chart gradients/zones in app-common.js) correct without
+   needing to also become theme-aware. app-common.js mirrors these exact hex values in its
+   PALETTE object for the SVG-drawn gauges/charts, which can't use CSS variables directly -
+   if you change a value here, change the matching one in applyPaletteForTheme() too. */
+[data-theme="dark"]{
+  --bg:#10131A;
+  --surface:#181C24;
+  --surface-2:#1F242E;
+  --surface-3:#262C38;
+  --line:#2C3240;
+  --line-soft:#232833;
+  --text:#EDEFF3;
+  --text-dim:#9BA3B0;
+  --text-faint:#6B7383;
+
+  --accent-dim:#FF6A3D33;
+  --data-dim:#2F7BE033;
+
+  /* Plain drop shadows barely read against an already-dark canvas, so dark mode leans on a
+     1px "outline" (via an extra 0 0 0 1px var(--line) shadow layer) for card edges, plus a
+     darker/stronger blur for the pop-over elevation - same technique as most dark UIs. */
+  --shadow-card: 0 0 0 1px var(--line), 0 1px 2px rgba(0,0,0,0.35), 0 4px 14px rgba(0,0,0,0.45);
+  --shadow-pop: 0 0 0 1px var(--line), 0 8px 30px rgba(0,0,0,0.55);
+
+  --overlay: rgba(0,0,0,0.6);
+  --tooltip-dim: rgba(0,0,0,0.45);
 }
 *{box-sizing:border-box;}
 ::selection{background:var(--accent-dim);color:var(--text);}
 body{
   margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
   min-height:100vh; -webkit-font-smoothing:antialiased;
+  transition:background-color .15s ease, color .15s ease;
 }
 .wrap{max-width:1040px;margin:0 auto;padding:32px 22px 70px;}
 
@@ -197,7 +246,7 @@ h1{font-size:1.3rem;font-weight:800;margin:0;letter-spacing:-0.02em;}
 
 .chart-tabs{display:flex;gap:3px;background:var(--surface-3);border-radius:10px;padding:3px;}
 .tab-btn{background:none;border:none;color:var(--text-dim);padding:6px 12px;border-radius:8px;font-size:0.76rem;cursor:pointer;font-family:var(--mono);}
-.tab-btn.active{color:#fff;background:var(--text);font-weight:600;}
+.tab-btn.active{color:var(--bg);background:var(--text);font-weight:600;}
 
 .chart-card{background:var(--surface);border-radius:20px;box-shadow:var(--shadow-card);padding:18px;position:relative;}
 .chart-card svg{width:100%;height:200px;display:block;cursor:crosshair;}
@@ -219,7 +268,7 @@ h1{font-size:1.3rem;font-weight:800;margin:0;letter-spacing:-0.02em;}
   padding:8px 10px; font-family:var(--mono); font-size:0.72rem; min-width:140px;
   box-shadow:var(--shadow-pop);
 }
-.chart-tooltip .tt-date{color:#fff8;margin-bottom:5px;font-size:0.68rem;}
+.chart-tooltip .tt-date{color:var(--tooltip-dim);margin-bottom:5px;font-size:0.68rem;}
 .chart-tooltip .tt-row{display:flex;align-items:center;gap:6px;margin-top:3px;color:var(--bg);}
 .chart-tooltip .tt-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;display:inline-block;}
 
@@ -246,7 +295,7 @@ tr:hover td{background:var(--surface-2);}
 .err{color:var(--bad);margin:16px 0;font-size:0.85rem;white-space:pre-wrap;font-family:var(--mono);}
 .loading{color:var(--text-dim);padding:60px 0;text-align:center;font-family:var(--mono);font-size:0.85rem;}
 
-.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(23,26,31,0.45);align-items:center;justify-content:center;z-index:50;padding:20px;}
+.modal-backdrop{display:none;position:fixed;inset:0;background:var(--overlay);align-items:center;justify-content:center;z-index:50;padding:20px;}
 .modal-backdrop.show{display:flex;}
 .modal{background:var(--surface);border-radius:20px;box-shadow:var(--shadow-pop);padding:24px;max-width:420px;width:100%;}
 .modal h3{margin:0 0 10px;font-size:1.05rem;}

@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Nastaví data-theme skôr, než prehliadač čokoľvek vykreslí, aby stránka nebliklo v zlej téme
+     (svetlá/tmavá voľba sa inak aplikuje až z app-common.js na konci <body>). -->
+<script>(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 <title>Kalendár — Adam</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -231,7 +234,7 @@ async function runActivityAnalysis(activityId, btn){
     }
     if(done){
       statusEl.textContent = '✅ Hotovo';
-      openDayModal(currentModalDate); // prekresli s novým hodnotením
+      openCalendarDayModal(currentModalDate); // prekresli s novým hodnotením
     } else {
       statusEl.textContent = '⚠️ Trvá to dlhšie, skús o chvíľu obnoviť stránku';
     }
@@ -308,7 +311,7 @@ function renderCalendar(){
         ${hasNote ? '<span class="cal-dot note"></span>' : ''}
       </div>
     `;
-    cell.addEventListener('click', ()=> openDayModal(dateStr));
+    cell.addEventListener('click', ()=> openCalendarDayModal(dateStr));
     grid.appendChild(cell);
     // po 6. stĺpci (nedeľa, index 6,13,20...) netreba nič extra, grid je 7-stĺpcový CSS grid
   }
@@ -378,7 +381,14 @@ document.getElementById('day-modal-ai-plan-toggle').addEventListener('click', ()
   toggle.textContent = showing ? 'Podrobný plán ↓' : 'Skryť plán ↑';
 });
 
-function openDayModal(dateStr){
+// Pomenované openCalendarDayModal (nie openDayModal) zámerne: app-common.js definuje vlastnú
+// globálnu funkciu openDayModal(date, dayResult, dayActivities, notesByDate, opts) s úplne iným
+// podpisom (5 parametrov, zoznam aktivít z indexu/histórie). Táto stránka predtým používala rovnaké
+// meno a ticho prekrývala tú z app-common.js (funguje to len vďaka poradiu <script> tagov) - keby
+// niekto túto funkciu v budúcnosti omylom vymazal/premenoval, volania nižšie by ticho spadli na
+// verziu z app-common.js s len 1 argumentom namiesto 5 (dayActivities by bolo undefined -> pád na
+// dayActivities.length).
+function openCalendarDayModal(dateStr){
   currentModalDate = dateStr;
   document.getElementById('day-modal-date').textContent = dateStr;
   const acts = ACTIVITIES_BY_DATE.get(dateStr) || [];
