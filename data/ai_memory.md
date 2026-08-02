@@ -15,3 +15,6 @@ Dnes si fyziologicky veľmi dobre zregenerovaný. Tvoje ranné HRV stúplo na 64
 
 ## 2026-08-01
 Dnes si fyziologicky uspokojivo zregenerovaný so skvelým spánkovým skóre 89 pri 8,1 hodinách spánku a nadpriemerným HRV 59 ms. Zvýšená pokojová (61 bpm) aj spánková tepová frekvencia (62 bpm) však ukazujú, že tvoje telo stále spracováva kumulovanú únavu z včerajšej 159-minútovej jazdy a náročnej tatranskej túry z 29. júla. Hoci sa HRV po poklese na 49 ms spred dvoch dní stabilizovalo, mierne zvýšená TF varuje pred nadmerným preťažením. Keďže 3. augusta plánuješ náročnú 130 km trasu do Námestova, dnešok by mal zostať striktne bez intenzít.
+
+## 2026-08-02
+Dnes si výborne zregenerovaný s nadpriemerným HRV 64 ms (+7,9 ms oproti priemeru) a spánkovým skóre 88 pri 8,1 hodinách spánku. Spánková tepová frekvencia klesla na 59 bpm (-0,9 bpm pod priemer), čo potvrdzuje, že tvoj autonómny nervový systém úspešne spracoval včerajšiu 190-minútovú jazdu so záťažou 151. Po výraznejšom poklese HRV spred troch dní sa tvoja biometria plne stabilizovala. Pred zajtrajšou plánovanou 130 km trasou do Námestova sa nachádzaš v ideálnom fyziologickom stave.
