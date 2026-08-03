@@ -7,7 +7,7 @@
   "maxHR": 130,
   "preciseActivityMinutes": 0,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.315Z"
+  "computedAt": "2026-08-03T07:30:55.705Z"
  },
  "2026-07-02": {
   "strain": 7.2,
@@ -17,7 +17,7 @@
   "maxHR": 160,
   "preciseActivityMinutes": 0,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.316Z"
+  "computedAt": "2026-08-03T07:30:55.706Z"
  },
  "2026-07-03": {
   "strain": 13.6,
@@ -27,7 +27,7 @@
   "maxHR": 174,
   "preciseActivityMinutes": 0,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.317Z"
+  "computedAt": "2026-08-03T07:30:55.707Z"
  },
  "2026-07-04": {
   "strain": 18.2,
@@ -37,7 +37,7 @@
   "maxHR": 178,
   "preciseActivityMinutes": 163,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.318Z"
+  "computedAt": "2026-08-03T07:30:55.708Z"
  },
  "2026-07-05": {
   "strain": 6.4,
@@ -47,7 +47,7 @@
   "maxHR": 135,
   "preciseActivityMinutes": 0,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.319Z"
+  "computedAt": "2026-08-03T07:30:55.709Z"
  },
  "2026-07-06": {
   "strain": 8.4,
@@ -57,7 +57,7 @@
   "maxHR": 171,
   "preciseActivityMinutes": 17,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.320Z"
+  "computedAt": "2026-08-03T07:30:55.710Z"
  },
  "2026-07-07": {
   "strain": 6,
@@ -67,7 +67,7 @@
   "maxHR": 132,
   "preciseActivityMinutes": 0,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.322Z"
+  "computedAt": "2026-08-03T07:30:55.711Z"
  },
  "2026-07-08": {
   "strain": 16.6,
@@ -77,7 +77,7 @@
   "maxHR": 185,
   "preciseActivityMinutes": 140,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.323Z"
+  "computedAt": "2026-08-03T07:30:55.713Z"
  },
  "2026-07-09": {
   "strain": 8.1,
@@ -87,7 +87,7 @@
   "maxHR": 132,
   "preciseActivityMinutes": 149,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.324Z"
+  "computedAt": "2026-08-03T07:30:55.714Z"
  },
  "2026-07-10": {
   "strain": 19.9,
@@ -97,7 +97,7 @@
   "maxHR": 174,
   "preciseActivityMinutes": 268,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.325Z"
+  "computedAt": "2026-08-03T07:30:55.715Z"
  },
  "2026-07-11": {
   "strain": 8.9,
@@ -107,7 +107,7 @@
   "maxHR": 139,
   "preciseActivityMinutes": 63,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.326Z"
+  "computedAt": "2026-08-03T07:30:55.716Z"
  },
  "2026-07-12": {
   "strain": 5.8,
@@ -117,7 +117,7 @@
   "maxHR": 116,
   "preciseActivityMinutes": 0,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.327Z"
+  "computedAt": "2026-08-03T07:30:55.717Z"
  },
  "2026-07-13": {
   "strain": 6.6,
@@ -127,7 +127,7 @@
   "maxHR": 117,
   "preciseActivityMinutes": 0,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.328Z"
+  "computedAt": "2026-08-03T07:30:55.718Z"
  },
  "2026-07-14": {
   "strain": 6.3,
@@ -137,7 +137,7 @@
   "maxHR": 135,
   "preciseActivityMinutes": 0,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.329Z"
+  "computedAt": "2026-08-03T07:30:55.718Z"
  },
  "2026-07-15": {
   "strain": 4.3,
@@ -147,7 +147,7 @@
   "maxHR": 141,
   "preciseActivityMinutes": 0,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.329Z"
+  "computedAt": "2026-08-03T07:30:55.719Z"
  },
  "2026-07-16": {
   "strain": 9.2,
@@ -157,7 +157,7 @@
   "maxHR": 158,
   "preciseActivityMinutes": 18,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.330Z"
+  "computedAt": "2026-08-03T07:30:55.720Z"
  },
  "2026-07-17": {
   "strain": 6.9,
@@ -167,7 +167,7 @@
   "maxHR": 161,
   "preciseActivityMinutes": 0,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.331Z"
+  "computedAt": "2026-08-03T07:30:55.721Z"
  },
  "2026-07-18": {
   "strain": 14.6,
@@ -177,7 +177,7 @@
   "maxHR": 163,
   "preciseActivityMinutes": 45,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.264Z"
+  "computedAt": "2026-08-03T07:30:55.660Z"
  },
  "2026-07-19": {
   "strain": 10.8,
@@ -187,7 +187,7 @@
   "maxHR": 142,
   "preciseActivityMinutes": 0,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.267Z"
+  "computedAt": "2026-08-03T07:30:55.663Z"
  },
  "2026-07-20": {
   "strain": 11.5,
@@ -197,7 +197,7 @@
   "maxHR": 153,
   "preciseActivityMinutes": 0,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.270Z"
+  "computedAt": "2026-08-03T07:30:55.666Z"
  },
  "2026-07-21": {
   "strain": 12.8,
@@ -207,7 +207,7 @@
   "maxHR": 158,
   "preciseActivityMinutes": 14,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.273Z"
+  "computedAt": "2026-08-03T07:30:55.668Z"
  },
  "2026-07-22": {
   "strain": 11.9,
@@ -217,7 +217,7 @@
   "maxHR": 163,
   "preciseActivityMinutes": 16,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.279Z"
+  "computedAt": "2026-08-03T07:30:55.673Z"
  },
  "2026-07-23": {
   "strain": 11.5,
@@ -227,7 +227,7 @@
   "maxHR": 136,
   "preciseActivityMinutes": 0,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.281Z"
+  "computedAt": "2026-08-03T07:30:55.675Z"
  },
  "2026-07-24": {
   "strain": 11.1,
@@ -237,7 +237,7 @@
   "maxHR": 125,
   "preciseActivityMinutes": 83,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.286Z"
+  "computedAt": "2026-08-03T07:30:55.677Z"
  },
  "2026-07-25": {
   "strain": 19,
@@ -247,7 +247,7 @@
   "maxHR": 180,
   "preciseActivityMinutes": 160,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.291Z"
+  "computedAt": "2026-08-03T07:30:55.680Z"
  },
  "2026-07-26": {
   "strain": 19.1,
@@ -257,7 +257,7 @@
   "maxHR": 161,
   "preciseActivityMinutes": 178,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.295Z"
+  "computedAt": "2026-08-03T07:30:55.685Z"
  },
  "2026-07-27": {
   "strain": 10.2,
@@ -267,7 +267,7 @@
   "maxHR": 126,
   "preciseActivityMinutes": 0,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.297Z"
+  "computedAt": "2026-08-03T07:30:55.689Z"
  },
  "2026-07-28": {
   "strain": 12.8,
@@ -277,7 +277,7 @@
   "maxHR": 160,
   "preciseActivityMinutes": 47,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.300Z"
+  "computedAt": "2026-08-03T07:30:55.692Z"
  },
  "2026-07-29": {
   "strain": 20.6,
@@ -287,7 +287,7 @@
   "maxHR": 163,
   "preciseActivityMinutes": 348,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.303Z"
+  "computedAt": "2026-08-03T07:30:55.695Z"
  },
  "2026-07-30": {
   "strain": 14.5,
@@ -297,7 +297,7 @@
   "maxHR": 159,
   "preciseActivityMinutes": 43,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.309Z"
+  "computedAt": "2026-08-03T07:30:55.700Z"
  },
  "2026-07-31": {
   "strain": 19.8,
@@ -307,7 +307,7 @@
   "maxHR": 163,
   "preciseActivityMinutes": 159,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.311Z"
+  "computedAt": "2026-08-03T07:30:55.702Z"
  },
  "2026-08-01": {
   "strain": 18.8,
@@ -317,7 +317,7 @@
   "maxHR": 178,
   "preciseActivityMinutes": 190,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.313Z"
+  "computedAt": "2026-08-03T07:30:55.703Z"
  },
  "2026-08-02": {
   "strain": 6.7,
@@ -327,6 +327,6 @@
   "maxHR": 141,
   "preciseActivityMinutes": 43,
   "source": "heart_rate_csv",
-  "computedAt": "2026-08-03T07:15:39.314Z"
+  "computedAt": "2026-08-03T07:30:55.704Z"
  }
 }
