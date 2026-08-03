@@ -18,3 +18,6 @@ Dnes si fyziologicky uspokojivo zregenerovaný so skvelým spánkovým skóre 89
 
 ## 2026-08-02
 Dnes si výborne zregenerovaný s nadpriemerným HRV 64 ms (+7,9 ms oproti priemeru) a spánkovým skóre 88 pri 8,1 hodinách spánku. Spánková tepová frekvencia klesla na 59 bpm (-0,9 bpm pod priemer), čo potvrdzuje, že tvoj autonómny nervový systém úspešne spracoval včerajšiu 190-minútovú jazdu so záťažou 151. Po výraznejšom poklese HRV spred troch dní sa tvoja biometria plne stabilizovala. Pred zajtrajšou plánovanou 130 km trasou do Námestova sa nachádzaš v ideálnom fyziologickom stave.
+
+## 2026-08-03
+Dnes tvoje HRV kleslo na 49 ms, čo je o 7.4 ms pod tvojím dlhodobým priemerom, a pokojová tepová frekvencia mierne stúpla na 59 bpm. Napriek vynikajúcemu spánku v trvaní 8.1 hodiny so skóre 88 ukazuje tvoj autonómny nervový systém zvýšenú únavu, čo mohlo byť spôsobené aj neskorým jedlom pred spaním. Tvoje telo vykazuje mierny stres a po včerajšom výbornom dni si dnes menej zregenerovaný. Podobný pokles HRV na 49 ms si zaznamenal aj pred štyrmi dňami po náročnejšom programe, no po ľahšom režime sa rýchlo zotavilo.
