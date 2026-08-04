@@ -270,18 +270,35 @@ function processHeartRateCsvs(activitiesMerged) {
     console.log('ℹ️ V data/heart_rate_raw/ nie sú žiadne .csv súbory.');
     return;
   }
-  const byDate = new Map();
+  // OPRAVA 3.8.2026 (nahlásené Adamom - 101km jazda/load 272 vyšla na NIŽŠÍ Strain než predošlá
+  // kratšia jazda): priečinok heart_rate_raw/ okrem DENNÝCH exportov obsahuje aj TÝŽDENNÉ/MESAČNÉ
+  // súhrnné exporty z Huawei Health ("Heart rate 31-2026...", "Heart rate July 2026..."), ktoré sa
+  // dátumovo PREKRÝVAJÚ s dennými súbormi - ten istý deň tak vie byť naraz v 2 aj 3 súboroch, s
+  // BAJT PO BAJTE identickými riadkami (over. na 2026-07-29: denný + týždenný + mesačný súbor).
+  // Pôvodný kód všetky riadky zo všetkých súborov len naskladal do jedného poľa BEZ deduplikácie -
+  // dni pokryté 2 súbormi tak mali každú minútu tepu spočítanú 2x, dni pokryté 3 súbormi 3x (napr.
+  // 2026-07-29 malo 4281 CSV riadkov = presne 3× 1427 skutočných minút). To umelo nafúklo Strain
+  // práve pre dni pokryté viacerými súbormi - a NEPRIAMO tým "poškodilo" porovnanie voči dňom
+  // pokrytým len 1 súborom (napr. dnešok 2026-08-03, kým preň ešte neexistuje týždenný/mesačný
+  // súhrn) - preto sa 100km jazda dnes javila slabšia, hoci reálne bola najnáročnejší deň.
+  // Riešenie: byDate teraz drží Map<time, hr> namiesto poľa - rovnaký (date,time) kľúč z viacerých
+  // súborov sa PREPÍŠE (dáta sú identické), nie PRIPOČÍTA k predošlej hodnote. Funguje bez ohľadu
+  // na to, koľko a akých súborov (denné/týždenné/mesačné/iné) sa v priečinku objaví, aj do budúcna.
+  const byDate = new Map(); // date -> Map<time, hr>
   let filesRead = 0;
+  let rawRowsTotal = 0;
   for (const file of files) {
     const rows = parseHrCsv(path.join(RAW_HR_DIR, file));
     if (rows.length === 0) continue;
     filesRead++;
+    rawRowsTotal += rows.length;
     for (const r of rows) {
-      if (!byDate.has(r.date)) byDate.set(r.date, []);
-      byDate.get(r.date).push({ time: r.time, hr: r.hr });
+      if (!byDate.has(r.date)) byDate.set(r.date, new Map());
+      byDate.get(r.date).set(r.time, r.hr); // Map.set s rovnakým kľúčom prepíše predošlú hodnotu = dedup
     }
   }
-  console.log(`💓 HR CSV: spracovaných súborov ${filesRead}/${files.length}, dní s dátami: ${byDate.size}`);
+  const uniqueRowsTotal = Array.from(byDate.values()).reduce((s, m) => s + m.size, 0);
+  console.log(`💓 HR CSV: spracovaných súborov ${filesRead}/${files.length}, dní s dátami: ${byDate.size}, riadkov spolu ${rawRowsTotal} → po deduplikácii ${uniqueRowsTotal}${rawRowsTotal !== uniqueRowsTotal ? ` (odstránených ${rawRowsTotal - uniqueRowsTotal} duplicitných riadkov z prekrývajúcich sa súborov)` : ''}`);
 
   const activitiesByDate = new Map();
   (activitiesMerged || []).forEach(act => {
@@ -292,7 +309,8 @@ function processHeartRateCsvs(activitiesMerged) {
 
   const existing = loadJsonSafe(HR_STRAIN_FILE);
   const existingObj = Array.isArray(existing) ? {} : existing; // loadJsonSafe defaultuje na [], tu chceme objekt
-  for (const [date, dayRows] of byDate.entries()) {
+  for (const [date, timeMap] of byDate.entries()) {
+    const dayRows = Array.from(timeMap, ([time, hr]) => ({ time, hr })); // Map -> pole pre dayTrimp()
     const dayActivities = activitiesByDate.get(date) || [];
     const { raw, minutes, avgHR, maxHR, activitySecondsUsed } = dayTrimp(dayRows, dayActivities);
     existingObj[date] = {
