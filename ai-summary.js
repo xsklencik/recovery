@@ -217,6 +217,13 @@ function buildAiPrompt(wellnessMerged, activitiesMerged, pastSummaries, globalSt
 // nemusí meniť. Aktuálny default (gemini-3.6-flash, PLNÝ Flash nie Lite - výkonnejší, stále
 // free tier k 26.7.2026) - ak by robil problémy, over/skús gemini-3.5-flash ako zálohu.
 const DEFAULT_GEMINI_MODEL = 'gemini-3.6-flash';
+// OPRAVA 5.8.2026 (nahlásené Adamom - AI súhrn padal na "503", kým weather-plan.js fungoval
+// spoľahlivo): weather-plan.js má už od začiatku záložné modely pre presne tento prípad (404 po
+// vyradení, 429 po vyčerpaní kvóty, 503 = model dočasne preťažený/nedostupný - bežné hlavne pár
+// dní po vydaní nového modelu, keď je naň nával). Tento skript predtým žiadny fallback nemal -
+// jediné zlyhanie primárneho modelu = žiadny AI súhrn. Teraz skúša presne rovnaký zoznam záloh v
+// rovnakom poradí ako weather-plan.js.
+const FALLBACK_GEMINI_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.1-flash'];
 
 // POZOR (zistené 28.7.2026, opravené 29.7.2026) - "flash" modely v Gemini API majú defaultne
 // zapnuté interné "thinking" (reasoning) tokeny, ktoré sa POČÍTAJU do maxOutputTokens, ale nie sú
@@ -237,6 +244,40 @@ function thinkingConfigFor(model) {
   return { thinkingLevel: 'low' };
 }
 
+async function callGeminiOnce(model, key, prompt, opts) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+  const generationConfig = {
+    temperature: 0.7,
+    maxOutputTokens: opts.maxOutputTokens || 2048,
+    thinkingConfig: thinkingConfigFor(model),
+  };
+  if (opts.json) generationConfig.responseMimeType = 'application/json';
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig }),
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    throw new Error(`Gemini API ${res.status} (model=${model}): ${txt.slice(0, 300)}`);
+  }
+  const data = await res.json();
+  const candidate = data && data.candidates && data.candidates[0];
+  const text = candidate && candidate.content && candidate.content.parts
+    && candidate.content.parts[0] && candidate.content.parts[0].text;
+  const finishReason = candidate && candidate.finishReason;
+  if (finishReason && finishReason !== 'STOP') {
+    // MAX_TOKENS = odpoveď bola orezaná (pozri komentár vyššie) - nedôveryhodná, zahoď.
+    // Iné dôvody (SAFETY, RECITATION...) sú tiež nedôveryhodné pre uloženie.
+    throw new Error(`Gemini (model=${model}) finishReason=${finishReason} - odpoveď pravdepodobne orezaná/nekompletná`);
+  }
+  return text ? text.trim() : null;
+}
+
+// Skúša modely v poradí: env premenná GEMINI_MODEL (ak je nastavená) alebo DEFAULT_GEMINI_MODEL,
+// potom FALLBACK_GEMINI_MODELS. Vráti { text, model } prvého modelu, ktorý naozaj odpovedal (nie
+// null/prázdne) - rovnaká logika ako v weather-plan.js, aby jedno dočasné zlyhanie (napr. 503)
+// neznamenalo "žiadny AI súhrn na celý deň".
 async function callGemini(prompt, opts) {
   opts = opts || {};
   const key = process.env.GEMINI_API_KEY;
@@ -244,42 +285,22 @@ async function callGemini(prompt, opts) {
     console.log('ℹ️ GEMINI_API_KEY nie je nastavený - preskakujem AI súhrn dňa.');
     return null;
   }
-  const model = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-  try {
-    const generationConfig = {
-      temperature: 0.7,
-      maxOutputTokens: opts.maxOutputTokens || 2048,
-      thinkingConfig: thinkingConfigFor(model),
-    };
-    if (opts.json) generationConfig.responseMimeType = 'application/json';
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig }),
-    });
-    if (!res.ok) {
-      const txt = await res.text().catch(() => '');
-      console.warn(`⚠️ Gemini API ${res.status} (model=${model}): ${txt}`);
-      return null;
+  const primary = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
+  const models = [primary, ...FALLBACK_GEMINI_MODELS.filter(m => m !== primary)];
+  for (const model of models) {
+    try {
+      const text = await callGeminiOnce(model, key, prompt, opts);
+      if (text) {
+        if (model !== primary) console.log(`ℹ️ Primárny model zlyhal, použitý záložný model: ${model}`);
+        return { text, model };
+      }
+      console.warn(`⚠️ Gemini (model=${model}) vrátil prázdnu odpoveď, skúšam ďalší model...`);
+    } catch (e) {
+      console.warn(`⚠️ ${e.message} - skúšam ďalší model...`);
     }
-    const data = await res.json();
-    const candidate = data && data.candidates && data.candidates[0];
-    const text = candidate && candidate.content && candidate.content.parts
-      && candidate.content.parts[0] && candidate.content.parts[0].text;
-    const finishReason = candidate && candidate.finishReason;
-    if (finishReason && finishReason !== 'STOP') {
-      // MAX_TOKENS = odpoveď bola orezaná (pozri komentár vyššie) - nedôveryhodná, zahoď.
-      // Iné dôvody (SAFETY, RECITATION...) sú tiež nedôveryhodné pre uloženie.
-      console.warn(`⚠️ Gemini odpoveď má finishReason=${finishReason} (model=${model}) - ` +
-        `pravdepodobne orezaná/nekompletná, preskakujem uloženie tohto behu.`);
-      return null;
-    }
-    return text ? text.trim() : null;
-  } catch (e) {
-    console.warn('⚠️ Chyba pri volaní Gemini API:', e.message);
-    return null;
   }
+  console.warn('⚠️ Všetky Gemini modely zlyhali (napr. všetky preťažené/503) - AI súhrn sa tento beh nevygeneruje.');
+  return null;
 }
 
 // Koľko dní vlastných AI súhrnov sa posiela SPÄŤ do promptu (kontext/kontinuita) a koľko sa
@@ -325,7 +346,8 @@ async function main() {
   }
 
   console.log('Generujem AI súhrn dňa (Gemini)...');
-  const raw = await callGemini(aiCtx.prompt, { json: true, maxOutputTokens: 2048 });
+  const result = await callGemini(aiCtx.prompt, { json: true, maxOutputTokens: 2048 });
+  const raw = result ? result.text : null;
   let kratky = null, podrobny = null;
   if (raw) {
     let jsonStr = raw.trim();
@@ -346,7 +368,7 @@ async function main() {
   }
 
   const generatedAt = new Date().toISOString();
-  const model = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
+  const model = result ? result.model : (process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL);
 
   // ai_summary_daily.json ostáva ako doteraz - rýchly "posledný/dnešný" snapshot pre Dashboard
   // (index.html ho číta priamo, bez nutnosti prehľadávať históriu).

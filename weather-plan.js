@@ -1,9 +1,17 @@
 // weather-plan.js
 // Stiahne 8-dňovú predpoveď počasia pre Čadcu (Open-Meteo, zadarmo, žiadny API kľúč netreba),
-// skombinuje s aktuálnou formou (CTL/ATL) a kalendárovými poznámkami, a pre dni BEZ vlastnej
-// poznámky navrhne cez Gemini 3 alternatívy tréningu (recovery/endurance/intensity). Dni, kde už
-// máš vlastný plán (day_notes.json), sa nepretláčajú - "ak nemám vlastný plán" bolo explicitná
-// požiadavka.
+// skombinuje s aktuálnou formou (CTL/ATL) a kalendárovými poznámkami, a cez Gemini pripraví návrh
+// na každý deň:
+//  - Dni BEZ vlastnej poznámky: 4 alternatívy tréningu (rest/long/intensity/indoor), viď
+//    KNOWN_INTENSITIES nižšie.
+//  - Dni, kde už máš vlastný plán (day_notes.json): AI negeneruje alternatívy (nepretláča sa do
+//    toho, ČO si sa rozhodol robiť), ale vráti "notePlan" - krajšie sformulovanú verziu tvojej
+//    poznámky doplnenú o konkrétne odporúčanie ako ju ísť (dĺžka/zóny/tempo podľa počasia). Ak sa
+//    to nevygeneruje (chyba/orezaná odpoveď), frontend padá späť na tvoju surovú poznámku.
+//
+// OPRAVA 5.8.2026 (nahlásené Adamom): predtým sa dni s vlastnou poznámkou úplne vynechávali z AI
+// generovania ("ak nemám vlastný plán" bola pôvodná explicitná požiadavka) - teraz sa aj pre ne
+// generuje AI návrh (notePlan), len iným spôsobom než pre voľné dni.
 //
 // Dva režimy behu:
 //  1) Normálne generovanie (žiadny PLAN_EDIT_INSTRUCTION) - stiahne čerstvé počasie a vygeneruje
@@ -263,23 +271,32 @@ async function callGemini(prompt, opts) {
 }
 
 // ---------- Normalizácia alternatív (spoločná pre generovanie aj úpravu) ----------
-const KNOWN_INTENSITIES = ['recovery', 'endurance', 'intensity'];
-const INTENSITY_LABELS = { recovery: 'Regenerácia', endurance: 'Vytrvalosť', intensity: 'Intenzita' };
-// Normalizuje a obmedzí to, čo Gemini vrátil pre jeden deň, na max 3 použiteľné alternatívy s
+// OPRAVA 5.8.2026 (nahlásené Adamom): pôvodné recovery/endurance/intensity trio bolo príliš
+// vágne, chýbali skutočné opozitá (poriadne voľno vs. poriadny objem) a chýbala samostatná
+// indoor možnosť - "indoor" sa predtým len niekedy spomenul VNÚTRI textu iného variantu, čo bolo
+// v praxi zbytočné, lebo si to nešlo vybrať ako vlastnú alternatívu. Teraz 4 jasne odlíšené póly.
+const KNOWN_INTENSITIES = ['rest', 'long', 'intensity', 'indoor'];
+const INTENSITY_LABELS = {
+  rest: 'Voľno',
+  long: 'Dlhá jazda',
+  intensity: 'Intervaly',
+  indoor: 'Indoor',
+};
+// Normalizuje a obmedzí to, čo Gemini vrátil pre jeden deň, na max 4 použiteľné alternatívy s
 // konzistentným tvarom (id/label/intensity/suggestion) - aj keby model vynechal label alebo
 // poslal neznámu hodnotu intensity, frontend dostane vždy rozumný tvar dát. Poradie sa
 // zachováva podľa toho, čo vrátil model (generovací aj edit prompt ho žiadajú v poradí
-// recovery/endurance/intensity), aby si výber alternatívy v prehliadači (index 0/1/2) držal
+// rest/long/intensity/indoor), aby si výber alternatívy v prehliadači (index 0/1/2/3) držal
 // rovnaký význam aj po úprave existujúceho plánu.
 function normalizeAlternatives(alts) {
   if (!Array.isArray(alts)) return [];
   return alts
     .filter(a => a && a.suggestion)
-    .slice(0, 3)
+    .slice(0, 4)
     .map((a, i) => {
-      const intensity = KNOWN_INTENSITIES.includes(a.intensity) ? a.intensity : 'endurance';
+      const intensity = KNOWN_INTENSITIES.includes(a.intensity) ? a.intensity : 'long';
       return {
-        id: ['a', 'b', 'c'][i] || String(i),
+        id: ['a', 'b', 'c', 'd'][i] || String(i),
         label: a.label || INTENSITY_LABELS[intensity],
         intensity,
         suggestion: String(a.suggestion),
@@ -315,51 +332,68 @@ function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate, ac
   const todayDate = weatherDays.length ? weatherDays[0].date : null;
   const lines = [];
   lines.push(
-    'Si osobný cyklistický/bežecký kouč. Na základe počasia a aktuálnej formy nižšie navrhni pre ' +
-    'KAŽDÝ deň označený nižšie ako "BEZ VLASTNÉHO PLÁNU" TRI rôzne alternatívy tréningu (nie tri ' +
-    'preformulovania toho istého) - dni, kde už má vlastnú poznámku, VYNECHAJ úplne z výstupu ' +
-    '(nepretláčaj sa do jeho vlastných plánov). Tri alternatívy na deň:\n' +
-    '1) intensity="recovery" - regenerácia/voľno/veľmi ľahko,\n' +
-    '2) intensity="endurance" - vytrvalostná jazda/beh v nižšej zóne, dlhšie trvanie,\n' +
-    '3) intensity="intensity" - intervaly/tempo, kratšie ale náročnejšie.\n' +
-    'Každú alternatívu prispôsob počasiu toho dňa (dážď/vietor/teplota - napr. silný dážď -> ' +
-    'radšej doma/rolky aj pre "intensity" variant) a celkovému kontextu okolitých dní a aktuálnej ' +
-    'formy (napr. pred/po náročnom dni uprav, čo dáva zmysel odporučiť). Ak je pri dni uvedené ' +
-    '"najlepšie okno" (súvislý časový úsek s najnižšou pravdepodobnosťou dažďa), zohľadni ho a v ' +
-    'texte návrhu (najmä pri "endurance"/"intensity" variante, kde je dĺžka vonku dlhšia) stručne ' +
-    'spomeň orientačný čas, kedy je najvhodnejšie ísť trénovať - toto okno je zámerne hľadané ' +
-    'prednostne v poobedných/podvečerných hodinách (Adam ráno väčšinou netrénuje), takže ak nie je ' +
-    'označené ako "mimo zvyčajného poobedného času", NENAVRHUJ radšej skoré ráno len preto, že by ' +
-    'tam bola o pár % nižšia šanca dažďa.\n' +
+    'Si osobný cyklistický/bežecký kouč. Na základe počasia a aktuálnej formy nižšie priprav pre ' +
+    'KAŽDÝ deň nižšie presne jeden z dvoch výstupov, podľa toho, ako je označený:\n\n' +
+    'A) Dni označené "BEZ VLASTNÉHO PLÁNU": navrhni ŠTYRI rôzne alternatívy tréningu (nie štyri ' +
+    'preformulovania toho istého), v tomto poradí a presne s týmito hodnotami "intensity":\n' +
+    '1) intensity="rest" - SKUTOČNÉ voľno/úplný regeneračný deň (žiadny tréning, prípadne len ' +
+    'veľmi ľahký pohyb/strečing) - nie "ľahká jazda", ale reálne voľno,\n' +
+    '2) intensity="long" - vytrvalostná/DLHŠIA jazda alebo beh v nižšej zóne, citeľne väčší objem ' +
+    'než bežný deň - toto má byť skutočný OPAK alternatívy "rest", nie jej mierne obmenená verzia,\n' +
+    '3) intensity="intensity" - intervaly/tempo, kratšie trvanie ale náročné,\n' +
+    '4) intensity="indoor" - SAMOSTATNÁ konkrétna indoor alternatíva (trenažér/rolky, beh na ' +
+    'páse, posilňovňa, plávanie a pod.), NIE len poznámka pri inom variante ako doteraz, ale ' +
+    'reálna štvrtá voliteľná možnosť pre zlé počasie, nedostatok času vonku, alebo keď sa mu von ' +
+    'jednoducho nechce.\n' +
+    '"rest" a "long" musia vyjsť ako skutočné opačné póly (celkom voľno vs. poriadny objem), nie ' +
+    'dve stredné cesty, ktoré vyzerajú skoro rovnako.\n\n' +
+    'B) Dni označené "MÁ VLASTNÝ PLÁN": TU NEGENERUJ štyri alternatívy. Namiesto toho zober jeho ' +
+    'vlastnú poznámku (čo si už sám naplánoval) a vráť JEDNU vec - kratšie a krajšie sformulovanú ' +
+    'verziu jeho plánu DOPLNENÚ o konkrétne odporúčanie, ako ho ísť (orientačná dĺžka/objem, ' +
+    'zóny/tempo, na čo si dať pozor vzhľadom na počasie toho dňa a nedávnu záťaž). NIKDY nemeň, ' +
+    'ČO si naplánoval (napr. ak napísal "idem na túru", nenavrhuj namiesto toho bicykel) - len to ' +
+    'vylepši a doplň o praktickú radu. Toto vráť v poli "notePlan" (2-4 vety) - takýto deň v ' +
+    'odpovedi NEMÁ pole "alternatives".\n\n' +
+    'Obe (alternatívy aj notePlan) prispôsob počasiu toho dňa (dážď/vietor/teplota) a celkovému ' +
+    'kontextu okolitých dní a aktuálnej formy (napr. pred/po náročnom dni uprav, čo dáva zmysel ' +
+    'odporučiť). Ak je pri dni uvedené "najlepšie okno" (súvislý časový úsek s najnižšou ' +
+    'pravdepodobnosťou dažďa), zohľadni ho a v texte (najmä pri "long"/"intensity" variante alebo ' +
+    'v notePlan, kde je dĺžka vonku dlhšia) stručne spomeň orientačný čas, kedy je najvhodnejšie ' +
+    'ísť trénovať - toto okno je zámerne hľadané prednostne v poobedných/podvečerných hodinách ' +
+    '(Adam ráno väčšinou netrénuje), takže ak nie je označené ako "mimo zvyčajného poobedného ' +
+    'času", NENAVRHUJ radšej skoré ráno len preto, že by tam bola o pár % nižšia šanca dažďa.\n' +
     `DÔLEŽITÉ - AK je pri dni uvedené "UŽ ABSOLVOVANÉ DNES" (týka sa to prakticky vždy len ` +
     `dnešného dňa, ${todayDate || 'prvý deň v zozname'}): túto aktivitu už reálne vykonal, deň sa ` +
-    'pre neho z tréningového hľadiska už čiastočne/úplne odohral - NENAVRHUJ žiadnu z troch ' +
-    'alternatív ako keby sa deň ešte len začínal. Namiesto toho: ak už absolvovaná aktivita svojím ' +
-    'objemom/záťažou zodpovedá plnohodnotnému tréningu dňa, "recovery" alternatíva nech je ' +
-    'jednoducho pochvala/potvrdenie že už má odtrénované a odporučanie oddychu do konca dňa, a ' +
-    '"endurance"/"intensity" alternatívy nech sú buď ĽAHKÝ DOPLNOK (nie duplicitný plnohodnotný ' +
-    'druhý tréning) alebo návrh dokedy ešte dnes prípadne pridať niečo malé, ak by chcel. Text ' +
-    'návrhu nech explicitne spomenie, že už dnes niečo absolvoval (napr. "keďže si už dnes ' +
-    'odjazdil X min, ..."). Pre dni BEZ poznámky "UŽ ABSOLVOVANÉ" postupuj úplne štandardne.\n' +
+    'pre neho z tréningového hľadiska už čiastočne/úplne odohral - NENAVRHUJ žiadnu z alternatív ' +
+    '(ani notePlan) ako keby sa deň ešte len začínal. Namiesto toho: ak už absolvovaná aktivita ' +
+    'svojím objemom/záťažou zodpovedá plnohodnotnému tréningu dňa, "rest" alternatíva (alebo ' +
+    'notePlan, ak má vlastnú poznámku) nech je jednoducho pochvala/potvrdenie že už má odtrénované ' +
+    'a odporúčanie oddychu do konca dňa, a ostatné alternatívy nech sú buď ĽAHKÝ DOPLNOK (nie ' +
+    'duplicitný plnohodnotný druhý tréning) alebo návrh, dokedy ešte dnes prípadne pridať niečo ' +
+    'malé, ak by chcel. Text nech explicitne spomenie, že už dnes niečo absolvoval (napr. "keďže ' +
+    'si už dnes odjazdil X min, ..."). Pre dni BEZ poznámky "UŽ ABSOLVOVANÉ" postupuj úplne ' +
+    'štandardne.\n' +
     'DÔLEŽITÉ - CELÉ OBDOBIE POSUDZUJ SPOLU, NIE DEŇ PO DNI IZOLOVANE: pozri sa na VŠETKY dni ' +
     'nižšie naraz (aj na "Posledných X dní" - čo už reálne predchádzalo, ak je uvedené) a dbaj, ' +
-    'aby odporúčania medzi dňami dávali zmysel ako celok. Konkrétne: NEODPORÚČAJ recovery/voľno ' +
-    'ako jedinú reálne zmysluplnú možnosť (teda že aj endurance/intensity varianty sú fakticky ' +
-    'tiež len o oddychu/veľmi ľahkom pohybe) na 3 a viac dní PO SEBE, pokiaľ to jasne nevyžaduje ' +
-    'kontext (napr. bezprostredne pred tým niekoľko veľmi náročných dní za sebou, choroba/extrémna ' +
-    'únava spomenutá v poznámke). Zlé počasie viac dní po sebe (horúčava, dážď) NIE JE samo o sebe ' +
-    'dôvod na viacdňové voľno - namiesto toho ponúkni realistickú DOMA/INDOOR alternatívu ' +
-    '(trenažér/rolky, silový tréning, plávanie, beh na páse a pod.) ako plnohodnotný "endurance" ' +
-    'alebo "intensity" variant, nie len ako poznámku vedľa "radšej voľno". Ak z kontextu (nedávna ' +
-    'záťaž, "Posledných X dní") vyplýva, že si už oddýchol, uprednostni v takom prípade skôr ' +
-    'endurance/indoor možnosť pred ďalším recovery dňom, aj keď vonku prší.\n' +
-    'Odpovedz IBA validným JSON poľom ' +
-    '(žiadny markdown, žiadne ```), presne v tvare:\n' +
+    'aby odporúčania medzi dňami dávali zmysel ako celok. Konkrétne: NEODPORÚČAJ "rest"/voľno ako ' +
+    'jedinú reálne zmysluplnú možnosť (teda že aj ostatné varianty sú fakticky tiež len o ' +
+    'oddychu/veľmi ľahkom pohybe) na 3 a viac dní PO SEBE, pokiaľ to jasne nevyžaduje kontext ' +
+    '(napr. bezprostredne pred tým niekoľko veľmi náročných dní za sebou, choroba/extrémna únava ' +
+    'spomenutá v poznámke). Zlé počasie viac dní po sebe (horúčava, dážď) NIE JE samo o sebe ' +
+    'dôvod na viacdňové voľno - presne na to slúži samostatná "indoor" alternatíva, tú v takom ' +
+    'prípade ponúkni ako plnohodnotnú možnosť namiesto tlačenia na "rest". Ak z kontextu (nedávna ' +
+    'záťaž, "Posledných X dní") vyplýva, že si už oddýchol, uprednostni skôr "long"/"indoor" ' +
+    'možnosť pred ďalším "rest" dňom, aj keď vonku prší.\n' +
+    'Odpovedz IBA validným JSON poľom (žiadny markdown, žiadne ```). Každý prvok má "date" a BUĎ ' +
+    '"alternatives" (presne 4 položky v poradí rest/long/intensity/indoor, pre typ A dni) ALEBO ' +
+    '"notePlan" (text, pre typ B dni) - nikdy oboje naraz. Presný tvar:\n' +
     '[{"date":"YYYY-MM-DD","alternatives":[' +
-    '{"label":"krátky názov 2-4 slová","intensity":"recovery","suggestion":"1-2 vety, konkrétne"},' +
-    '{"label":"...","intensity":"endurance","suggestion":"..."},' +
-    '{"label":"...","intensity":"intensity","suggestion":"..."}' +
-    ']}]'
+    '{"label":"krátky názov 2-4 slová","intensity":"rest","suggestion":"1-2 vety, konkrétne"},' +
+    '{"label":"...","intensity":"long","suggestion":"..."},' +
+    '{"label":"...","intensity":"intensity","suggestion":"..."},' +
+    '{"label":"...","intensity":"indoor","suggestion":"..."}' +
+    ']},' +
+    '{"date":"YYYY-MM-DD","notePlan":"krajšie sformulovaný plán + konkrétne odporúčanie ako ho ísť"}]'
   );
   lines.push('');
   if (recentPastDays && recentPastDays.length) {
@@ -400,8 +434,8 @@ function buildEditPrompt(existingPlan, currentSelection, instruction) {
   const lines = [];
   lines.push(
     'Si osobný cyklistický/bežecký kouč. Nižšie je AKTUÁLNY tréningový plán na najbližšie dni - ' +
-    'pre dni bez vlastnej poznámky vidíš všetky 3 momentálne alternatívy (recovery/endurance/' +
-    'intensity) a ktorú z nich má užívateľ práve vybranú (VYBRANÉ). Toto NIE JE požiadavka na ' +
+    'pre dni bez vlastnej poznámky vidíš všetky 4 momentálne alternatívy (rest/long/intensity/' +
+    'indoor) a ktorú z nich má užívateľ práve vybranú (VYBRANÉ). Toto NIE JE požiadavka na ' +
     'nové generovanie od nuly - len na úpravu existujúceho plánu podľa pokynu používateľa.\n\n' +
     `POKYN OD POUŽÍVATEĽA: "${instruction}"\n\n` +
     'Uprav LEN tie dni, ktorých sa pokyn reálne týka (napr. "skráť dnešný tréning na 60 minút" = ' +
@@ -410,12 +444,13 @@ function buildEditPrompt(existingPlan, currentSelection, instruction) {
     'Dni, ktorých sa pokyn netýka, VYNECHAJ úplne z výstupu - ich pôvodné alternatívy ostanú ' +
     'nezmenené. Dni s vlastným plánom (nižšie označené "MÁ VLASTNÝ PLÁN") NIKDY neuprav a ' +
     'nezaraď do výstupu - tie sú mimo dosahu AI úprav. Pre každý upravovaný deň vráť znova ' +
-    'VŠETKY 3 alternatívy v rovnakom poradí podľa intenzity (recovery, endurance, intensity) - aj ' +
+    'VŠETKY 4 alternatívy v rovnakom poradí podľa intenzity (rest, long, intensity, indoor) - aj ' +
     'tie, ktoré vecne nemeníš, len ich preformuluj/zachovaj - presne v tomto JSON tvare:\n' +
     '[{"date":"YYYY-MM-DD","alternatives":[' +
-    '{"label":"...","intensity":"recovery","suggestion":"..."},' +
-    '{"label":"...","intensity":"endurance","suggestion":"..."},' +
-    '{"label":"...","intensity":"intensity","suggestion":"..."}' +
+    '{"label":"...","intensity":"rest","suggestion":"..."},' +
+    '{"label":"...","intensity":"long","suggestion":"..."},' +
+    '{"label":"...","intensity":"intensity","suggestion":"..."},' +
+    '{"label":"...","intensity":"indoor","suggestion":"..."}' +
     ']}]\n' +
     'Odpovedz IBA validným JSON poľom, žiadny markdown, žiadne ```.'
   );
@@ -537,10 +572,21 @@ async function generateNewPlan() {
         hourly: w.hourly || [],
         alreadyDone: doneActivitiesSummary(activitiesByDate ? activitiesByDate[w.date] : null) || null,
         ownNote: hasOwnNote ? note.note : null,
+        // OPRAVA 5.8.2026 (nahlásené Adamom): predtým sa dni s vlastnou poznámkou úplne vynechali
+        // z AI generovania a v pláne sa zobrazila len surová poznámka tak, ako ju napísal. Teraz
+        // AI aj pre tieto dni vráti "notePlan" - krajšie sformulovanú verziu jeho plánu doplnenú o
+        // konkrétne odporúčanie (dĺžka/zóny/tempo, prispôsobené počasiu) - BEZ zmeny toho, čo si
+        // sám naplánoval. Ak AI pre daný deň notePlan nevrátila (chyba, orezaná odpoveď a pod.),
+        // frontend nemá o čo prísť - vždy mu ostáva ako záloha jeho pôvodná surová poznámka nižšie
+        // (ownNote), tá sa NIKDY nemaže/neprepisuje na disku, len sa v UI prípadne zobrazí krajšia
+        // verzia navyše.
+        notePlan: hasOwnNote && daySuggestion && daySuggestion.notePlan
+          ? String(daySuggestion.notePlan).trim() : null,
         status: statusByDate[w.date] !== 'active' ? statusByDate[w.date] : null,
-        // Dni s vlastným plánom nemajú alternatívy (rovnaká logika ako predtým pri aiSuggestion -
-        // "ak nemám vlastný plán" bola explicitná požiadavka). Pre ostatné dni až 3 alternatívy,
-        // ktoré si frontend (plan.html) vie prepínať a na základe voľby prepočítať okolité dni.
+        // Dni s vlastným plánom nemajú "alternatives" (majú namiesto toho notePlan vyššie) - tie
+        // isté 4 alternatívy by sem nedávali zmysel, keďže deň už má rozhodnutý vlastný plán. Pre
+        // ostatné dni až 4 alternatívy (rest/long/intensity/indoor), ktoré si frontend (plan.html)
+        // vie prepínať a na základe voľby prepočítať okolité dni.
         alternatives: hasOwnNote ? [] : normalizeAlternatives(daySuggestion && daySuggestion.alternatives),
       };
     }),

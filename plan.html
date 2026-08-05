@@ -123,8 +123,8 @@ function daysWithAlternatives(plan){
 }
 
 // Po kliknutí na alternatívu pre `fromDate` skús doladiť NASLEDUJÚCI deň (ak ho užívateľ sám
-// ručne nevybral), aby dával tréningovo zmysel: po "intensity" dni navrhni "recovery", po
-// "recovery" dni navrhni "intensity" (je priestor zabrať), po "endurance" dni navrhni "recovery".
+// ručne nevybral), aby dával tréningovo zmysel: po "intensity" dni navrhni "rest", po "rest" dni
+// navrhni "intensity" (je priestor zabrať), po "long"/"indoor" dni navrhni "rest".
 // Ide zámerne len o jeden krok dopredu - reťaziť to ďalej by rýchlo prestalo byť predvídateľné.
 function cascade(plan, choices, fromDate){
   const seq = daysWithAlternatives(plan);
@@ -139,11 +139,11 @@ function cascade(plan, choices, fromDate){
   const nextChoice = choices[next.date];
   if(nextChoice && nextChoice.manual) return choices; // užívateľ si tento deň už vybral sám, nemeníme mu ho
 
-  const wantIntensity = curAlt.intensity === 'intensity' ? 'recovery'
-    : curAlt.intensity === 'recovery' ? 'intensity'
-    : 'recovery';
+  const wantIntensity = curAlt.intensity === 'intensity' ? 'rest'
+    : curAlt.intensity === 'rest' ? 'intensity'
+    : 'rest';
   let ni = next.alternatives.findIndex(a => a.intensity === wantIntensity);
-  if(ni === -1) ni = next.alternatives.findIndex(a => a.intensity === 'endurance');
+  if(ni === -1) ni = next.alternatives.findIndex(a => a.intensity === 'long');
   if(ni === -1) ni = 0;
   choices[next.date] = { i: ni, manual:false, auto:true };
   return choices;
@@ -214,7 +214,16 @@ function renderPlan(plan){
   daysBox.innerHTML = plan.days.map(d=>{
     let body, altsHtml = '';
     if(d.ownNote){
-      body = `<span class="plan-day-own">Tvoj plán:</span> ${escapeHtml(d.ownNote)}`;
+      // OPRAVA 5.8.2026 (nahlásené Adamom): predtým sa tu vždy zobrazila len surová poznámka.
+      // Teraz, ak AI pre tento deň vrátila "notePlan" (krajšie sformulovaná verzia + konkrétne
+      // odporúčanie ako to ísť), zobrazí sa prednostne tá - pôvodná poznámka ostáva viditeľná
+      // nižšie, drobným písmom, nech sa nič nestratí.
+      if(d.notePlan){
+        body = `<span class="plan-day-own">Tvoj plán:</span> ${escapeHtml(d.notePlan)}` +
+          `<div style="margin-top:5px;font-size:0.72rem;color:var(--text-faint);">📝 pôvodná poznámka: ${escapeHtml(d.ownNote)}</div>`;
+      } else {
+        body = `<span class="plan-day-own">Tvoj plán:</span> ${escapeHtml(d.ownNote)}`;
+      }
     } else if(d.alternatives && d.alternatives.length){
       const choice = choices[d.date];
       const i = (choice && choice.i < d.alternatives.length) ? choice.i : 0;
