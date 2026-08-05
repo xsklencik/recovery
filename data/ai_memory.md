@@ -24,3 +24,6 @@ Dnes tvoje HRV kleslo na 49 ms, čo je 7,4 ms pod tvojím priemerom 56,4 ms, a p
 
 ## 2026-08-04
 Dnes tvoje HRV kleslo na 48 ms (o 8.1 ms pod priemerom) a spánková tepová frekvencia stúpla na 63 bpm (o 3.1 bpm nad priemerom), čo signalizuje výrazne zvýšenú únavu. Po včerajšej extrémnej 443-minútovej jazde s tréningovou záťažou 272 a neskorom jedle je tvoj autonómny nervový systém pod značným stresom. V histórii sa po vysokom objeme opakuje vzor poklesu HRV k hranici 48-49 ms, čo potvrdzuje vyčerpanie organizmu. Dnešný deň musí byť zameraný výhradne na aktívny alebo pasívny odpočinok bez akejkoľvek záťaže.
+
+## 2026-08-05
+Dnes si fyziologicky veľmi dobre zregenerovaný s HRV na úrovni 66 ms, čo je o 10.2 ms nad tvojím dlhodobým priemerom. Pokojová tepová frekvencia 57 bpm aj spánková TF 57 bpm klesli pod priemer, čo potvrdzuje úspešné spracovanie extrémnej záťaže z 3. augusta. Po predchádzajúcich dvoch dňoch so zníženým HRV okolo 48-49 ms prišiel výrazný pozitívny skok. Tvoje telo opäť skvelo zareagovalo a dokázalo absorbovať masívny 443-minútový tréningový objem.
