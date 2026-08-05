@@ -607,7 +607,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-05T05:45:42.825Z"
+  "syncedAt": "2026-08-05T05:49:00.021Z"
  },
  {
   "id": "2026-08-03",
@@ -628,7 +628,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-05T05:45:42.825Z"
+  "syncedAt": "2026-08-05T05:49:00.021Z"
  },
  {
   "id": "2026-08-04",
@@ -639,7 +639,7 @@
   "avgSleepingHR": 63,
   "sleepScore": 86,
   "sleepSecs": 29340,
-  "steps": 8318,
+  "steps": 8346,
   "ctl": 45.84876,
   "atl": 77.3763,
   "weight": null,
@@ -649,27 +649,27 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-05T05:45:42.825Z"
+  "syncedAt": "2026-08-05T05:49:00.021Z"
  },
  {
   "id": "2026-08-05",
   "date": "2026-08-05",
-  "restingHR": null,
+  "restingHR": 57,
   "hrv": null,
-  "hrvSDNN": null,
-  "avgSleepingHR": null,
+  "hrvSDNN": 66,
+  "avgSleepingHR": 57,
   "sleepScore": 82,
   "sleepSecs": 27540,
-  "steps": null,
+  "steps": 24,
   "ctl": 44.770016,
   "atl": 67.0758,
   "weight": null,
-  "comments": null,
+  "comments": "Idem na turzovku na rehabilitácie a pôjdem asi na biku lebo idú autobusy blbo",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-05T05:45:42.825Z"
+  "syncedAt": "2026-08-05T05:49:00.021Z"
  }
 ]
