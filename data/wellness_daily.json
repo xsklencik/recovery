@@ -622,13 +622,13 @@
   "ctl": 46.592068,
   "atl": 86.95512,
   "weight": null,
-  "comments": "Trošku pokaziť čísla spánku mohli špagety hodinu a pol pred spaním",
+  "comments": "Trošku pokaziť ��ísla spánku mohli špagety hodinu a pol pred spaním",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-06T05:01:02.572Z"
+  "syncedAt": "2026-08-06T05:03:42.895Z"
  },
  {
   "id": "2026-08-04",
@@ -649,7 +649,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-06T05:01:02.572Z"
+  "syncedAt": "2026-08-06T05:03:42.895Z"
  },
  {
   "id": "2026-08-05",
@@ -670,17 +670,17 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-06T05:01:02.572Z"
+  "syncedAt": "2026-08-06T05:03:42.895Z"
  },
  {
   "id": "2026-08-06",
   "date": "2026-08-06",
   "restingHR": null,
   "hrv": null,
-  "hrvSDNN": null,
-  "avgSleepingHR": null,
-  "sleepScore": null,
-  "sleepSecs": null,
+  "hrvSDNN": 57,
+  "avgSleepingHR": 60,
+  "sleepScore": 85,
+  "sleepSecs": 29280,
   "steps": null,
   "ctl": 45.370834,
   "atl": 66.455376,
@@ -691,6 +691,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-06T05:01:02.572Z"
+  "syncedAt": "2026-08-06T05:03:42.895Z"
  }
 ]
