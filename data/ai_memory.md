@@ -27,3 +27,6 @@ Dnes tvoje HRV kleslo na 48 ms (o 8.1 ms pod priemerom) a spánková tepová fre
 
 ## 2026-08-05
 Dnes si fyziologicky veľmi dobre zregenerovaný s HRV na úrovni 66 ms, čo je o 10.2 ms nad tvojím dlhodobým priemerom. Pokojová tepová frekvencia 57 bpm aj spánková TF 57 bpm klesli pod priemer, čo potvrdzuje úspešné spracovanie extrémnej záťaže z 3. augusta. Po predchádzajúcich dvoch dňoch so zníženým HRV okolo 48-49 ms prišiel výrazný pozitívny skok. Tvoje telo opäť skvelo zareagovalo a dokázalo absorbovať masívny 443-minútový tréningový objem.
+
+## 2026-08-06
+Dnes si stabilne a dobre zregenerovaný, tvoje HRV dosahuje 57 ms a spánok trval výborných 8,1 hodiny. Pokojová aj spánková biometria sa drží na tvojom dlhodobom priemere a telo úspešne absorbovalo predchádzajúce zaťaženie. V histórii sa po náročných dňoch objavuje rýchla obnova, čo potvrdzuje dobrú pripravenosť na dnešný denný plán.
