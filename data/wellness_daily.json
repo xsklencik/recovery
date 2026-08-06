@@ -628,7 +628,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-06T14:15:45.567Z"
+  "syncedAt": "2026-08-06T14:30:55.122Z"
  },
  {
   "id": "2026-08-04",
@@ -649,7 +649,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-06T14:15:45.567Z"
+  "syncedAt": "2026-08-06T14:30:55.122Z"
  },
  {
   "id": "2026-08-05",
@@ -670,7 +670,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-06T14:15:45.567Z"
+  "syncedAt": "2026-08-06T14:30:55.122Z"
  },
  {
   "id": "2026-08-06",
@@ -682,8 +682,8 @@
   "sleepScore": 85,
   "sleepSecs": 29280,
   "steps": 25349,
-  "ctl": 45.348396,
-  "atl": 66.35534,
+  "ctl": 47.98357,
+  "atl": 81.265015,
   "weight": null,
   "comments": "Ideme na túru Veľký Polóm",
   "mood": null,
@@ -691,6 +691,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-06T14:15:45.567Z"
+  "syncedAt": "2026-08-06T14:30:55.122Z"
  }
 ]

@@ -669,5 +669,28 @@
   "hr_z3_secs": 682,
   "hr_z4_secs": 0,
   "hr_z5_secs": 0
+ },
+ {
+  "id": "i173096604",
+  "date": "2026-08-06",
+  "start_date_local": "2026-08-06T09:36:00",
+  "name": "Morning Rock Climbing",
+  "type": "RockClimbing",
+  "comments": null,
+  "moving_time": 17044,
+  "distance": 16090,
+  "total_elevation_gain": 559.4001,
+  "average_heartrate": 119,
+  "max_heartrate": 152,
+  "icu_training_load": 112,
+  "icu_ctl": 47.98357,
+  "icu_atl": 81.265015,
+  "icu_intensity": 48.637863,
+  "icu_rpe": null,
+  "hr_z1_secs": 16428,
+  "hr_z2_secs": 625,
+  "hr_z3_secs": 0,
+  "hr_z4_secs": 0,
+  "hr_z5_secs": 0
  }
 ]
