@@ -622,13 +622,13 @@
   "ctl": 46.592068,
   "atl": 86.95512,
   "weight": null,
-  "comments": "Trošku pokaziť čísla spánku mohli špagety hodinu a pol pred spaním",
+  "comments": "Trošku pokaziť ��ísla spánku mohli špagety hodinu a pol pred spaním",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-06T03:00:54.843Z"
+  "syncedAt": "2026-08-06T03:15:43.804Z"
  },
  {
   "id": "2026-08-04",
@@ -649,7 +649,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-06T03:00:54.843Z"
+  "syncedAt": "2026-08-06T03:15:43.804Z"
  },
  {
   "id": "2026-08-05",
@@ -670,7 +670,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-06T03:00:54.843Z"
+  "syncedAt": "2026-08-06T03:15:43.804Z"
  },
  {
   "id": "2026-08-06",
@@ -691,6 +691,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-06T03:00:54.843Z"
+  "syncedAt": "2026-08-06T03:15:43.805Z"
  }
 ]
