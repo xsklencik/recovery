@@ -628,7 +628,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-06T06:01:03.743Z"
+  "syncedAt": "2026-08-06T06:15:25.677Z"
  },
  {
   "id": "2026-08-04",
@@ -640,8 +640,8 @@
   "sleepScore": 86,
   "sleepSecs": 29340,
   "steps": 8346,
-  "ctl": 45.84876,
-  "atl": 77.3763,
+  "ctl": 45.82523,
+  "atl": 77.24318,
   "weight": null,
   "comments": null,
   "mood": null,
@@ -649,7 +649,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-06T06:01:03.743Z"
+  "syncedAt": "2026-08-06T06:15:25.678Z"
  },
  {
   "id": "2026-08-05",
@@ -661,8 +661,8 @@
   "sleepScore": 82,
   "sleepSecs": 27540,
   "steps": 11999,
-  "ctl": 46.464054,
-  "atl": 76.66059,
+  "ctl": 46.44108,
+  "atl": 76.5452,
   "weight": null,
   "comments": "Idem na turzovku na rehabilitácie a pôjdem asi na biku lebo idú autobusy blbo",
   "mood": null,
@@ -670,20 +670,20 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-06T06:01:03.743Z"
+  "syncedAt": "2026-08-06T06:15:25.678Z"
  },
  {
   "id": "2026-08-06",
   "date": "2026-08-06",
-  "restingHR": null,
+  "restingHR": 52,
   "hrv": 60.454544,
   "hrvSDNN": 57,
   "avgSleepingHR": 60,
   "sleepScore": 85,
   "sleepSecs": 29280,
-  "steps": 24,
-  "ctl": 45.370834,
-  "atl": 66.455376,
+  "steps": 184,
+  "ctl": 45.348396,
+  "atl": 66.35534,
   "weight": null,
   "comments": "Ideme na túru Veľký Polóm",
   "mood": null,
@@ -691,6 +691,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-06T06:01:03.743Z"
+  "syncedAt": "2026-08-06T06:15:25.678Z"
  }
 ]
