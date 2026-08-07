@@ -649,7 +649,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-07T05:30:49.382Z"
+  "syncedAt": "2026-08-07T05:45:35.698Z"
  },
  {
   "id": "2026-08-05",
@@ -670,7 +670,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-07T05:30:49.382Z"
+  "syncedAt": "2026-08-07T05:45:35.698Z"
  },
  {
   "id": "2026-08-06",
@@ -681,7 +681,7 @@
   "avgSleepingHR": 60,
   "sleepScore": 85,
   "sleepSecs": 29280,
-  "steps": 25798,
+  "steps": 28908,
   "ctl": 47.98357,
   "atl": 81.265015,
   "weight": null,
@@ -691,27 +691,27 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-07T05:30:49.382Z"
+  "syncedAt": "2026-08-07T05:45:35.698Z"
  },
  {
   "id": "2026-08-07",
   "date": "2026-08-07",
   "restingHR": null,
   "hrv": null,
-  "hrvSDNN": null,
-  "avgSleepingHR": null,
-  "sleepScore": null,
-  "sleepSecs": null,
+  "hrvSDNN": 61,
+  "avgSleepingHR": 58,
+  "sleepScore": 81,
+  "sleepSecs": 25740,
   "steps": null,
   "ctl": 46.8546,
   "atl": 70.446846,
   "weight": null,
-  "comments": "Hlásia búrky a dážď",
+  "comments": "Dnes dám voľno, zlá noc hodinu som u dedka nemohol zaspať kvôli tomu že sa dívali na svadbu",
   "mood": null,
-  "soreness": null,
+  "soreness": 3,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-07T05:30:49.382Z"
+  "syncedAt": "2026-08-07T05:45:35.698Z"
  }
 ]
