@@ -664,13 +664,13 @@
   "ctl": 46.44108,
   "atl": 76.5452,
   "weight": null,
-  "comments": "Idem na turzovku na rehabilit��cie a pôjdem asi na biku lebo idú autobusy blbo",
+  "comments": "Idem na turzovku na rehabilitácie a pôjdem asi na biku lebo idú autobusy blbo",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-08T12:01:02.058Z"
+  "syncedAt": "2026-08-08T12:15:39.079Z"
  },
  {
   "id": "2026-08-06",
@@ -691,7 +691,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-08T12:01:02.058Z"
+  "syncedAt": "2026-08-08T12:15:39.079Z"
  },
  {
   "id": "2026-08-07",
@@ -712,18 +712,18 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-08T12:01:02.058Z"
+  "syncedAt": "2026-08-08T12:15:39.079Z"
  },
  {
   "id": "2026-08-08",
   "date": "2026-08-08",
   "restingHR": 57,
-  "hrv": 60.243904,
+  "hrv": 60.42857,
   "hrvSDNN": 56,
   "avgSleepingHR": 58,
   "sleepScore": 89,
   "sleepSecs": 30660,
-  "steps": 5824,
+  "steps": 6515,
   "ctl": 45.75219,
   "atl": 61.068813,
   "weight": null,
@@ -733,6 +733,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-08T12:01:02.058Z"
+  "syncedAt": "2026-08-08T12:15:39.079Z"
  }
 ]
