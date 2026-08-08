@@ -33,3 +33,6 @@ Dnes si stabilne a dobre zregenerovaný, tvoje HRV dosahuje 57 ms a spánok trva
 
 ## 2026-08-07
 Dnes si vcelku dobre zregenerovaný, tvoje HRV stúplo na 61 ms a spánková tepová frekvencia klesla na 58 bpm. Spánok bol s dĺžkou 7,2 hodiny o niečo kratší a prerušovaný, čo súvisí s včerajším neskorším zaspávaním. Keďže včera prebehla náročná túra na Veľký Polóm s takmer 29-tisíc krokmi a hlásia búrky, tvoje telo vykazuje zvýšenú svalovú bolestivosť. Vzhľadom na tvoj vlastný plán dnes zaradiť voľno je to ideálna voľba.
+
+## 2026-08-08
+Dnes si fyziologicky plne zregenerovaný a pripravený na záťaž. Tvoje ranné HRV dosiahlo 56 ms, čo presne zodpovedá tvojmu dlhodobému priemeru 56,4 ms, a spánková tepová frekvencia klesla na 58 bpm. Po včerajšom kratšom spánku si v noci odpočíval výborných 8,5 hodiny so špičkovým spánkovým skóre 89. Tvoje telo úspešne vstrebalo záťaž z náročnej túry zo 6. augusta a znížená pokojová TF 57 bpm potvrdzuje priaznivý stav autonómneho nervového systému. V histórii pozorujeme, že po dni voľna s kvalitným spánkom sa tvoje biometrické hodnoty rýchlo vracajú do optimálneho základného pásma.
