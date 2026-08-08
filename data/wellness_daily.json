@@ -670,7 +670,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-08T15:15:36.905Z"
+  "syncedAt": "2026-08-08T15:30:48.328Z"
  },
  {
   "id": "2026-08-06",
@@ -691,7 +691,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-08T15:15:36.905Z"
+  "syncedAt": "2026-08-08T15:30:48.328Z"
  },
  {
   "id": "2026-08-07",
@@ -712,7 +712,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-08T15:15:36.905Z"
+  "syncedAt": "2026-08-08T15:30:48.328Z"
  },
  {
   "id": "2026-08-08",
@@ -724,8 +724,8 @@
   "sleepScore": 89,
   "sleepSecs": 30660,
   "steps": 6964,
-  "ctl": 45.75219,
-  "atl": 61.068813,
+  "ctl": 46.952133,
+  "atl": 67.85804,
   "weight": null,
   "comments": "U dedka budeme asi maľovať balkón možno. Možno nie čiže niečo by som mohol dať. Beh nie ešte.",
   "mood": null,
@@ -733,6 +733,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-08T15:15:36.905Z"
+  "syncedAt": "2026-08-08T15:30:48.328Z"
  }
 ]
