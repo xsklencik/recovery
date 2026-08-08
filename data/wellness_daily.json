@@ -664,13 +664,13 @@
   "ctl": 46.44108,
   "atl": 76.5452,
   "weight": null,
-  "comments": "Idem na turzovku na rehabilit��cie a pôjdem asi na biku lebo idú autobusy blbo",
+  "comments": "Idem na turzovku na rehabilitácie a pôjdem asi na biku lebo idú autobusy blbo",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-08T21:45:46.251Z"
+  "syncedAt": "2026-08-08T22:00:57.394Z"
  },
  {
   "id": "2026-08-06",
@@ -691,7 +691,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-08T21:45:46.251Z"
+  "syncedAt": "2026-08-08T22:00:57.394Z"
  },
  {
   "id": "2026-08-07",
@@ -712,7 +712,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-08T21:45:46.251Z"
+  "syncedAt": "2026-08-08T22:00:57.394Z"
  },
  {
   "id": "2026-08-08",
@@ -733,6 +733,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-08T21:45:46.251Z"
+  "syncedAt": "2026-08-08T22:00:57.394Z"
  }
 ]
