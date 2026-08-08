@@ -670,7 +670,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-07T23:45:39.859Z"
+  "syncedAt": "2026-08-08T00:01:05.800Z"
  },
  {
   "id": "2026-08-06",
@@ -691,7 +691,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-07T23:45:39.859Z"
+  "syncedAt": "2026-08-08T00:01:05.800Z"
  },
  {
   "id": "2026-08-07",
@@ -712,6 +712,27 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-07T23:45:39.859Z"
+  "syncedAt": "2026-08-08T00:01:05.800Z"
+ },
+ {
+  "id": "2026-08-08",
+  "date": "2026-08-08",
+  "restingHR": null,
+  "hrv": null,
+  "hrvSDNN": null,
+  "avgSleepingHR": null,
+  "sleepScore": null,
+  "sleepSecs": null,
+  "steps": null,
+  "ctl": 45.75219,
+  "atl": 61.068813,
+  "weight": null,
+  "comments": "U dedka budeme asi maľovať balkón čiže voľno tiež",
+  "mood": null,
+  "soreness": null,
+  "fatigue": null,
+  "stress": null,
+  "source": "intervals_api",
+  "syncedAt": "2026-08-08T00:01:05.800Z"
  }
 ]
