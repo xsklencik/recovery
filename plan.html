@@ -54,6 +54,14 @@
   }
   .plan-edit-row input:focus{outline:2px solid var(--accent-dim);border-color:var(--accent);}
   .plan-edit-hint{font-size:0.7rem;color:var(--text-faint);margin-top:6px;}
+  .plan-qa-q{font-size:0.78rem;color:var(--text-dim);font-style:italic;margin-bottom:6px;}
+  .plan-qa-a{font-size:0.85rem;color:var(--text);line-height:1.55;white-space:pre-line;}
+  .plan-forecast-table{width:100%;border-collapse:collapse;font-size:0.78rem;margin-top:8px;}
+  .plan-forecast-table th{text-align:left;color:var(--text-faint);font-weight:600;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.03em;padding:4px 6px;border-bottom:1.5px solid var(--line);}
+  .plan-forecast-table td{padding:7px 6px;border-bottom:1px solid var(--line);}
+  .plan-forecast-table td:first-child{font-family:var(--mono);font-weight:600;white-space:nowrap;}
+  .plan-forecast-activity{color:var(--text-dim);}
+  .plan-forecast-num{font-family:var(--mono);font-weight:700;text-align:right;}
 </style>
 </head>
 <body>
@@ -80,12 +88,28 @@
     <div class="plan-edit-hint">AI upraví len dotknuté dni, ostatné nechá bez zmeny.</div>
   </div>
 
+  <div class="plan-edit-card">
+    <label class="plan-edit-label" for="ask-question">🗨️ Opýtať sa AI</label>
+    <div class="plan-edit-row">
+      <input type="text" id="ask-question" placeholder='napr. "Koľko vody si mám vziať?" alebo "Môžem ísť do vyšších intenzít?"'>
+      <button class="btn" id="btn-ask">Opýtať sa</button>
+    </div>
+    <div class="plan-edit-hint">Len odpovie, nič v pláne nemení.</div>
+    <div id="plan-qa" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);"></div>
+  </div>
+
   <div class="plan-meta-row">
     <span id="plan-meta">Načítavam…</span>
     <button class="plan-reset" id="btn-reset-choices" style="display:none;">↺ zresetovať výber</button>
   </div>
   <div class="plan-last-edit" id="plan-last-edit" style="display:none;"></div>
   <div id="plan-days"></div>
+
+  <div class="plan-edit-card" id="plan-forecast-card" style="display:none;">
+    <label class="plan-edit-label">📅 Najbližší týždeň - súhrn</label>
+    <div id="plan-forecast-table"></div>
+    <div class="plan-edit-hint">Hrubý odhad na základe plánovanej záťaže a toho, ako si sa regeneroval doteraz - nie skutočné meranie budúcnosti.</div>
+  </div>
 </div>
 
 <nav class="bottom-nav">
@@ -169,13 +193,16 @@ function buildCurrentSelectionPayload(plan){
   const result = {};
   daysWithAlternatives(plan).forEach(d=>{
     const c = choices[d.date];
-    result[d.date] = (c && c.i < d.alternatives.length) ? c.i : 0;
+    if(c && c.i < d.alternatives.length){ result[d.date] = c.i; return; }
+    const recommendedI = d.alternatives.findIndex(a => a.recommended);
+    result[d.date] = recommendedI !== -1 ? recommendedI : 0;
   });
   return result;
 }
 
 function renderPlan(plan){
   CURRENT_PLAN = plan;
+  renderQa(plan);
   const meta = document.getElementById('plan-meta');
   const resetBtn = document.getElementById('btn-reset-choices');
   const lastEditBox = document.getElementById('plan-last-edit');
@@ -185,6 +212,7 @@ function renderPlan(plan){
     resetBtn.style.display = 'none';
     lastEditBox.style.display = 'none';
     daysBox.innerHTML = '';
+    document.getElementById('plan-forecast-card').style.display = 'none';
     return;
   }
   meta.textContent = `Vygenerované ${plan.generatedAt ? plan.generatedAt.slice(0,16).replace('T',' ') : '?'} · ${plan.location || ''}`;
@@ -226,12 +254,20 @@ function renderPlan(plan){
       }
     } else if(d.alternatives && d.alternatives.length){
       const choice = choices[d.date];
-      const i = (choice && choice.i < d.alternatives.length) ? choice.i : 0;
+      // OPRAVA 8.8.2026 (nahlásené Adamom - plán vyzeral, akoby dával "veľa oddychu" viacero dní
+      // po sebe): predtým sa tu bez výberu VŽDY zobrazila alternatíva na indexe 0, čo je odteraz
+      // vždy "rest" - takže kým užívateľ na nič neklikol, každý deň ukazoval Voľno bez ohľadu na
+      // to, čo AI reálne odporúčala. Teraz sa ako predvolená zobrazí tá, ktorú AI označila
+      // "recommended" (viď weather-plan.js) - index 0 ostáva len ako záchranný fallback pre
+      // staršie uložené plány spred tejto opravy, kde toto pole ešte neexistovalo.
+      const recommendedI = d.alternatives.findIndex(a => a.recommended);
+      const defaultI = recommendedI !== -1 ? recommendedI : 0;
+      const i = (choice && choice.i < d.alternatives.length) ? choice.i : defaultI;
       const active = d.alternatives[i];
       body = escapeHtml(active.suggestion) +
         (choice && choice.auto ? '<span class="plan-alt-auto">🔁 doladené podľa predošlého dňa</span>' : '');
       altsHtml = `<div class="plan-alts">` + d.alternatives.map((a,ai)=>`
-        <button class="plan-alt ${ai===i?'active':''}" data-date="${d.date}" data-i="${ai}">${escapeHtml(a.label)}</button>
+        <button class="plan-alt ${ai===i?'active':''}" data-date="${d.date}" data-i="${ai}">${a.recommended?'⭐ ':''}${escapeHtml(a.label)}</button>
       `).join('') + `</div>`;
     } else {
       body = '<span style="color:var(--text-faint);">Bez návrhu.</span>';
@@ -267,6 +303,8 @@ function renderPlan(plan){
       head.closest('.plan-day').classList.toggle('open');
     });
   });
+
+  renderForecastTable(plan); // async, beží na pozadí - kým sa nenačíta, zostáva zobrazený predošlý stav
 }
 
 // Hodinová mriežka pre jeden deň - hodina / šanca dažďa / teplota. Bunky v preferovanom poobednom
@@ -289,10 +327,42 @@ function renderHourlyGrid(hourly){
 
 document.getElementById('btn-reset-choices').addEventListener('click', resetChoices);
 
-// ---------- Spustenie GitHub Actions behu (spoločné pre "Vygenerovať" aj "Upraviť") ----------
-// `inputs` ide priamo do workflow_dispatch inputs (edit_instruction/current_selection, alebo
-// prázdne pre bežné vygenerovanie). `progressLabel` je text zobrazený počas čakania.
-async function dispatchAndPoll(inputs, progressLabel){
+// ---------- Otázka pre AI (bez úpravy plánu) ----------
+function renderQa(plan){
+  const box = document.getElementById('plan-qa');
+  if(!plan || !plan.qa || !plan.qa.answer){ box.style.display = 'none'; box.innerHTML = ''; return; }
+  box.style.display = '';
+  box.innerHTML = `<div class="plan-qa-q">Ty: ${escapeHtml(plan.qa.question)}</div>` +
+    `<div class="plan-qa-a">${escapeHtml(plan.qa.answer)}</div>`;
+}
+
+// ---------- Súhrnná tabuľka najbližšieho týždňa (Strain/Recovery odhad, viď app-common.js) ----------
+async function renderForecastTable(plan){
+  const card = document.getElementById('plan-forecast-card');
+  const box = document.getElementById('plan-forecast-table');
+  if(!plan || !plan.days || !plan.days.length){ card.style.display = 'none'; return; }
+  const rows = await projectPlanRecoveryStrain(plan, loadChoices());
+  if(!rows.length){ card.style.display = 'none'; return; }
+  card.style.display = '';
+  box.innerHTML = `<table class="plan-forecast-table"><thead><tr>
+      <th>Deň</th><th>Aktivita</th><th style="text-align:right;">Strain</th><th style="text-align:right;">Recovery</th>
+    </tr></thead><tbody>` +
+    rows.map(r => `<tr>
+      <td>${r.date.slice(5)}</td>
+      <td class="plan-forecast-activity">${escapeHtml(r.activityLabel)}</td>
+      <td class="plan-forecast-num">${r.predictedStrain!=null ? r.predictedStrain : '—'}</td>
+      <td class="plan-forecast-num">${r.predictedRecovery!=null ? r.predictedRecovery+'%' : '—'}</td>
+    </tr>`).join('') +
+    `</tbody></table>`;
+}
+
+// ---------- Spustenie GitHub Actions behu (spoločné pre "Vygenerovať"/"Upraviť"/"Opýtať sa") ----------
+// `inputs` ide priamo do workflow_dispatch inputs. `progressLabel` je text zobrazený počas
+// čakania. `isDoneFn(before, after)` rozhoduje, kedy je beh hotový - default sleduje zmenu
+// `generatedAt` (generovanie/úprava plánu); "Opýtať sa" posiela vlastnú verziu, lebo odpoveď na
+// otázku NEMENÍ generatedAt (plán samotný sa nedotýka), len pole "qa".
+async function dispatchAndPoll(inputs, progressLabel, isDoneFn){
+  isDoneFn = isDoneFn || ((before, after) => !!(after && after.generatedAt && (!before || after.generatedAt !== before.generatedAt)));
   const token = getToken();
   if(!token){ alert('Chýba GitHub token - nastav ho tlačidlom Token na Dashboarde.'); return false; }
   const metaEl = document.getElementById('plan-meta');
@@ -314,12 +384,11 @@ async function dispatchAndPoll(inputs, progressLabel){
       throw new Error(`GitHub API ${dispatchRes.status}: ${txt.slice(0,200)}`);
     }
     const before = await loadJson(PLAN_URL);
-    const beforeTs = before && before.generatedAt ? before.generatedAt : null;
     for(let i=0;i<30;i++){
       metaEl.textContent = `⏳ ${progressLabel}… (${(i+1)*8}s) - toto okno môžeš zavrieť, beh dobehne aj bez neho.`;
       await new Promise(r=>setTimeout(r, 8000));
       const check = await loadJson(PLAN_URL);
-      if(check && check.generatedAt && check.generatedAt !== beforeTs){
+      if(isDoneFn(before, check)){
         renderPlan(check);
         return true;
       }
@@ -360,6 +429,23 @@ document.getElementById('btn-edit').addEventListener('click', async ()=>{
   if(ok) input.value = '';
   btn.disabled = false;
   btn.textContent = 'Upraviť';
+});
+
+document.getElementById('btn-ask').addEventListener('click', async ()=>{
+  const input = document.getElementById('ask-question');
+  const question = input.value.trim();
+  if(!question){ alert('Napíš najprv otázku.'); return; }
+  const btn = document.getElementById('btn-ask');
+  btn.disabled = true;
+  btn.textContent = '⏳ Pýtam sa…';
+  const ok = await dispatchAndPoll(
+    { question },
+    'odpoveď od AI',
+    (before, after) => !!(after && after.qa && after.qa.answeredAt && (!before || !before.qa || after.qa.answeredAt !== before.qa.answeredAt))
+  );
+  if(ok) input.value = '';
+  btn.disabled = false;
+  btn.textContent = 'Opýtať sa';
 });
 
 loadJson(PLAN_URL).then(renderPlan);

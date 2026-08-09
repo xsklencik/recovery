@@ -283,23 +283,36 @@ const INTENSITY_LABELS = {
   indoor: 'Indoor',
 };
 // Normalizuje a obmedzí to, čo Gemini vrátil pre jeden deň, na max 4 použiteľné alternatívy s
-// konzistentným tvarom (id/label/intensity/suggestion) - aj keby model vynechal label alebo
-// poslal neznámu hodnotu intensity, frontend dostane vždy rozumný tvar dát. Poradie sa
+// konzistentným tvarom (id/label/intensity/suggestion/recommended) - aj keby model vynechal label
+// alebo poslal neznámu hodnotu intensity, frontend dostane vždy rozumný tvar dát. Poradie sa
 // zachováva podľa toho, čo vrátil model (generovací aj edit prompt ho žiadajú v poradí
 // rest/long/intensity/indoor), aby si výber alternatívy v prehliadači (index 0/1/2/3) držal
 // rovnaký význam aj po úprave existujúceho plánu.
+// OPRAVA 8.8.2026 (nahlásené Adamom - plán vyzeral, akoby dával "veľa oddychu" viacero dní po
+// sebe): to nebola AI, ale frontend (plan.html) - kým používateľ na nič neklikol, VŽDY zobrazoval
+// ako aktívnu alternatívu index 0, čo je teraz vždy "rest". AI reálne pre každý deň mohla mať úplne
+// iný názor, len sa to nikde neprejavilo. Odteraz AI musí pre každý deň označiť presne JEDNU
+// alternatívu ako "recommended":true (na základe posúdenia celého obdobia) - frontend potom ako
+// predvolenú zobrazí TÚTO, nie mechanicky prvú v poradí. Tu sa to defenzívne normalizuje: ak AI
+// označí viac než jednu, platí prvá; ak neoznačí žiadnu, žiadna nemá recommended=true a frontend
+// má vlastný fallback na index 0 (pozri plan.html).
 function normalizeAlternatives(alts) {
   if (!Array.isArray(alts)) return [];
+  let recommendedUsed = false;
   return alts
     .filter(a => a && a.suggestion)
     .slice(0, 4)
     .map((a, i) => {
       const intensity = KNOWN_INTENSITIES.includes(a.intensity) ? a.intensity : 'long';
+      let recommended = !!a.recommended;
+      if (recommended && recommendedUsed) recommended = false; // druhé a ďalšie "recommended" sa ignorujú
+      if (recommended) recommendedUsed = true;
       return {
         id: ['a', 'b', 'c', 'd'][i] || String(i),
         label: a.label || INTENSITY_LABELS[intensity],
         intensity,
         suggestion: String(a.suggestion),
+        recommended,
       };
     });
 }
@@ -346,7 +359,12 @@ function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate, ac
     'reálna štvrtá voliteľná možnosť pre zlé počasie, nedostatok času vonku, alebo keď sa mu von ' +
     'jednoducho nechce.\n' +
     '"rest" a "long" musia vyjsť ako skutočné opačné póly (celkom voľno vs. poriadny objem), nie ' +
-    'dve stredné cesty, ktoré vyzerajú skoro rovnako.\n\n' +
+    'dve stredné cesty, ktoré vyzerajú skoro rovnako. Navyše pri KAŽDEJ zo 4 alternatív nastav ' +
+    'pole "recommended" (boolean) - presne JEDNA zo 4 má "recommended":true (tá, ktorú by si mu ' +
+    'reálne odporučil urobiť tento konkrétny deň, ostatné "recommended":false), pozri nižšie ' +
+    '"CELÉ OBDOBIE POSUDZUJ SPOLU" - tento výber sa použije ako predvolene zobrazená alternatíva, ' +
+    'preto musí naozaj odzrkadľovať tvoje odporúčanie pre daný deň v kontexte celého obdobia, nie ' +
+    'mechanicky vždy prvú v poradí.\n\n' +
     'B) Dni označené "MÁ VLASTNÝ PLÁN": TU NEGENERUJ štyri alternatívy. Namiesto toho zober jeho ' +
     'vlastnú poznámku (čo si už sám naplánoval) a vráť JEDNU vec - kratšie a krajšie sformulovanú ' +
     'verziu jeho plánu DOPLNENÚ o konkrétne odporúčanie, ako ho ísť (orientačná dĺžka/objem, ' +
@@ -354,6 +372,17 @@ function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate, ac
     'ČO si naplánoval (napr. ak napísal "idem na túru", nenavrhuj namiesto toho bicykel) - len to ' +
     'vylepši a doplň o praktickú radu. Toto vráť v poli "notePlan" (2-4 vety) - takýto deň v ' +
     'odpovedi NEMÁ pole "alternatives".\n\n' +
+    'VÝŽIVA/PITNÝ REŽIM: pri KAŽDEJ alternatíve typu A aj notePlan (typ B), kde ide o reálne ' +
+    'dlhší alebo namáhavý tréning VONKU alebo na trenažéri (typicky "long", "intensity", dlhšie ' +
+    '"indoor" sedenie, alebo notePlan s dlhšou aktivitou) - teda NIE pri "rest" a NIE pri krátkych/ ' +
+    'ľahkých sedeniach - doplň do textu aj konkrétne odporúčanie na pitný režim a sacharidy: koľko ' +
+    'g sacharidov za hodinu (podľa dĺžky/intenzity), a ako si pripraviť nápoj. Adam má presne 3 ' +
+    'fľaše s celkovou kapacitou 2650 ml (2× 950 ml + 1× 750 ml) a robí si vlastný izotonický nápoj ' +
+    '- do každej fľaše zvyčajne 60-80 g bieleho cukru a 3-6 g soli. Odporúčanie priprav v RÁMCI ' +
+    'tohto jeho zvyčajného rozsahu (napr. "naplň obe 950 ml fľaše, do každej ~70 g cukru a 4 g ' +
+    'soli" alebo pri väčšej horúčave/dĺžke "aj tretiu 750 ml fľašu, o niečo viac soli"), NEVYMÝŠĽAJ ' +
+    'úplne inú receptúru. Pri kratších/ľahkých alternatívach (napr. "rest", krátke "indoor") toto ' +
+    'nepridávaj vôbec, nech text neopuchne zbytočnými radami tam, kde nedávajú zmysel.\n\n' +
     'Obe (alternatívy aj notePlan) prispôsob počasiu toho dňa (dážď/vietor/teplota) a celkovému ' +
     'kontextu okolitých dní a aktuálnej formy (napr. pred/po náročnom dni uprav, čo dáva zmysel ' +
     'odporučiť). Ak je pri dni uvedené "najlepšie okno" (súvislý časový úsek s najnižšou ' +
@@ -368,30 +397,29 @@ function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate, ac
     '(ani notePlan) ako keby sa deň ešte len začínal. Namiesto toho: ak už absolvovaná aktivita ' +
     'svojím objemom/záťažou zodpovedá plnohodnotnému tréningu dňa, "rest" alternatíva (alebo ' +
     'notePlan, ak má vlastnú poznámku) nech je jednoducho pochvala/potvrdenie že už má odtrénované ' +
-    'a odporúčanie oddychu do konca dňa, a ostatné alternatívy nech sú buď ĽAHKÝ DOPLNOK (nie ' +
-    'duplicitný plnohodnotný druhý tréning) alebo návrh, dokedy ešte dnes prípadne pridať niečo ' +
-    'malé, ak by chcel. Text nech explicitne spomenie, že už dnes niečo absolvoval (napr. "keďže ' +
-    'si už dnes odjazdil X min, ..."). Pre dni BEZ poznámky "UŽ ABSOLVOVANÉ" postupuj úplne ' +
-    'štandardne.\n' +
+    'a odporúčanie oddychu do konca dňa (a spravidla by mala byť aj "recommended":true), a ostatné ' +
+    'alternatívy nech sú buď ĽAHKÝ DOPLNOK (nie duplicitný plnohodnotný druhý tréning) alebo návrh, ' +
+    'dokedy ešte dnes prípadne pridať niečo malé, ak by chcel. Text nech explicitne spomenie, že ' +
+    'už dnes niečo absolvoval (napr. "keďže si už dnes odjazdil X min, ..."). Pre dni BEZ poznámky ' +
+    '"UŽ ABSOLVOVANÉ" postupuj úplne štandardne.\n' +
     'DÔLEŽITÉ - CELÉ OBDOBIE POSUDZUJ SPOLU, NIE DEŇ PO DNI IZOLOVANE: pozri sa na VŠETKY dni ' +
     'nižšie naraz (aj na "Posledných X dní" - čo už reálne predchádzalo, ak je uvedené) a dbaj, ' +
-    'aby odporúčania medzi dňami dávali zmysel ako celok. Konkrétne: NEODPORÚČAJ "rest"/voľno ako ' +
-    'jedinú reálne zmysluplnú možnosť (teda že aj ostatné varianty sú fakticky tiež len o ' +
-    'oddychu/veľmi ľahkom pohybe) na 3 a viac dní PO SEBE, pokiaľ to jasne nevyžaduje kontext ' +
-    '(napr. bezprostredne pred tým niekoľko veľmi náročných dní za sebou, choroba/extrémna únava ' +
-    'spomenutá v poznámke). Zlé počasie viac dní po sebe (horúčava, dážď) NIE JE samo o sebe ' +
-    'dôvod na viacdňové voľno - presne na to slúži samostatná "indoor" alternatíva, tú v takom ' +
-    'prípade ponúkni ako plnohodnotnú možnosť namiesto tlačenia na "rest". Ak z kontextu (nedávna ' +
+    'aby "recommended" voľby medzi dňami dávali zmysel ako celok. Konkrétne: NEODPORÚČAJ ' +
+    '(t.j. "recommended":true nedávaj na) "rest"/voľno na 3 a viac dní PO SEBE, pokiaľ to jasne ' +
+    'nevyžaduje kontext (napr. bezprostredne pred tým niekoľko veľmi náročných dní za sebou, ' +
+    'choroba/extrémna únava spomenutá v poznámke). Zlé počasie viac dní po sebe (horúčava, dážď) ' +
+    'NIE JE samo o sebe dôvod odporúčať viacdňové voľno - presne na to slúži samostatná "indoor" ' +
+    'alternatíva, tú v takom prípade odporuč namiesto tlačenia na "rest". Ak z kontextu (nedávna ' +
     'záťaž, "Posledných X dní") vyplýva, že si už oddýchol, uprednostni skôr "long"/"indoor" ' +
-    'možnosť pred ďalším "rest" dňom, aj keď vonku prší.\n' +
+    'možnosť pred ďalším odporúčaným "rest" dňom, aj keď vonku prší.\n' +
     'Odpovedz IBA validným JSON poľom (žiadny markdown, žiadne ```). Každý prvok má "date" a BUĎ ' +
     '"alternatives" (presne 4 položky v poradí rest/long/intensity/indoor, pre typ A dni) ALEBO ' +
     '"notePlan" (text, pre typ B dni) - nikdy oboje naraz. Presný tvar:\n' +
     '[{"date":"YYYY-MM-DD","alternatives":[' +
-    '{"label":"krátky názov 2-4 slová","intensity":"rest","suggestion":"1-2 vety, konkrétne"},' +
-    '{"label":"...","intensity":"long","suggestion":"..."},' +
-    '{"label":"...","intensity":"intensity","suggestion":"..."},' +
-    '{"label":"...","intensity":"indoor","suggestion":"..."}' +
+    '{"label":"krátky názov 2-4 slová","intensity":"rest","suggestion":"1-2 vety, konkrétne","recommended":false},' +
+    '{"label":"...","intensity":"long","suggestion":"...","recommended":true},' +
+    '{"label":"...","intensity":"intensity","suggestion":"...","recommended":false},' +
+    '{"label":"...","intensity":"indoor","suggestion":"...","recommended":false}' +
     ']},' +
     '{"date":"YYYY-MM-DD","notePlan":"krajšie sformulovaný plán + konkrétne odporúčanie ako ho ísť"}]'
   );
@@ -435,8 +463,9 @@ function buildEditPrompt(existingPlan, currentSelection, instruction) {
   lines.push(
     'Si osobný cyklistický/bežecký kouč. Nižšie je AKTUÁLNY tréningový plán na najbližšie dni - ' +
     'pre dni bez vlastnej poznámky vidíš všetky 4 momentálne alternatívy (rest/long/intensity/' +
-    'indoor) a ktorú z nich má užívateľ práve vybranú (VYBRANÉ). Toto NIE JE požiadavka na ' +
-    'nové generovanie od nuly - len na úpravu existujúceho plánu podľa pokynu používateľa.\n\n' +
+    'indoor), ktorá z nich je momentálne "recommended" (⭐) a ktorú z nich má užívateľ práve ' +
+    'ručne vybranú (VYBRANÉ), ak sa to líši. Toto NIE JE požiadavka na nové generovanie od nuly - ' +
+    'len na úpravu existujúceho plánu podľa pokynu používateľa.\n\n' +
     `POKYN OD POUŽÍVATEĽA: "${instruction}"\n\n` +
     'Uprav LEN tie dni, ktorých sa pokyn reálne týka (napr. "skráť dnešný tréning na 60 minút" = ' +
     'len dnešok; "presuň intervaly na zajtra" = dnešok aj zajtrajšok; "cítim sa dnes unavený, ' +
@@ -445,12 +474,16 @@ function buildEditPrompt(existingPlan, currentSelection, instruction) {
     'nezmenené. Dni s vlastným plánom (nižšie označené "MÁ VLASTNÝ PLÁN") NIKDY neuprav a ' +
     'nezaraď do výstupu - tie sú mimo dosahu AI úprav. Pre každý upravovaný deň vráť znova ' +
     'VŠETKY 4 alternatívy v rovnakom poradí podľa intenzity (rest, long, intensity, indoor) - aj ' +
-    'tie, ktoré vecne nemeníš, len ich preformuluj/zachovaj - presne v tomto JSON tvare:\n' +
+    'tie, ktoré vecne nemeníš, len ich preformuluj/zachovaj - vrátane poľa "recommended" (presne ' +
+    'jedna z 4 má true; ak pokyn mení, čo je pre daný deň najlepšie robiť, uprav aj to, inak ' +
+    'zachovaj pôvodnú "recommended" voľbu). Pri "long"/"intensity"/dlhšom "indoor" nezabudni ' +
+    'zachovať/doplniť aj odporúčanie na sacharidy a pitný režim (Adam: 3 fľaše, 2650 ml spolu, ' +
+    'vlastný izotonický nápoj 60-80 g cukru + 3-6 g soli na fľašu), presne v tomto JSON tvare:\n' +
     '[{"date":"YYYY-MM-DD","alternatives":[' +
-    '{"label":"...","intensity":"rest","suggestion":"..."},' +
-    '{"label":"...","intensity":"long","suggestion":"..."},' +
-    '{"label":"...","intensity":"intensity","suggestion":"..."},' +
-    '{"label":"...","intensity":"indoor","suggestion":"..."}' +
+    '{"label":"...","intensity":"rest","suggestion":"...","recommended":false},' +
+    '{"label":"...","intensity":"long","suggestion":"...","recommended":false},' +
+    '{"label":"...","intensity":"intensity","suggestion":"...","recommended":true},' +
+    '{"label":"...","intensity":"indoor","suggestion":"...","recommended":false}' +
     ']}]\n' +
     'Odpovedz IBA validným JSON poľom, žiadny markdown, žiadne ```.'
   );
@@ -466,15 +499,44 @@ function buildEditPrompt(existingPlan, currentSelection, instruction) {
       return;
     }
     lines.push(weatherLineFor(d.date, d.weatherDesc, d.tempMin, d.tempMax, d.precipMm, d.windMaxKmh, 'BEZ VLASTNÉHO PLÁNU', '', d.bestWindow));
-    const selIdx = (currentSelection[d.date] != null && currentSelection[d.date] < d.alternatives.length) ? currentSelection[d.date] : 0;
+    const recIdx = d.alternatives.findIndex(a => a.recommended);
+    const selIdx = (currentSelection[d.date] != null && currentSelection[d.date] < d.alternatives.length)
+      ? currentSelection[d.date] : (recIdx !== -1 ? recIdx : 0);
     d.alternatives.forEach((a, i) => {
-      lines.push(`   ${i === selIdx ? '→ VYBRANÉ' : '   '} [${a.intensity}] ${a.label}: ${a.suggestion}`);
+      const marker = (i === selIdx ? '→ VYBRANÉ ' : '') + (a.recommended ? '⭐' : '');
+      lines.push(`   ${marker || '   '} [${a.intensity}] ${a.label}: ${a.suggestion}`);
     });
   });
   return lines.join('\n');
 }
 
 // ---------- Režim 1: normálne generovanie nového plánu ----------
+// OPRAVA 31.7.2026 (nahlásené Adamom - plán 4x po sebe navrhol "voľno/oddych", keďže počasie
+// bolo viac dní po sebe zlé, a AI pri každom dni rozhodovalo izolovane bez vedomia, koľko dní
+// oddychu/tréningu už reálne predchádzalo): súhrn POSLEDNÝCH ~10 DNÍ PRED daným dňom (mimo
+// predpovedaného/plánovaného obdobia) - skutočné aktivity + Strain z hr_strain_daily.json - aby AI
+// vedelo posúdiť, či si už oddýchol/nabral únavu predtým, než navrhne ďalšie voľno. Vytiahnuté do
+// samostatnej funkcie, aby ju vedel použiť aj nový "opýtať sa AI" režim nižšie (answerQuestion),
+// nielen bežné generovanie plánu.
+function gatherRecentPastDays(anchorDate, activitiesMerged, strainByDate) {
+  const recentPastDays = [];
+  if (!anchorDate) return recentPastDays;
+  for (let i = 10; i >= 1; i--) {
+    const d = new Date(anchorDate + 'T00:00:00');
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().slice(0, 10);
+    const acts = activitiesMerged.filter(a => a.date === dateStr);
+    const strainEntry = strainByDate[dateStr];
+    if (!acts.length && !strainEntry) continue; // žiadne dáta pre tento deň - vynechaj, nerobiť šum
+    recentPastDays.push({
+      date: dateStr,
+      strain: strainEntry ? strainEntry.strain : null,
+      activitiesTxt: doneActivitiesSummary(acts),
+    });
+  }
+  return recentPastDays;
+}
+
 async function generateNewPlan() {
   console.log('Sťahujem predpoveď počasia pre Čadcu...');
   const weatherDays = await fetchWeather();
@@ -498,29 +560,9 @@ async function generateNewPlan() {
     (activitiesByDate[a.date] = activitiesByDate[a.date] || []).push(a);
   });
 
-  // OPRAVA 31.7.2026 (nahlásené Adamom - plán 4x po sebe navrhol "voľno/oddych", keďže počasie
-  // bolo viac dní po sebe zlé, a AI pri každom dni rozhodovalo izolovane bez vedomia, koľko dní
-  // oddychu/tréningu už reálne predchádzalo): priprav aj súhrn POSLEDNÝCH ~10 DNÍ PRED dnešným
-  // dňom (mimo predpovedaného okna) - skutočné aktivity + Strain z hr_strain_daily.json - aby AI
-  // vedelo posúdiť, či si už oddýchol/nabral únavu predtým, než navrhne ďalšie voľno.
   const strainByDate = loadJsonSafe(path.join(DATA_DIR, 'hr_strain_daily.json'), {});
   const todayForHistory = weatherDays.length ? weatherDays[0].date : null;
-  const recentPastDays = [];
-  if (todayForHistory) {
-    for (let i = 10; i >= 1; i--) {
-      const d = new Date(todayForHistory + 'T00:00:00');
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().slice(0, 10);
-      const acts = activitiesMerged.filter(a => a.date === dateStr);
-      const strainEntry = strainByDate[dateStr];
-      if (!acts.length && !strainEntry) continue; // žiadne dáta pre tento deň - vynechaj, nerobiť šum
-      recentPastDays.push({
-        date: dateStr,
-        strain: strainEntry ? strainEntry.strain : null,
-        activitiesTxt: doneActivitiesSummary(acts),
-      });
-    }
-  }
+  const recentPastDays = gatherRecentPastDays(todayForHistory, activitiesMerged, strainByDate);
 
   const dayNotes = loadJsonSafe(path.join(DATA_DIR, 'day_notes.json'), []);
   const globalStatus = loadJsonSafe(path.join(DATA_DIR, 'status.json'), null);
@@ -647,9 +689,87 @@ async function editExistingPlan(instruction) {
   console.log(`✅ Plán upravený podľa pokynu (zmenené dni: ${changedDates.join(', ') || 'žiadne'}) a uložený do data/weather_plan.json.`);
 }
 
+// ---------- Režim 3: len odpovedať na otázku, plán/alternatívy sa VÔBEC nemenia ----------
+// OPRAVA 8.8.2026 (žiadosť Adama): predtým jediný spôsob "spýtať sa niečo" bol cez pokyn na
+// úpravu plánu (editExistingPlan), čo pri jednoduchej otázke typu "koľko vody si mám vziať?"
+// alebo "môžem ísť do vyšších intenzít?" nedávalo zmysel - buď by to AI ignorovala, alebo by sa
+// to (nechcene) pokúsilo prepísať alternatívy. Tento režim vráti čistý textový záznam do poľa
+// "qa" v data/weather_plan.json - dni/alternatívy/notePlan zostávajú úplne nedotknuté.
+function buildAskPrompt(existingPlan, recentPastDays, question) {
+  const lines = [];
+  lines.push(
+    'Si osobný cyklistický/bežecký kouč pre Adama. Používateľ sa ťa niečo PÝTA - toto NIE JE ' +
+    'pokyn na úpravu plánu, iba na jeho existujúci plán a nedávnu formu nižšie ODPOVEDZ. ' +
+    'Nevracaj JSON, nevracaj plán, nemeň žiadny deň - len vecná, konkrétna odpoveď (2-6 viet ' +
+    'podľa zložitosti otázky) v slovenčine, prípadne s jasným zoznamom, ak sa to na otázku hodí. ' +
+    'Ak sa otázka týka pitného režimu/sacharidov, ber do úvahy: Adam má 3 fľaše s celkovou ' +
+    'kapacitou 2650 ml (2× 950 ml + 1× 750 ml) a robí si vlastný izotonický nápoj - do každej ' +
+    'fľaše zvyčajne 60-80 g bieleho cukru a 3-6 g soli; odporúčania priprav v rámci/blízko tohto ' +
+    'zvyčajného rozsahu, nevymýšľaj úplne inú receptúru.\n\n' +
+    `OTÁZKA: "${question}"\n`
+  );
+  lines.push('');
+  if (recentPastDays && recentPastDays.length) {
+    lines.push(`Posledných ${recentPastDays.length} dní (kontext o forme/únave):`);
+    recentPastDays.forEach(p => {
+      const strainTxt = p.strain != null ? `Strain ${p.strain}` : 'Strain —';
+      const actTxt = p.activitiesTxt ? `, aktivity: ${p.activitiesTxt}` : ', bez zaznamenanej aktivity';
+      lines.push(`- ${p.date}: ${strainTxt}${actTxt}`);
+    });
+    lines.push('');
+  }
+  if (existingPlan && Array.isArray(existingPlan.days) && existingPlan.days.length) {
+    lines.push('Aktuálny naplánovaný plán (pre kontext, NEMEŇ ho):');
+    existingPlan.days.forEach(d => {
+      if (d.ownNote) {
+        lines.push(`- ${d.date}: ${d.weatherDesc}, ${Math.round(d.tempMin)}-${Math.round(d.tempMax)}°C [vlastný plán: "${d.notePlan || d.ownNote}"]`);
+        return;
+      }
+      if (!d.alternatives || !d.alternatives.length) return;
+      const active = d.alternatives.find(a => a.recommended) || d.alternatives[0];
+      lines.push(`- ${d.date}: ${d.weatherDesc}, ${Math.round(d.tempMin)}-${Math.round(d.tempMax)}°C [odporúčané: ${active.label} (${active.intensity})]`);
+    });
+  }
+  return lines.join('\n');
+}
+
+async function answerQuestion(question) {
+  const existing = loadJsonSafe(PLAN_FILE, null);
+
+  const activitiesMerged = mergeById(
+    loadJsonSafe(path.join(DATA_DIR, 'activities_history.json'), []),
+    loadJsonSafe(path.join(DATA_DIR, 'activities_daily.json'), []), 'id'
+  );
+  const strainByDate = loadJsonSafe(path.join(DATA_DIR, 'hr_strain_daily.json'), {});
+  const anchorDate = (existing && existing.days && existing.days.length)
+    ? existing.days[0].date : new Date().toISOString().slice(0, 10);
+  const recentPastDays = gatherRecentPastDays(anchorDate, activitiesMerged, strainByDate);
+
+  const prompt = buildAskPrompt(existing, recentPastDays, question);
+  console.log(`Odpovedám na otázku: "${question}" (Gemini)...`);
+  const result = await callGemini(prompt, { json: false, maxOutputTokens: 700 });
+  const answer = result ? result.text : null;
+  const usedModel = result ? result.model : (process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL);
+
+  if (!answer) {
+    console.warn('⚠️ Gemini nevrátila odpoveď (chyba API alebo prázdna odpoveď) - "qa" pole sa neuloží.');
+    return;
+  }
+
+  // Ak zatiaľ neexistuje žiadny plán, ulož odpoveď aspoň do prázdnej kostry súboru - "qa" musí
+  // fungovať nezávisle od toho, či už bol niekedy vygenerovaný plán.
+  const output = existing || { generatedAt: null, model: null, location: 'Čadca, Slovensko', days: [] };
+  output.qa = { question, answer, answeredAt: new Date().toISOString(), model: usedModel };
+  fs.writeFileSync(PLAN_FILE, JSON.stringify(output, null, 1));
+  console.log('✅ Odpoveď uložená do data/weather_plan.json (pole "qa") - dni/alternatívy nedotknuté.');
+}
+
 async function main() {
+  const question = (process.env.PLAN_QUESTION || '').trim();
   const editInstruction = (process.env.PLAN_EDIT_INSTRUCTION || '').trim();
-  if (editInstruction) {
+  if (question) {
+    await answerQuestion(question);
+  } else if (editInstruction) {
     await editExistingPlan(editInstruction);
   } else {
     await generateNewPlan();

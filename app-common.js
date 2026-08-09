@@ -984,6 +984,95 @@ function computeResults(recs, activities, hrStrainByDate){
   return {results: resultsWithStrain, strainByDate, latestBaseline, stepsBaselineByDate};
 }
 
+// ---------- Projekcia Strain/Recovery pre naplánované dni (použité na plan.html) ----------
+// FEATURE 8.8.2026 (žiadosť Adama): "hrubý odhad" Strain/Recovery pre najbližší týždeň
+// naplánovaných dní, postavený na TOM ISTOM fatigue/CTL/ATL modeli ako skutočný Recovery vyššie
+// (fatigueScoreForDate/fatigueRatioToScore/rawToStrain) - len s ODHADOVANÝM, nie reálnym Load pre
+// každý plánovaný deň (PLAN_ESTIMATED_RAW_LOAD nižšie).
+// DÔLEŽITÉ OBMEDZENIE, ktoré treba chápať pri čítaní výsledku: budúce HRV/pokojová TF/spánok sa
+// NEDAJÚ predpovedať - tie tvoria 60 % skutočného Recovery vzorca. Tu preto namiesto nich berieme
+// PRIEMER reálneho Recovery za posledných PHYSIOLOGY_BASELINE_DAYS dní ako "keby sa fyziológia
+// nezmenila" predpoklad, a jediná časť, ktorá sa deň čo deň v projekcii reálne mení, je 40 %-ná
+// tréningová záťaž - presne tá časť, ktorú si výberom alternatívy sám ovplyvňuješ. Výsledok je
+// preto skôr "trend podľa plánovanej záťaže" než plnohodnotná predpoveď, presne v duchu "hrubého
+// odhadu", ako bolo pýtané.
+const PLAN_ESTIMATED_RAW_LOAD = {
+  rest: 0,          // skutočné voľno
+  indoor: 75,        // ~45-60 min. štruktúrované indoor sedenie
+  intensity: 140,    // ~60-90 min. intervaly/tempo
+  long: 180,         // ~2.5-4h vytrvalostná/dlhá jazda alebo beh
+  note: 110,         // deň s vlastnou poznámkou (napr. túra) - orientačný stredný odhad, keďže typ nie je štruktúrovaný ako alternatívy
+  unknown: 60,
+};
+// Tieto konštanty sú vedomý odhad, nie odvodené z tvojich reálnych dát - ak po pár týždňoch
+// uvidíš, že projekcia systematicky nadhodnocuje/podhodnocuje oproti tomu, čo potom reálne
+// nasynchronizuje sync.js, pokojne im tu priprav iné hodnoty.
+const PHYSIOLOGY_BASELINE_DAYS = 7;
+
+async function projectPlanRecoveryStrain(plan, choices) {
+  if (!plan || !Array.isArray(plan.days) || !plan.days.length) return [];
+  choices = choices || {};
+
+  const [wellHistory, wellDaily, actHistory, actDaily, hrStrainMap] = await Promise.all([
+    loadJson(HISTORY_URL), loadJson(DAILY_URL), loadJson(ACT_HISTORY_URL), loadJson(ACT_DAILY_URL), loadHrStrainMap(),
+  ]);
+  const recs = mergeById(wellHistory || [], wellDaily || []).sort((a, b) => (a.date < b.date ? -1 : 1));
+  const activities = mergeById(actHistory || [], actDaily || []);
+  if (!recs.length) return [];
+
+  const { results } = computeResults(recs, activities, hrStrainMap);
+  const last = results[results.length - 1];
+  if (!last || last.ctl == null || last.atl == null) return []; // bez CTL/ATL (napr. čerstvý účet) sa projekcia nedá spraviť
+
+  const recentRecoveries = results.slice(-PHYSIOLOGY_BASELINE_DAYS).map(r => r.recovery).filter(v => v != null);
+  const physiologyBaseline = recentRecoveries.length
+    ? recentRecoveries.reduce((s, v) => s + v, 0) / recentRecoveries.length
+    : 60; // neutrálny fallback, ak história úplne chýba
+
+  // Skutočný Load posledných dní (pre fatigueScoreForDate lookback) - sem priebežne dopĺňame aj
+  // odhady pre plánované dni, aby deň+2 videl v "histórii" aj odhadovaný Load dňa+1.
+  const loadByDate = {};
+  activities.forEach(a => { if (a && a.date) loadByDate[a.date] = (loadByDate[a.date] || 0) + (a.icu_training_load || 0); });
+
+  let ctl = last.ctl, atl = last.atl;
+  const rows = [];
+  plan.days.slice(0, 7).forEach(d => {
+    let category, activityLabel;
+    if (d.ownNote) {
+      category = 'note';
+      activityLabel = '📝 ' + (d.notePlan || d.ownNote);
+    } else if (d.alternatives && d.alternatives.length) {
+      const choice = choices[d.date];
+      const recIdx = d.alternatives.findIndex(a => a.recommended);
+      const i = (choice && choice.i < d.alternatives.length) ? choice.i : (recIdx !== -1 ? recIdx : 0);
+      const active = d.alternatives[i];
+      category = active.intensity;
+      activityLabel = active.label;
+    } else {
+      category = 'unknown';
+      activityLabel = 'Bez návrhu';
+    }
+    const estLoad = PLAN_ESTIMATED_RAW_LOAD[category] != null ? PLAN_ESTIMATED_RAW_LOAD[category] : PLAN_ESTIMATED_RAW_LOAD.unknown;
+
+    const fatigueScore = fatigueScoreForDate(d.date, loadByDate);
+    const capacity = Math.pow(Math.max(ctl, FATIGUE_CTL_FLOOR), FATIGUE_LOAD_EXPONENT) * FATIGUE_WEIGHT_SUM;
+    const fatigueRatio = capacity ? fatigueScore / capacity : null;
+    const fatigueComponentScore = fatigueRatio != null ? fatigueRatioToScore(fatigueRatio) : null;
+    const predictedRecovery = fatigueComponentScore != null
+      ? Math.round(clamp(0.6 * physiologyBaseline + 0.4 * fatigueComponentScore, 0, 100)) : null;
+    const predictedStrain = Math.round(rawToStrain(estLoad) * 10) / 10;
+
+    rows.push({ date: d.date, category, activityLabel, predictedStrain, predictedRecovery });
+
+    // Zaregistruj odhad AŽ TERAZ (po výpočte dnešného skóre) a posuň CTL/ATL na ďalší deň -
+    // rovnaký Banister EWMA vzorec (42/7-dňová časová konštanta) ako interne používa Intervals.icu.
+    loadByDate[d.date] = estLoad;
+    ctl = ctl + (estLoad - ctl) / 42;
+    atl = atl + (estLoad - atl) / 7;
+  });
+  return rows;
+}
+
 // ---------- Unified chart renderer: auto-scaled line chart s crosshair/tooltip + voliteľné farebné pásma ----------
 // series: [{field, color, label, width?, dash?, hideDots?}]
 // opts: {fixedMin,fixedMax,gridValues,minAtZero,hideDots,dotColorFn,yFormat,tooltipFormat,bands:[{min,max,color}],height}
