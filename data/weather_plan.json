@@ -999,5 +999,11 @@
     }
    ]
   }
- ]
+ ],
+ "qa": {
+  "question": "preco posledne 3 dni mam oddych stale iba",
+  "answer": "Adam, pozri sa na svoje dáta z predchádzajúcich dní – 3. augusta si mal brutálnu 7-hodinovú cyklistickú túru (Load 272) a 6. augusta takmer 5 hodín lezenia (Load 112). Tvoje telo dostalo v posledných dňoch obrovský nátsiik a kumulatívna únava je veľmi vysoká. Tieto dni voľna (oddychu) nie sú náhoda, ale nevyhnutný reštart, aby sa tvoje svaly a nervová sústava stihli zregenerovať pred ďalšími záťažami.",
+  "answeredAt": "2026-08-09T19:47:07.106Z",
+  "model": "gemini-3.5-flash-lite"
+ }
 }
