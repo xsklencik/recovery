@@ -691,7 +691,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-09T07:00:54.690Z"
+  "syncedAt": "2026-08-09T07:15:38.199Z"
  },
  {
   "id": "2026-08-07",
@@ -712,7 +712,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-09T07:00:54.690Z"
+  "syncedAt": "2026-08-09T07:15:38.199Z"
  },
  {
   "id": "2026-08-08",
@@ -723,7 +723,7 @@
   "avgSleepingHR": 58,
   "sleepScore": 89,
   "sleepSecs": 30660,
-  "steps": 11005,
+  "steps": 11246,
   "ctl": 46.952133,
   "atl": 67.85804,
   "weight": null,
@@ -733,27 +733,27 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-09T07:00:54.690Z"
+  "syncedAt": "2026-08-09T07:15:38.199Z"
  },
  {
   "id": "2026-08-09",
   "date": "2026-08-09",
-  "restingHR": null,
+  "restingHR": 60,
   "hrv": null,
-  "hrvSDNN": null,
-  "avgSleepingHR": null,
-  "sleepScore": null,
-  "sleepSecs": null,
-  "steps": null,
+  "hrvSDNN": 57,
+  "avgSleepingHR": 61,
+  "sleepScore": 86,
+  "sleepSecs": 28380,
+  "steps": 3988,
   "ctl": 45.847427,
   "atl": 58.824635,
   "weight": null,
-  "comments": null,
+  "comments": "rozmýšľam že takú easy jazdu na Vychylovku s chalanmi dáme",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-09T07:00:54.690Z"
+  "syncedAt": "2026-08-09T07:15:38.199Z"
  }
 ]
