@@ -11,6 +11,10 @@ on:
         description: 'Interné - JSON mapa dátum->index aktuálne vybranej alternatívy z prehliadača (posiela plan.html automaticky, nevypĺňaj ručne).'
         required: false
         default: ''
+      question:
+        description: 'Otázka pre AI kouča (napr. "koľko vody si mám vziať?") - odpovie bez toho, aby menila plán. Nechaj prázdne pre generovanie/úpravu.'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -28,6 +32,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           PLAN_EDIT_INSTRUCTION: ${{ github.event.inputs.edit_instruction }}
           PLAN_CURRENT_SELECTION: ${{ github.event.inputs.current_selection }}
+          PLAN_QUESTION: ${{ github.event.inputs.question }}
         run: node weather-plan.js
       - name: Commit a push výsledok
         run: |
