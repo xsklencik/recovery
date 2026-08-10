@@ -1015,5 +1015,11 @@
    "status": "break",
    "alternatives": []
   }
- ]
+ ],
+ "qa": {
+  "question": "🏆 AKTUÁLNY SÚČET1 434 kcal78,5 g144,8 g58,4 gBST . do flase 70 a 70g a mam este 2 banany a kysle zizalky 80g. napis mi plan kedy co zjest ak idem Hluchanka Signpost loop from Podvysoká 03:26  68.6 km  20.0 km/h  620 m",
+  "answer": "Na túto 3,5-hodinovú vytrvalostnú jazdu (cca 68 km) máš pripravených celkovo **140 g cukru vo fľašiach** (2× 70 g) a solídnu tuhú/gumovú zálohu. Rozlož si to takto:\n\n*   **Pred jazdou (30 min):** Zjedz 1 banán pre rýchly štart a ľahké piškóty/snack, ak cítiš hlad.\n*   **1. hodina:** Pite len z prvej fľaše (70 g cukru + soľ), cca polovicu objemu. \n*   **2. hodina:** Dopi prvú fľašu a prejdi na druhú (ďalších 70 g cukru). V polovici tejto hodiny zjedz druhý banán.\n*   **3. hodina a dojazd:** Pokračuj v popíjaní druhej fľaše. Kyslé žížalky (80 g) si šetri do záverečnej tretiny, kedy ti cukor v tejto forme dodá rýchly energetický kopanec na prekonanie únavy.",
+  "answeredAt": "2026-08-10T10:54:51.302Z",
+  "model": "gemini-3.5-flash-lite"
+ }
 }
