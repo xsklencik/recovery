@@ -1015,5 +1015,11 @@
     }
    ]
   }
- ]
+ ],
+ "qa": {
+  "question": "O 8:45 som zjedol Za dnešné raňajky si prijal 557 kcal, z čoho bolo 30,1 g bielkovín, 49,1 g sacharidov a 26,2 g tukov. Je 11:17. Mám sa najesť? Špagety? Koľko? Či? Chcem ísť aby som do 17 bol doma",
+  "answer": "Áno, určite sa choď pred odchodom najesť, pretože z raňajok máš už len málo energie a do 17:00 ťa čaká ešte dosť času. Špagety sú na tento účel výborná voľba, pretože dodajú kvalitné a ľahko stráviteľné sacharidy. Daj si strednú porciu (napr. 100–120 g v surovom stave) s ľahkou omáčkou, ideálne aspoň 1,5 až 2 hodiny pred plánovaným výjazdom, aby ti neťažilo v žalúdku. Nezabudni doplniť aj tekutiny, nech vyrážaš stopercentne pripravený.",
+  "answeredAt": "2026-08-10T09:17:49.794Z",
+  "model": "gemini-3.5-flash-lite"
+ }
 }
