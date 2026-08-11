@@ -727,13 +727,13 @@
   "ctl": 46.952133,
   "atl": 67.85804,
   "weight": null,
-  "comments": "U dedka budeme asi maľovať balkón možno. Možno nie čiže niečo by som mohol dať. Beh nie ešte.",
+  "comments": "U dedka budeme asi maľova�� balkón možno. Možno nie čiže niečo by som mohol dať. Beh nie ešte.",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-11T00:01:02.256Z"
+  "syncedAt": "2026-08-11T00:15:42.702Z"
  },
  {
   "id": "2026-08-09",
@@ -754,7 +754,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-11T00:01:02.256Z"
+  "syncedAt": "2026-08-11T00:15:42.702Z"
  },
  {
   "id": "2026-08-10",
@@ -775,7 +775,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-11T00:01:02.256Z"
+  "syncedAt": "2026-08-11T00:15:42.702Z"
  },
  {
   "id": "2026-08-11",
@@ -796,6 +796,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-11T00:01:02.256Z"
+  "syncedAt": "2026-08-11T00:15:42.702Z"
  }
 ]
