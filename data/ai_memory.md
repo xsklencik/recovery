@@ -39,3 +39,6 @@ Dnes si fyziologicky plne zregenerovaný a pripravený na záťaž. Tvoje ranné
 
 ## 2026-08-09
 Dnes si fyziologicky dobre zregenerovaný s HRV na úrovni 57 ms a kvalitným 7,9-hodinovým spánkom so skóre 86. Mierne zvýšená pokojová tepová frekvencia 60 bpm signalizuje jemnú reakciu organizmu na včerajšiu 75-minútovú jazdu a fyzickú aktivitu. Tvoje biometrické ukazovatele sú celkovo stabilné a drží sa na tvojom dlhodobom priemere. Telo je pripravené na plánovanú ľahšiu záťaž bez výrazného chronického vyčerpania.
+
+## 2026-08-11
+Dnes vykazuješ zvýšenú únavu po včerajšej 200-minútovej jazde s tréningovou záťažou 193. Tvoje ranné HRV kleslo na 53 ms, čo je o 3,5 ms pod tvojím dlhodobým priemerom, a pokojová tepová frekvencia stúpla na 60 bpm. Spánková tepová frekvencia 61 bpm a kratší 7,0-hodinový spánok so skóre 80 potvrdzujú, že autonómny nervový systém aktuálne spracováva akumulovaný objem. V histórii sa u teba po dňoch so záťažou nad 150 pravidelne objavuje dočasný pokles HRV a zvýšenie tepu.
