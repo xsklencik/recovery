@@ -748,13 +748,13 @@
   "ctl": 45.847427,
   "atl": 58.824635,
   "weight": null,
-  "comments": "S chalanmi nedám nič nemajú čas, je 16:00 a nemám chuť na nič tak neviem čo.",
+  "comments": "S chalanmi ned��m nič nemajú čas, je 16:00 a nemám chuť na nič tak neviem čo.",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-12T09:45:39.437Z"
+  "syncedAt": "2026-08-12T10:01:00.529Z"
  },
  {
   "id": "2026-08-10",
@@ -775,7 +775,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-12T09:45:39.437Z"
+  "syncedAt": "2026-08-12T10:01:00.529Z"
  },
  {
   "id": "2026-08-11",
@@ -796,7 +796,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-12T09:45:39.437Z"
+  "syncedAt": "2026-08-12T10:01:00.529Z"
  },
  {
   "id": "2026-08-12",
@@ -817,6 +817,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-12T09:45:39.437Z"
+  "syncedAt": "2026-08-12T10:01:00.529Z"
  }
 ]
