@@ -761,5 +761,26 @@
   "hr_z3_secs": 0,
   "hr_z4_secs": 0,
   "hr_z5_secs": 0
+ },
+ {
+  "id": "i175244916",
+  "date": "2026-08-12",
+  "start_date_local": "2026-08-12T19:26:31",
+  "name": "Evening Walk",
+  "type": "Walk",
+  "comments": null,
+  "moving_time": 1780,
+  "average_heartrate": 89,
+  "max_heartrate": 110,
+  "icu_training_load": 4,
+  "icu_ctl": 48.925747,
+  "icu_atl": 67.277176,
+  "icu_intensity": 28.48276,
+  "icu_rpe": null,
+  "hr_z1_secs": 1781,
+  "hr_z2_secs": 0,
+  "hr_z3_secs": 0,
+  "hr_z4_secs": 0,
+  "hr_z5_secs": 0
  }
 ]
