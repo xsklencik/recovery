@@ -754,7 +754,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-11T18:54:00.661Z"
+  "syncedAt": "2026-08-12T05:03:29.154Z"
  },
  {
   "id": "2026-08-10",
@@ -775,7 +775,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-11T18:54:00.661Z"
+  "syncedAt": "2026-08-12T05:03:29.154Z"
  },
  {
   "id": "2026-08-11",
@@ -796,6 +796,27 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-11T18:54:00.661Z"
+  "syncedAt": "2026-08-12T05:03:29.154Z"
+ },
+ {
+  "id": "2026-08-12",
+  "date": "2026-08-12",
+  "restingHR": null,
+  "hrv": null,
+  "hrvSDNN": 50,
+  "avgSleepingHR": 61,
+  "sleepScore": 87,
+  "sleepSecs": 28080,
+  "steps": null,
+  "ctl": 48.831635,
+  "atl": 66.74469,
+  "weight": null,
+  "comments": "Zákopčie chata budeme hrať badminton a budeme tam spať",
+  "mood": null,
+  "soreness": null,
+  "fatigue": null,
+  "stress": null,
+  "source": "intervals_api",
+  "syncedAt": "2026-08-12T05:03:29.154Z"
  }
 ]
