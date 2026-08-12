@@ -42,3 +42,6 @@ Dnes si fyziologicky dobre zregenerovaný s HRV na úrovni 57 ms a kvalitným 7,
 
 ## 2026-08-11
 Dnes tvoje biometrické ukazovatele signalizujú zvýšenú únavu po včerajšej 200-minútovej jazde s tréningovou záťažou 193. Ranné HRV kleslo na 53 ms, čo je o 3,5 ms pod tvojím dlhodobým priemerom, a pokojová tepová frekvencia stúpla na 60 bpm. Kratší 7,0-hodinový spánok so skóre 80 a zvýšená spánková TF 61 bpm potvrdzujú, že autonómny nervový systém stále spracováva predchádzajúce zaťaženie. V histórii sa u teba po dňoch so záťažou nad 150 regularly opakuje mierny pokles HRV a zvýšenie tepu v nasledujúce ráno. Telo je dnes v stave zníženej regenerácie, preto je vhodné vyhnúť sa akejkoľvek vysokej intenzite.
+
+## 2026-08-12
+Tvoje ranné HRV kleslo na 50 ms, čo je o 6,4 ms pod tvojím dlhodobým priemerom, a pokojová tepová frekvencia stúpla na 60 bpm. Napriek kvalitnému spánku v dĺžke 7,8 hodiny so skóre 87 vykazuje tvoj autonómny nervový systém zvýšenú únavu. Dôvodom je akumulovaná záťaž z včerajšej 313-minútovej túry v Tatrách spojená s viac ako 24-tisíc krokmi a pondelkovou dlhou jazdou. V tvojich dátach sa opakovane potvrdzuje vzor, kedy po dvoch objemovo náročných dňoch po sebe dochádza k poklesu HRV a zvýšeniu tepu.
