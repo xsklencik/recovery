@@ -769,13 +769,13 @@
   "ctl": 49.30968,
   "atl": 76.68634,
   "weight": null,
-  "comments": "Kľudne nejakú dlhú jazdu si môžem dať asi mám čas, aj tak zajtra to chcem tak iba zóna 1 túru",
+  "comments": "Kľudne nejakú dlh�� jazdu si môžem dať asi mám čas, aj tak zajtra to chcem tak iba zóna 1 túru",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-13T17:01:02.104Z"
+  "syncedAt": "2026-08-13T17:15:38.326Z"
  },
  {
   "id": "2026-08-11",
@@ -796,7 +796,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-13T17:01:02.104Z"
+  "syncedAt": "2026-08-13T17:15:38.326Z"
  },
  {
   "id": "2026-08-12",
@@ -817,7 +817,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-13T17:01:02.104Z"
+  "syncedAt": "2026-08-13T17:15:38.326Z"
  },
  {
   "id": "2026-08-13",
@@ -828,9 +828,9 @@
   "avgSleepingHR": 60,
   "sleepScore": 87,
   "sleepSecs": 27960,
-  "steps": 1233,
-  "ctl": 47.774605,
-  "atl": 58.3211,
+  "steps": 10254,
+  "ctl": 48.15106,
+  "atl": 60.45105,
   "weight": null,
   "comments": null,
   "mood": null,
@@ -838,6 +838,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-13T17:01:02.104Z"
+  "syncedAt": "2026-08-13T17:15:38.326Z"
  }
 ]
