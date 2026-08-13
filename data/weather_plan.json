@@ -1,14 +1,14 @@
 {
- "generatedAt": "2026-08-12T07:05:07.961Z",
+ "generatedAt": "2026-08-13T19:03:30.744Z",
  "model": "gemini-3.6-flash",
  "location": "Čadca, Slovensko",
  "days": [
   {
-   "date": "2026-08-12",
-   "weatherDesc": "jasno",
-   "weatherEmoji": "☀️",
-   "tempMax": 22.5,
-   "tempMin": 11,
+   "date": "2026-08-13",
+   "weatherDesc": "prevažne jasno",
+   "weatherEmoji": "🌤️",
+   "tempMax": 24.3,
+   "tempMin": 10.6,
    "precipMm": 0,
    "windMaxKmh": 10.4,
    "bestWindow": {
@@ -21,108 +21,137 @@
     {
      "hour": 5,
      "rainProb": 0,
-     "temp": 11.1
+     "temp": 10.8
     },
     {
      "hour": 6,
      "rainProb": 0,
-     "temp": 11
+     "temp": 10.6
     },
     {
      "hour": 7,
      "rainProb": 0,
-     "temp": 12.6
+     "temp": 12
     },
     {
      "hour": 8,
      "rainProb": 0,
-     "temp": 14.9
+     "temp": 15.1
     },
     {
      "hour": 9,
      "rainProb": 0,
-     "temp": 16.6
+     "temp": 18.2
     },
     {
      "hour": 10,
      "rainProb": 0,
-     "temp": 17.7
+     "temp": 19.8
     },
     {
      "hour": 11,
      "rainProb": 0,
-     "temp": 19
+     "temp": 21.3
     },
     {
      "hour": 12,
      "rainProb": 0,
-     "temp": 20.3
+     "temp": 22.7
     },
     {
      "hour": 13,
      "rainProb": 0,
-     "temp": 21.3
+     "temp": 23.7
     },
     {
      "hour": 14,
      "rainProb": 0,
-     "temp": 22
+     "temp": 24.2
     },
     {
      "hour": 15,
      "rainProb": 0,
-     "temp": 22.4
+     "temp": 24.3
     },
     {
      "hour": 16,
      "rainProb": 0,
-     "temp": 22.5
+     "temp": 24
     },
     {
      "hour": 17,
      "rainProb": 0,
-     "temp": 22.2
+     "temp": 23.4
     },
     {
      "hour": 18,
      "rainProb": 0,
-     "temp": 21.4
+     "temp": 22.6
     },
     {
      "hour": 19,
      "rainProb": 0,
-     "temp": 20.3
+     "temp": 21.3
     },
     {
      "hour": 20,
      "rainProb": 0,
-     "temp": 18.7
+     "temp": 19.3
     },
     {
      "hour": 21,
      "rainProb": 0,
-     "temp": 16.9
+     "temp": 17.5
     },
     {
      "hour": 22,
      "rainProb": 0,
-     "temp": 15.5
+     "temp": 16.2
     }
    ],
-   "alreadyDone": null,
-   "ownNote": "Zákopčie chata budeme hrať badminton a budeme tam spať ",
-   "notePlan": "Uži si pobyt na chate v Zákopčí spojený s badmintonom a prespaním. Aktivitu ber ako príjemný aktívny oddych, dávaj si pozor na neopatrné doskoky a snaž sa nadmerne nezaťažovať členky či kolená pred ďalšími tréningovými dňami.",
+   "alreadyDone": "57min Walk, Load 16, Ø111bpm",
+   "ownNote": null,
+   "notePlan": null,
    "status": null,
-   "alternatives": []
+   "alternatives": [
+    {
+     "id": "a",
+     "label": "Úplný večerný relax",
+     "intensity": "rest",
+     "suggestion": "Keďže si už dnes absolvoval 57 min chôdze, na dnešok máš splnené a ideálne je len oddychovať. Uži si pokojný večer a pošetri sily na zajtrajšok.",
+     "recommended": true
+    },
+    {
+     "id": "b",
+     "label": "Ľahké večerné vyjazdenie",
+     "intensity": "long",
+     "suggestion": "Ak by si chcel ešte vybehnúť von, daj si len voľných 60 minút na bicykli v Z1/Z2 okolo 17:00-19:00 na vyklepanie nôh. Doplň do fľaše čistú vodu bez špeciálnej výživy.",
+     "recommended": false
+    },
+    {
+     "id": "c",
+     "label": "Krátke doplňujúce rovinky",
+     "intensity": "intensity",
+     "suggestion": "Ak máš energiu naviac, daj si 30 minút s 4-5 krátkymi rovinkami na rozbúchanie srdca, ale nepreháňaj to. Keďže ide o krátky doplnok, vystačíš si s čistou vodou.",
+     "recommended": false
+    },
+    {
+     "id": "d",
+     "label": "Strečing a rolovanie",
+     "intensity": "indoor",
+     "suggestion": "Namiesto ďalšieho kardia venuj 20-30 minút indoor mobilite, rolovaniu valcom a strečingu nôh po chôdzi.",
+     "recommended": false
+    }
+   ]
   },
   {
-   "date": "2026-08-13",
-   "weatherDesc": "polooblačno",
-   "weatherEmoji": "⛅",
-   "tempMax": 23.9,
+   "date": "2026-08-14",
+   "weatherDesc": "jasno",
+   "weatherEmoji": "☀️",
+   "tempMax": 27.9,
    "tempMin": 11.5,
    "precipMm": 0,
-   "windMaxKmh": 11.2,
+   "windMaxKmh": 9.4,
    "bestWindow": {
     "start": "12:00",
     "end": "16:00",
@@ -133,7 +162,7 @@
     {
      "hour": 5,
      "rainProb": 0,
-     "temp": 11.8
+     "temp": 11.6
     },
     {
      "hour": 6,
@@ -148,77 +177,77 @@
     {
      "hour": 8,
      "rainProb": 0,
-     "temp": 15.8
+     "temp": 16.1
     },
     {
      "hour": 9,
      "rainProb": 0,
-     "temp": 18.3
+     "temp": 19.1
     },
     {
      "hour": 10,
      "rainProb": 0,
-     "temp": 20
+     "temp": 21.8
     },
     {
      "hour": 11,
      "rainProb": 0,
-     "temp": 21.4
+     "temp": 23.9
     },
     {
      "hour": 12,
      "rainProb": 0,
-     "temp": 22.4
+     "temp": 25.3
     },
     {
      "hour": 13,
      "rainProb": 0,
-     "temp": 23.1
+     "temp": 26.4
     },
     {
      "hour": 14,
      "rainProb": 0,
-     "temp": 23.2
+     "temp": 27.1
     },
     {
      "hour": 15,
      "rainProb": 0,
-     "temp": 23.8
+     "temp": 27.7
     },
     {
      "hour": 16,
      "rainProb": 0,
-     "temp": 23.9
+     "temp": 27.9
     },
     {
      "hour": 17,
      "rainProb": 0,
-     "temp": 23.5
+     "temp": 27.5
     },
     {
      "hour": 18,
      "rainProb": 0,
-     "temp": 22.7
+     "temp": 26.6
     },
     {
      "hour": 19,
      "rainProb": 0,
-     "temp": 21.5
+     "temp": 24.7
     },
     {
      "hour": 20,
      "rainProb": 0,
-     "temp": 19.6
+     "temp": 22.4
     },
     {
      "hour": 21,
      "rainProb": 0,
-     "temp": 17.8
+     "temp": 20.7
     },
     {
      "hour": 22,
      "rainProb": 0,
-     "temp": 16.4
+     "temp": 19.1
     }
    ],
    "alreadyDone": null,
@@ -230,169 +259,28 @@
      "id": "a",
      "label": "Úplný regeneračný deň",
      "intensity": "rest",
-     "suggestion": "Po chate a turistike z predchádzajúcich dní si dopraj plnohodnotný relax bez cyklistiky či behu, doplnený len o ľahký strečing.",
+     "suggestion": "Dnes si dopraj úplné voľno bez akéhokoľvek tréningu, ideálne len ľahký večerný strečing.",
      "recommended": false
     },
     {
      "id": "b",
-     "label": "Stredne dlhá vytrvalostná jazda",
+     "label": "Vytrvalostná letná jazda",
      "intensity": "long",
-     "suggestion": "Využi ideálne počasie v čase 12:00-16:00 na 2,5 až 3-hodinovú jazdu v Zóne 2. Do dvoch 950 ml fliaš si priprav izotonický nápoj (do každej ~70 g cukru a 4 g soli) a pripíjaj každých 15 minút (cieľ 60 g sacharidov/hod).",
+     "suggestion": "Perfektné počasie na dlhú jazdu. Vyraz v okne 12:00-16:00 na 3 až 3.5 hodiny v Z2 tempe. Priprav si 2× 950 ml fľaše s 70 g cukru a 4 g soli v každej, mieri na cca 60 g sacharidov za hodinu.",
      "recommended": true
     },
     {
      "id": "c",
-     "label": "Kratšie tempo tréning",
+     "label": "Kopcovité tempo",
      "intensity": "intensity",
-     "suggestion": "Vyraz okolo 14:00 na 75 minút, vrátane 3×8 minút v tempe (Zóna 3) s 4 minútami pauzy. Do 750 ml fľaše si daj 60 g cukru a 3 g soli pre rýchlejšiu obnovu glykogénu.",
+     "suggestion": "Tréning zamierený na tempo v kopcoch: 90 minút vrátane 3×10 min v Z3/Z4. Zober si 1× 950 ml fľašu s 70 g cukru a 4 g soli.",
      "recommended": false
     },
     {
      "id": "d",
-     "label": "Silovo-kondičný trenažér",
+     "label": "Indoor trenažér Z2",
      "intensity": "indoor",
-     "suggestion": "45 minút na trenažéri so zaradením nízkej kadencie pre rozvoj sily, prípadne krátka posilňovňa s vlastnou váhou.",
-     "recommended": false
-    }
-   ]
-  },
-  {
-   "date": "2026-08-14",
-   "weatherDesc": "jasno",
-   "weatherEmoji": "☀️",
-   "tempMax": 26.5,
-   "tempMin": 11.6,
-   "precipMm": 0,
-   "windMaxKmh": 12.7,
-   "bestWindow": {
-    "start": "12:00",
-    "end": "16:00",
-    "avgRainProb": 0,
-    "outsidePreferred": false
-   },
-   "hourly": [
-    {
-     "hour": 5,
-     "rainProb": 0,
-     "temp": 12.1
-    },
-    {
-     "hour": 6,
-     "rainProb": 0,
-     "temp": 11.6
-    },
-    {
-     "hour": 7,
-     "rainProb": 0,
-     "temp": 12.9
-    },
-    {
-     "hour": 8,
-     "rainProb": 0,
-     "temp": 15.9
-    },
-    {
-     "hour": 9,
-     "rainProb": 0,
-     "temp": 19
-    },
-    {
-     "hour": 10,
-     "rainProb": 0,
-     "temp": 21.8
-    },
-    {
-     "hour": 11,
-     "rainProb": 0,
-     "temp": 23.2
-    },
-    {
-     "hour": 12,
-     "rainProb": 0,
-     "temp": 24.4
-    },
-    {
-     "hour": 13,
-     "rainProb": 0,
-     "temp": 25.4
-    },
-    {
-     "hour": 14,
-     "rainProb": 0,
-     "temp": 26.2
-    },
-    {
-     "hour": 15,
-     "rainProb": 0,
-     "temp": 26.5
-    },
-    {
-     "hour": 16,
-     "rainProb": 0,
-     "temp": 26.4
-    },
-    {
-     "hour": 17,
-     "rainProb": 0,
-     "temp": 25.7
-    },
-    {
-     "hour": 18,
-     "rainProb": 0,
-     "temp": 24.5
-    },
-    {
-     "hour": 19,
-     "rainProb": 0,
-     "temp": 22.7
-    },
-    {
-     "hour": 20,
-     "rainProb": 0,
-     "temp": 19.6
-    },
-    {
-     "hour": 21,
-     "rainProb": 0,
-     "temp": 18
-    },
-    {
-     "hour": 22,
-     "rainProb": 0,
-     "temp": 17.4
-    }
-   ],
-   "alreadyDone": null,
-   "ownNote": null,
-   "notePlan": null,
-   "status": null,
-   "alternatives": [
-    {
-     "id": "a",
-     "label": "Kompletné voľno",
-     "intensity": "rest",
-     "suggestion": "Dopraj telu absolútny oddych a regeneráciu pred náročným víkendom.",
-     "recommended": false
-    },
-    {
-     "id": "b",
-     "label": "Ľahší objem v Zóne 2",
-     "intensity": "long",
-     "suggestion": "Pohodových 90 minút bicykla poobede, zameraných na udržanie aeróbnej bázy bez hromadenia únavy.",
-     "recommended": false
-    },
-    {
-     "id": "c",
-     "label": "Sériové VO2max intervaly",
-     "intensity": "intensity",
-     "suggestion": "Vyraz medzi 12:00 a 16:00 na 60-75 minútový tréning s 5×3 minútami vo vysokej intenzite (Z3/Z4). Do 950 ml fľaše zamiešaj 70 g cukru a 4 g soli.",
-     "recommended": true
-    },
-    {
-     "id": "d",
-     "label": "Jazdectvo na trenažéri",
-     "intensity": "indoor",
-     "suggestion": "50 minút plynulej jazdy vo virtuálnom prostredí v komfortnom tempe.",
+     "suggestion": "Ak chceš radšej zostať v chlade doma, daj si 75 minút štruktúrovaných intervalov na trenažéri. Priprav si 1× 750 ml fľašu s 50 g cukru a 3 g soli.",
      "recommended": false
     }
    ]
@@ -401,10 +289,10 @@
    "date": "2026-08-15",
    "weatherDesc": "jasno",
    "weatherEmoji": "☀️",
-   "tempMax": 29.6,
-   "tempMin": 13.9,
+   "tempMax": 31.4,
+   "tempMin": 14.4,
    "precipMm": 0,
-   "windMaxKmh": 9.8,
+   "windMaxKmh": 7.6,
    "bestWindow": {
     "start": "12:00",
     "end": "16:00",
@@ -415,22 +303,22 @@
     {
      "hour": 5,
      "rainProb": 0,
-     "temp": 13.9
+     "temp": 14.6
     },
     {
      "hour": 6,
      "rainProb": 0,
-     "temp": 13.9
+     "temp": 14.4
     },
     {
      "hour": 7,
      "rainProb": 0,
-     "temp": 16
+     "temp": 15.8
     },
     {
      "hour": 8,
      "rainProb": 0,
-     "temp": 19.5
+     "temp": 19.2
     },
     {
      "hour": 9,
@@ -440,67 +328,67 @@
     {
      "hour": 10,
      "rainProb": 0,
-     "temp": 24.6
+     "temp": 24.8
     },
     {
      "hour": 11,
      "rainProb": 0,
-     "temp": 26.2
+     "temp": 27.2
     },
     {
      "hour": 12,
      "rainProb": 0,
-     "temp": 27.3
+     "temp": 28.6
     },
     {
      "hour": 13,
      "rainProb": 0,
-     "temp": 28.2
+     "temp": 29.7
     },
     {
      "hour": 14,
      "rainProb": 0,
-     "temp": 28.8
+     "temp": 30.6
     },
     {
      "hour": 15,
      "rainProb": 0,
-     "temp": 29.3
+     "temp": 31
     },
     {
      "hour": 16,
      "rainProb": 0,
-     "temp": 29.6
+     "temp": 31.4
     },
     {
      "hour": 17,
      "rainProb": 0,
-     "temp": 29.3
+     "temp": 31.2
     },
     {
      "hour": 18,
      "rainProb": 0,
-     "temp": 28.4
+     "temp": 30.7
     },
     {
      "hour": 19,
      "rainProb": 0,
-     "temp": 25.9
+     "temp": 29.6
     },
     {
      "hour": 20,
      "rainProb": 0,
-     "temp": 22.8
+     "temp": 27.2
     },
     {
      "hour": 21,
      "rainProb": 0,
-     "temp": 21.5
+     "temp": 24.2
     },
     {
      "hour": 22,
      "rainProb": 0,
-     "temp": 20.6
+     "temp": 22.6
     }
    ],
    "alreadyDone": null,
@@ -510,42 +398,42 @@
    "alternatives": [
     {
      "id": "a",
-     "label": "Pasívna regenerácia",
+     "label": "Regeneračný celodenný oddych",
      "intensity": "rest",
-     "suggestion": "Úplné voľno pred plánovaným nedeľným dlhým výjazdom, venuj sa len hydratácii a penovému valcu.",
-     "recommended": true
+     "suggestion": "Dnes nevyrážaj na žiadny tréning a dopraj telu 100% regeneráciu pred zajtrajším dlhým výjazdom.",
+     "recommended": false
     },
     {
      "id": "b",
-     "label": "Predvíkendový objem",
+     "label": "Predĺžený objem v teplu",
      "intensity": "long",
-     "suggestion": "3 hodiny voľným tempom v teplom počasí. Vezmi dve 950 ml fľaše s 75 g cukru a 5 g soli v každej, keďže bude až 30°C.",
+     "suggestion": "Ak chceš radšej jazdiť dnes, daj si 3.5 hodiny Z2 v čase 12:00-16:00. Naplň všetky 3 fľaše (2× 950 ml + 1× 750 ml), do každej daj 75 g cukru a 5 g soli kvôli teplote 31°C.",
      "recommended": false
     },
     {
      "id": "c",
-     "label": "Krátke rýchlostné rovinky",
+     "label": "Krátke výbušné intervaly",
      "intensity": "intensity",
-     "suggestion": "45 minút rozjazd s 6 krátkymi šprintmi do kopca na prebudenie nôh.",
-     "recommended": false
+     "suggestion": "Odjazdí 75 minút s 5×3 min nad prahom (VO2max) na rozprúdenie pred víkendom. Využi okno 12:00-16:00. Priprav si 1× 950 ml fľašu so 70 g cukru a 4 g soli.",
+     "recommended": true
     },
     {
      "id": "d",
-     "label": "Chladivý indoor tréning",
+     "label": "Sila v posilňovni / indoor",
      "intensity": "indoor",
-     "suggestion": "Ak sa chceš vyhnúť teplu (30°C), daj si 60 minút na trenažéri v klimatizovanej miestnosti.",
+     "suggestion": "Vyhni sa horúčave a daj si 60 minút silovo-kondičného tréningu v interiéri so zameraním na stred tela a nohy.",
      "recommended": false
     }
    ]
   },
   {
    "date": "2026-08-16",
-   "weatherDesc": "jasno",
-   "weatherEmoji": "☀️",
-   "tempMax": 30.5,
-   "tempMin": 16.8,
-   "precipMm": 0,
-   "windMaxKmh": 20.5,
+   "weatherDesc": "prehánky",
+   "weatherEmoji": "🌦️",
+   "tempMax": 30.7,
+   "tempMin": 15.4,
+   "precipMm": 1.9,
+   "windMaxKmh": 18.6,
    "bestWindow": {
     "start": "12:00",
     "end": "16:00",
@@ -556,32 +444,32 @@
     {
      "hour": 5,
      "rainProb": 0,
-     "temp": 16.8
+     "temp": 15.6
     },
     {
      "hour": 6,
      "rainProb": 0,
-     "temp": 17.9
+     "temp": 15.4
     },
     {
      "hour": 7,
      "rainProb": 0,
-     "temp": 19.8
+     "temp": 17.8
     },
     {
      "hour": 8,
      "rainProb": 0,
-     "temp": 21.7
+     "temp": 21.2
     },
     {
      "hour": 9,
      "rainProb": 0,
-     "temp": 23.8
+     "temp": 24
     },
     {
      "hour": 10,
      "rainProb": 0,
-     "temp": 25.9
+     "temp": 26.1
     },
     {
      "hour": 11,
@@ -591,422 +479,617 @@
     {
      "hour": 12,
      "rainProb": 0,
-     "temp": 28.8
+     "temp": 29
     },
     {
      "hour": 13,
      "rainProb": 0,
-     "temp": 29.5
+     "temp": 29.8
     },
     {
      "hour": 14,
      "rainProb": 0,
-     "temp": 29.9
+     "temp": 30.4
     },
     {
      "hour": 15,
-     "rainProb": 0,
-     "temp": 30.3
+     "rainProb": 1,
+     "temp": 30.7
     },
     {
      "hour": 16,
-     "rainProb": 0,
-     "temp": 30.5
+     "rainProb": 2,
+     "temp": 30.6
     },
     {
      "hour": 17,
-     "rainProb": 0,
-     "temp": 29.9
+     "rainProb": 4,
+     "temp": 30.2
     },
     {
      "hour": 18,
-     "rainProb": 1,
-     "temp": 28
+     "rainProb": 9,
+     "temp": 29.1
     },
     {
      "hour": 19,
-     "rainProb": 2,
-     "temp": 25.4
+     "rainProb": 15,
+     "temp": 27.1
     },
     {
      "hour": 20,
-     "rainProb": 2,
-     "temp": 23.2
+     "rainProb": 20,
+     "temp": 23.5
     },
     {
      "hour": 21,
-     "rainProb": 1,
-     "temp": 22.1
+     "rainProb": 22,
+     "temp": 19.9
     },
     {
      "hour": 22,
-     "rainProb": 1,
-     "temp": 21.5
+     "rainProb": 21,
+     "temp": 19.3
     }
    ],
    "alreadyDone": null,
    "ownNote": "Rozmýšľame s danom že dáme dlhý bike ",
-   "notePlan": "Skvelý nápad na dlhý výjazd s Danom v príjemnom letnom počasí! Naplánujte si 4 až 5 hodín v poobedných hodinách (12:00-16:00) v kľudnom tempe Zóny 2. Priprav si všetky 3 fľaše (2× 950 ml + 1× 750 ml) a do každej daj 75 g cukru a 5 g soli, aby si pokryl vysokú spotravu tekutín v 31°C horúčave (mierte na 60-70 g sacharidov/hodina).",
+   "notePlan": "Skvelý plán! Dajte s Danom dlhý výjazd na 3.5 až 4.5 hodiny v vytrvalostnom Z2 tempe. Využite najlepšie okno medzi 12:00 a 16:00, kedy je šanca na zrážky nulová, no pozor na vietor do 19 km/h. Na takto dlho v horúčave 31°C naplň všetky 3 fľaše (2× 950 ml + 1× 750 ml) s 75 g cukru a 5 g soli v každej fľaši, aby si pokryl 60-70 g sacharidov na hodinu a predišiel kŕčom.",
    "status": null,
    "alternatives": []
   },
   {
    "date": "2026-08-17",
-   "weatherDesc": "silné mrholenie",
-   "weatherEmoji": "🌧️",
-   "tempMax": 25.1,
-   "tempMin": 14.7,
-   "precipMm": 6,
-   "windMaxKmh": 17.9,
+   "weatherDesc": "búrka",
+   "weatherEmoji": "⛈️",
+   "tempMax": 19.4,
+   "tempMin": 13.9,
+   "precipMm": 17.7,
+   "windMaxKmh": 11.4,
    "bestWindow": {
-    "start": "12:00",
-    "end": "16:00",
-    "avgRainProb": 20,
-    "outsidePreferred": false
+    "start": "05:00",
+    "end": "09:00",
+    "avgRainProb": 24,
+    "outsidePreferred": true
    },
    "hourly": [
     {
      "hour": 5,
-     "rainProb": 6,
-     "temp": 18
+     "rainProb": 14,
+     "temp": 15.8
     },
     {
      "hour": 6,
-     "rainProb": 9,
-     "temp": 19.1
+     "rainProb": 20,
+     "temp": 16.2
     },
     {
      "hour": 7,
-     "rainProb": 13,
-     "temp": 20.7
+     "rainProb": 28,
+     "temp": 16.8
     },
     {
      "hour": 8,
-     "rainProb": 16,
-     "temp": 22.2
+     "rainProb": 35,
+     "temp": 17.4
     },
     {
      "hour": 9,
-     "rainProb": 16,
-     "temp": 23.5
+     "rainProb": 42,
+     "temp": 17.8
     },
     {
      "hour": 10,
-     "rainProb": 14,
-     "temp": 24.5
+     "rainProb": 49,
+     "temp": 18.1
     },
     {
      "hour": 11,
-     "rainProb": 14,
-     "temp": 25.1
+     "rainProb": 55,
+     "temp": 18.4
     },
     {
      "hour": 12,
-     "rainProb": 16,
-     "temp": 24.9
+     "rainProb": 60,
+     "temp": 18.9
     },
     {
      "hour": 13,
-     "rainProb": 19,
-     "temp": 24.1
+     "rainProb": 64,
+     "temp": 19.3
     },
     {
      "hour": 14,
-     "rainProb": 22,
-     "temp": 23.1
+     "rainProb": 67,
+     "temp": 19.4
     },
     {
      "hour": 15,
-     "rainProb": 23,
-     "temp": 21.9
+     "rainProb": 70,
+     "temp": 19
     },
     {
      "hour": 16,
-     "rainProb": 24,
-     "temp": 20.5
+     "rainProb": 74,
+     "temp": 18.2
     },
     {
      "hour": 17,
-     "rainProb": 25,
-     "temp": 19.2
+     "rainProb": 75,
+     "temp": 17.4
     },
     {
      "hour": 18,
-     "rainProb": 28,
-     "temp": 17.9
-    },
-    {
-     "hour": 19,
-     "rainProb": 31,
+     "rainProb": 74,
      "temp": 16.7
     },
     {
+     "hour": 19,
+     "rainProb": 72,
+     "temp": 16
+    },
+    {
      "hour": 20,
-     "rainProb": 33,
-     "temp": 15.7
+     "rainProb": 69,
+     "temp": 15.4
     },
     {
      "hour": 21,
-     "rainProb": 32,
-     "temp": 15.2
+     "rainProb": 65,
+     "temp": 14.8
     },
     {
      "hour": 22,
-     "rainProb": 30,
-     "temp": 14.9
+     "rainProb": 60,
+     "temp": 14.4
     }
    ],
    "alreadyDone": null,
    "ownNote": "Praha",
-   "notePlan": "Výlet do Prahy ber ako plánovaný výpadok tréningu a aktívny oddych od bicykla po nedeľnom dlhom výjazde. Vzhľadom na silné mrholenie si zober nepremokavú bundu a veľa chodenia po meste ber ako prirodzený regenačný pohyb.",
+   "notePlan": "Uži si výlet v Prahe a nerieš tréning. V meste hrozia silné búrky a výdatný dážď, takže najlepšou voľbou je čistá pešia turistika po pamiatkach alebo kaviarnach. Oddýchni si a načerpaj nové sily po víkendovom objeme.",
    "status": "break",
    "alternatives": []
   },
   {
    "date": "2026-08-18",
-   "weatherDesc": "silné mrholenie",
-   "weatherEmoji": "🌧️",
-   "tempMax": 19.3,
-   "tempMin": 14,
-   "precipMm": 3,
-   "windMaxKmh": 12.9,
+   "weatherDesc": "slabé mrholenie",
+   "weatherEmoji": "🌦️",
+   "tempMax": 20.5,
+   "tempMin": 11.8,
+   "precipMm": 0.3,
+   "windMaxKmh": 13.1,
    "bestWindow": {
-    "start": "12:00",
-    "end": "16:00",
-    "avgRainProb": 33,
+    "start": "18:00",
+    "end": "22:00",
+    "avgRainProb": 13,
     "outsidePreferred": false
    },
    "hourly": [
     {
      "hour": 5,
-     "rainProb": 24,
-     "temp": 14.2
+     "rainProb": 33,
+     "temp": 11.8
     },
     {
      "hour": 6,
-     "rainProb": 24,
-     "temp": 14.3
+     "rainProb": 33,
+     "temp": 12.2
     },
     {
      "hour": 7,
-     "rainProb": 24,
-     "temp": 14.6
+     "rainProb": 34,
+     "temp": 12.9
     },
     {
      "hour": 8,
-     "rainProb": 25,
-     "temp": 15
+     "rainProb": 35,
+     "temp": 13.9
     },
     {
      "hour": 9,
-     "rainProb": 26,
-     "temp": 15.6
+     "rainProb": 37,
+     "temp": 15.2
     },
     {
      "hour": 10,
-     "rainProb": 28,
-     "temp": 16.5
+     "rainProb": 40,
+     "temp": 16.8
     },
     {
      "hour": 11,
-     "rainProb": 29,
-     "temp": 17.4
+     "rainProb": 41,
+     "temp": 18.1
     },
     {
      "hour": 12,
-     "rainProb": 30,
-     "temp": 18.3
+     "rainProb": 40,
+     "temp": 18.9
     },
     {
      "hour": 13,
-     "rainProb": 32,
-     "temp": 19
+     "rainProb": 37,
+     "temp": 19.5
     },
     {
      "hour": 14,
      "rainProb": 33,
-     "temp": 19.3
+     "temp": 19.9
     },
     {
      "hour": 15,
-     "rainProb": 35,
-     "temp": 19.3
+     "rainProb": 28,
+     "temp": 20.3
     },
     {
      "hour": 16,
-     "rainProb": 36,
-     "temp": 18.9
+     "rainProb": 23,
+     "temp": 20.5
     },
     {
      "hour": 17,
-     "rainProb": 38,
-     "temp": 18.3
+     "rainProb": 18,
+     "temp": 20.2
     },
     {
      "hour": 18,
-     "rainProb": 39,
-     "temp": 17.6
+     "rainProb": 15,
+     "temp": 19
     },
     {
      "hour": 19,
-     "rainProb": 41,
-     "temp": 17
+     "rainProb": 13,
+     "temp": 17.4
     },
     {
      "hour": 20,
-     "rainProb": 41,
-     "temp": 16.5
+     "rainProb": 12,
+     "temp": 15.9
     },
     {
      "hour": 21,
-     "rainProb": 40,
-     "temp": 16.1
+     "rainProb": 10,
+     "temp": 15
     },
     {
      "hour": 22,
-     "rainProb": 39,
-     "temp": 15.6
+     "rainProb": 9,
+     "temp": 14.4
     }
    ],
    "alreadyDone": null,
-   "ownNote": null,
-   "notePlan": null,
+   "ownNote": "Stále v prahe",
+   "notePlan": "Pokračuj v oddychovom režime v Prahe. Ak budete veľa chodiť po meste, poslúži to ako výborná aktívna regenerácia. Keďže hlásia len mierne mrholenie, stačí pohodlná obuv, nepremokavá bunda a káva v meste.",
    "status": null,
-   "alternatives": [
-    {
-     "id": "a",
-     "label": "Cestovné voľno",
-     "intensity": "rest",
-     "suggestion": "Celodenný oddych po návrate z Prahy pre dočerpanie síl.",
-     "recommended": false
-    },
-    {
-     "id": "b",
-     "label": "Mokrá vytrvalosť vonku",
-     "intensity": "long",
-     "suggestion": "2 hodiny v nepremokavom oblečení napriek mrholeniu, tempo Zóna 2. Priprav si 950 ml fľašu s 70 g cukru a 4 g soli.",
-     "recommended": false
-    },
-    {
-     "id": "c",
-     "label": "Krátky náročný beh",
-     "intensity": "intensity",
-     "suggestion": "40 minút behu s 5×2 minútovým tempovým úsekom v poobednom okne, kedy menej prší.",
-     "recommended": false
-    },
-    {
-     "id": "d",
-     "label": "Kvalitná indoor kvalita",
-     "intensity": "indoor",
-     "suggestion": "Keďže vonku silno mrholí a je len 19°C, odjazdí 75 minút na trenažéri so zaradením 4×6 minút v Zóne 3. Do 950 ml fľaše si zarábaj 70 g cukru a 4 g soli pre stály prísun energie.",
-     "recommended": true
-    }
-   ]
+   "alternatives": []
   },
   {
    "date": "2026-08-19",
    "weatherDesc": "slabé mrholenie",
    "weatherEmoji": "🌦️",
-   "tempMax": 23.6,
-   "tempMin": 14.6,
-   "precipMm": 0.6,
-   "windMaxKmh": 20.4,
+   "tempMax": 21.5,
+   "tempMin": 12.9,
+   "precipMm": 1.2,
+   "windMaxKmh": 15.5,
    "bestWindow": {
-    "start": "18:00",
-    "end": "22:00",
-    "avgRainProb": 34,
+    "start": "12:00",
+    "end": "16:00",
+    "avgRainProb": 30,
     "outsidePreferred": false
    },
    "hourly": [
     {
      "hour": 5,
-     "rainProb": 27,
-     "temp": 15.1
+     "rainProb": 25,
+     "temp": 13.5
     },
     {
      "hour": 6,
-     "rainProb": 26,
-     "temp": 15.5
+     "rainProb": 25,
+     "temp": 14.6
     },
     {
      "hour": 7,
-     "rainProb": 25,
-     "temp": 16
+     "rainProb": 24,
+     "temp": 16.1
     },
     {
      "hour": 8,
-     "rainProb": 25,
-     "temp": 16.7
+     "rainProb": 24,
+     "temp": 17.2
     },
     {
      "hour": 9,
-     "rainProb": 26,
-     "temp": 17.7
+     "rainProb": 24,
+     "temp": 15.7
     },
     {
      "hour": 10,
-     "rainProb": 28,
-     "temp": 19
+     "rainProb": 25,
+     "temp": 17
     },
     {
      "hour": 11,
-     "rainProb": 30,
-     "temp": 20.5
+     "rainProb": 26,
+     "temp": 18.4
     },
     {
      "hour": 12,
-     "rainProb": 32,
-     "temp": 21.9
+     "rainProb": 28,
+     "temp": 19.8
     },
     {
      "hour": 13,
-     "rainProb": 34,
-     "temp": 23
+     "rainProb": 29,
+     "temp": 20.9
     },
     {
      "hour": 14,
-     "rainProb": 35,
-     "temp": 23.6
+     "rainProb": 31,
+     "temp": 21.5
     },
     {
      "hour": 15,
-     "rainProb": 36,
-     "temp": 23.6
+     "rainProb": 32,
+     "temp": 21.5
     },
     {
      "hour": 16,
-     "rainProb": 36,
-     "temp": 23.2
+     "rainProb": 33,
+     "temp": 21.2
     },
     {
      "hour": 17,
-     "rainProb": 36,
-     "temp": 22.5
+     "rainProb": 34,
+     "temp": 20.6
     },
     {
      "hour": 18,
-     "rainProb": 36,
-     "temp": 21.6
+     "rainProb": 34,
+     "temp": 19.9
     },
     {
      "hour": 19,
-     "rainProb": 35,
-     "temp": 20.7
+     "rainProb": 34,
+     "temp": 19.1
     },
     {
      "hour": 20,
      "rainProb": 33,
-     "temp": 19.9
+     "temp": 18.5
     },
     {
      "hour": 21,
-     "rainProb": 30,
-     "temp": 19.2
+     "rainProb": 31,
+     "temp": 17.8
+    },
+    {
+     "hour": 22,
+     "rainProb": 28,
+     "temp": 17.1
+    }
+   ],
+   "alreadyDone": null,
+   "ownNote": "Stále v prahe \n",
+   "notePlan": "Posledný plný deň v Prahe venuj oddychu a cestovateľským zážitkom. Žiadny tréning neplánuj, pred zajtrajšou dlhou cestou domov sa ti hodí plná regenerácia a dočerpanie glykogénu.",
+   "status": null,
+   "alternatives": []
+  },
+  {
+   "date": "2026-08-20",
+   "weatherDesc": "prehánky",
+   "weatherEmoji": "🌦️",
+   "tempMax": 23.8,
+   "tempMin": 14.9,
+   "precipMm": 4.5,
+   "windMaxKmh": 12.2,
+   "bestWindow": {
+    "start": "18:00",
+    "end": "22:00",
+    "avgRainProb": 25,
+    "outsidePreferred": false
+   },
+   "hourly": [
+    {
+     "hour": 5,
+     "rainProb": 11,
+     "temp": 15.7
+    },
+    {
+     "hour": 6,
+     "rainProb": 10,
+     "temp": 16.3
+    },
+    {
+     "hour": 7,
+     "rainProb": 10,
+     "temp": 16.9
+    },
+    {
+     "hour": 8,
+     "rainProb": 10,
+     "temp": 17.7
+    },
+    {
+     "hour": 9,
+     "rainProb": 12,
+     "temp": 18.6
+    },
+    {
+     "hour": 10,
+     "rainProb": 15,
+     "temp": 19.8
+    },
+    {
+     "hour": 11,
+     "rainProb": 18,
+     "temp": 21
+    },
+    {
+     "hour": 12,
+     "rainProb": 21,
+     "temp": 22.2
+    },
+    {
+     "hour": 13,
+     "rainProb": 25,
+     "temp": 23.2
+    },
+    {
+     "hour": 14,
+     "rainProb": 27,
+     "temp": 23.7
+    },
+    {
+     "hour": 15,
+     "rainProb": 28,
+     "temp": 23.8
+    },
+    {
+     "hour": 16,
+     "rainProb": 28,
+     "temp": 23.5
+    },
+    {
+     "hour": 17,
+     "rainProb": 27,
+     "temp": 23
+    },
+    {
+     "hour": 18,
+     "rainProb": 26,
+     "temp": 22.4
+    },
+    {
+     "hour": 19,
+     "rainProb": 25,
+     "temp": 21.7
+    },
+    {
+     "hour": 20,
+     "rainProb": 24,
+     "temp": 21
+    },
+    {
+     "hour": 21,
+     "rainProb": 24,
+     "temp": 20.3
     },
     {
      "hour": 22,
      "rainProb": 25,
-     "temp": 18.3
+     "temp": 19.4
+    }
+   ],
+   "alreadyDone": null,
+   "ownNote": "Cesta domov z Prahy. Prídeme až o 21",
+   "notePlan": "Cestovný deň. Po príchode domov o 21:00 už nič netrénuj, sústreď sa len na dobrú večeru, hydratáciu a kvalitný spánok vo vlastnej posteli.",
+   "status": null,
+   "alternatives": []
+  },
+  {
+   "date": "2026-08-21",
+   "weatherDesc": "prehánky",
+   "weatherEmoji": "🌦️",
+   "tempMax": 28.5,
+   "tempMin": 16.4,
+   "precipMm": 3.9,
+   "windMaxKmh": 4.7,
+   "bestWindow": {
+    "start": "12:00",
+    "end": "16:00",
+    "avgRainProb": 27,
+    "outsidePreferred": false
+   },
+   "hourly": [
+    {
+     "hour": 5,
+     "rainProb": 16,
+     "temp": 16.9
+    },
+    {
+     "hour": 6,
+     "rainProb": 13,
+     "temp": 17.4
+    },
+    {
+     "hour": 7,
+     "rainProb": 11,
+     "temp": 18.1
+    },
+    {
+     "hour": 8,
+     "rainProb": 10,
+     "temp": 19
+    },
+    {
+     "hour": 9,
+     "rainProb": 12,
+     "temp": 20.4
+    },
+    {
+     "hour": 10,
+     "rainProb": 15,
+     "temp": 22.3
+    },
+    {
+     "hour": 11,
+     "rainProb": 19,
+     "temp": 24.4
+    },
+    {
+     "hour": 12,
+     "rainProb": 23,
+     "temp": 26.3
+    },
+    {
+     "hour": 13,
+     "rainProb": 26,
+     "temp": 27.8
+    },
+    {
+     "hour": 14,
+     "rainProb": 29,
+     "temp": 28.5
+    },
+    {
+     "hour": 15,
+     "rainProb": 30,
+     "temp": 28.3
+    },
+    {
+     "hour": 16,
+     "rainProb": 31,
+     "temp": 27.4
+    },
+    {
+     "hour": 17,
+     "rainProb": 31,
+     "temp": 26.1
+    },
+    {
+     "hour": 18,
+     "rainProb": 31,
+     "temp": 24.5
+    },
+    {
+     "hour": 19,
+     "rainProb": 30,
+     "temp": 23
+    },
+    {
+     "hour": 20,
+     "rainProb": 29,
+     "temp": 21.8
+    },
+    {
+     "hour": 21,
+     "rainProb": 28,
+     "temp": 20.8
+    },
+    {
+     "hour": 22,
+     "rainProb": 27,
+     "temp": 19.7
     }
    ],
    "alreadyDone": null,
@@ -1016,33 +1099,145 @@
    "alternatives": [
     {
      "id": "a",
-     "label": "Regeneračné voľno",
+     "label": "Celodenný pasívny relax",
      "intensity": "rest",
-     "suggestion": "Úplný oddych bez fyzickej záťaže, zameraný na regeneráciu.",
+     "suggestion": "Dnes po návrate z Prahy úplne oddychuj a priprav sa na sobotnú oslavu.",
      "recommended": false
     },
     {
      "id": "b",
-     "label": "Podvečerný dlhý výjazd",
+     "label": "Návratový dlhý výjazd",
      "intensity": "long",
-     "suggestion": "Využi najlepšie okno medzi 18:00 a 21:00 na 2,5-hodinovú jazdu pri slabom mrholení. Do dvoch 950 ml fliaš si namiešaj po 70 g cukru a 4 g soli (odporúčaný príjem ~60 g/h).",
-     "recommended": true
+     "suggestion": "Odjazdí 2.5 až 3 hodiny v mierno-vytrvalostnom tempe v najlepšom okne 12:00-16:00. Priprav si 2× 950 ml fľaše, do každej daj 70 g cukru a 4 g soli na zabezpečenie 60 g sacharidov/hod.",
+     "recommended": false
     },
     {
      "id": "c",
-     "label": "Sériové voľné tempo",
+     "label": "Aktivácia po cestovaní",
      "intensity": "intensity",
-     "suggestion": "60 minút jazdy s 3×10 minútami v svižnom tempe Z3 podvečer okolo 18:00. Priprav si 750 ml fľašu s 65 g cukru a 4 g soli.",
-     "recommended": false
+     "suggestion": "Vyraz na 60-75 minút von v čase 12:00-16:00 a daj si 4×4 minúty vo svižnom tempe Z3/Z4 na prebudenie nôh po sedení v aute/vlaku. Zober 1× 950 ml fľašu s 70 g cukru a 4 g soli.",
+     "recommended": true
     },
     {
      "id": "d",
-     "label": "Indoor trenažér / trenažér",
+     "label": "Ľahký indoor trenažér",
      "intensity": "indoor",
-     "suggestion": "60 minút plynulej jazdy doma na trenažéri, ak sa ti nechce ísť do večerného chladu a mrholenia.",
+     "suggestion": "Ak ťa zastihnú prehánky, skoč na 50 minút na trenažér s pár krátkymi zrýchleniami na rozprúdenie krvi. Stačí čistá voda.",
      "recommended": false
     }
    ]
+  },
+  {
+   "date": "2026-08-22",
+   "weatherDesc": "jasno",
+   "weatherEmoji": "☀️",
+   "tempMax": 31.6,
+   "tempMin": 16.9,
+   "precipMm": 0,
+   "windMaxKmh": 10.4,
+   "bestWindow": {
+    "start": "18:00",
+    "end": "22:00",
+    "avgRainProb": 29,
+    "outsidePreferred": false
+   },
+   "hourly": [
+    {
+     "hour": 5,
+     "rainProb": 19,
+     "temp": 18.1
+    },
+    {
+     "hour": 6,
+     "rainProb": 18,
+     "temp": 18.9
+    },
+    {
+     "hour": 7,
+     "rainProb": 18,
+     "temp": 20
+    },
+    {
+     "hour": 8,
+     "rainProb": 18,
+     "temp": 21.2
+    },
+    {
+     "hour": 9,
+     "rainProb": 19,
+     "temp": 22.7
+    },
+    {
+     "hour": 10,
+     "rainProb": 22,
+     "temp": 24.8
+    },
+    {
+     "hour": 11,
+     "rainProb": 24,
+     "temp": 27
+    },
+    {
+     "hour": 12,
+     "rainProb": 26,
+     "temp": 29.1
+    },
+    {
+     "hour": 13,
+     "rainProb": 29,
+     "temp": 30.7
+    },
+    {
+     "hour": 14,
+     "rainProb": 31,
+     "temp": 31.6
+    },
+    {
+     "hour": 15,
+     "rainProb": 32,
+     "temp": 31.6
+    },
+    {
+     "hour": 16,
+     "rainProb": 32,
+     "temp": 30.9
+    },
+    {
+     "hour": 17,
+     "rainProb": 32,
+     "temp": 29.8
+    },
+    {
+     "hour": 18,
+     "rainProb": 31,
+     "temp": 28.5
+    },
+    {
+     "hour": 19,
+     "rainProb": 30,
+     "temp": 27.2
+    },
+    {
+     "hour": 20,
+     "rainProb": 29,
+     "temp": 26.1
+    },
+    {
+     "hour": 21,
+     "rainProb": 27,
+     "temp": 25.2
+    },
+    {
+     "hour": 22,
+     "rainProb": 24,
+     "temp": 24.2
+    }
+   ],
+   "alreadyDone": null,
+   "ownNote": "Oslava bude čiže voľno celý deň ",
+   "notePlan": "Rozumné rozhodnutie – počítaj s tým ako s plnohodnotným voľným dňom bez výčitiek. Uži si oslavu, zameraj sa na dobrú stravu a hydratáciu vodou počas dňa.",
+   "status": null,
+   "alternatives": []
   }
  ]
 }
