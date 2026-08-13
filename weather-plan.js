@@ -1,5 +1,5 @@
 // weather-plan.js
-// Stiahne 8-dňovú predpoveď počasia pre Čadcu (Open-Meteo, zadarmo, žiadny API kľúč netreba),
+// Stiahne 10-dňovú predpoveď počasia pre Čadcu (Open-Meteo, zadarmo, žiadny API kľúč netreba),
 // skombinuje s aktuálnou formou (CTL/ATL) a kalendárovými poznámkami, a cez Gemini pripraví návrh
 // na každý deň:
 //  - Dni BEZ vlastnej poznámky: 4 alternatívy tréningu (rest/long/intensity/indoor), viď
@@ -164,7 +164,7 @@ function hourlyBreakdownForDay(hourlyTimes, hourlyProb, hourlyTemp, date) {
 // `precipitation_probability` má stabilný názov naprieč verziami, tá fallback nepotrebuje.
 async function fetchWeatherWithParams(dailyParams) {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
-    `&daily=${dailyParams}&hourly=precipitation_probability,temperature_2m&timezone=Europe/Bratislava&forecast_days=8`;
+    `&daily=${dailyParams}&hourly=precipitation_probability,temperature_2m&timezone=Europe/Bratislava&forecast_days=10`;
   const res = await fetch(url);
   if (!res.ok) {
     const txt = await res.text().catch(() => '');
@@ -204,7 +204,7 @@ async function fetchWeather() {
 // POZOR (rovnaký koreň problému ako v ai-summary.js/sync.js, zistené 30.7.2026): Gemini 3.x
 // modely (flash aj flash-lite) majú defaultne zapnuté interné "thinking" tokeny, ktoré sa
 // POČÍTAJÚ do maxOutputTokens, ale nie sú vidno vo výstupe. Tento skript pýta výrazne väčší JSON
-// než ai-summary.js (8 dní × 3 alternatívy), takže aj pri maxOutputTokens 2600 sa dalo ľahko stať,
+// než ai-summary.js (10 dní × 4 alternatívy), takže aj pri maxOutputTokens 2600 sa dalo ľahko stať,
 // že model minul rozpočet na neviditeľné rozmýšľanie a viditeľný JSON sa orezal uprostred -
 // JSON.parse zlyhal, suggestions=[] a ÚPLNE VŠETKY dni skončili ako "Bez návrhu". Riešenie:
 // 1) thinkingConfig.thinkingLevel='low' (Gemini 3.x - NIE thinkingBudget, to je len pre 2.5 sériu
@@ -574,11 +574,12 @@ async function generateNewPlan() {
 
   const prompt = buildPlanPrompt(weatherDays, wellnessMerged, dayNotes, statusByDate, activitiesByDate, recentPastDays);
   console.log('Generujem plán (Gemini)...');
-  // maxOutputTokens 4096 (bolo 2600) + thinkingConfig v callGeminiOnce() - skutočná príčina
-  // "Bez návrhu pre všetky dni" bola, že neviditeľné "thinking" tokeny (počítajú sa do
+  // maxOutputTokens 5500 (bolo 4096, predtým 2600) + thinkingConfig v callGeminiOnce() - skutočná
+  // príčina "Bez návrhu pre všetky dni" bola, že neviditeľné "thinking" tokeny (počítajú sa do
   // maxOutputTokens, ale nie sú vidno vo výstupe) zjedli veľkú časť rozpočtu na tomto veľkom
-  // 8-dni×3-alternatívy JSON-e, odpoveď sa orezala uprostred a nedala sa naparsovať.
-  const result = await callGemini(prompt, { json: true, maxOutputTokens: 4096 });
+  // JSON-e (10 dní × 4 alternatívy + odporúčania na sacharidy/pitný režim), odpoveď sa orezala
+  // uprostred a nedala sa naparsovať. Po rozšírení z 8 na 10 dní (9.8.2026) opäť zvýšené s rezervou.
+  const result = await callGemini(prompt, { json: true, maxOutputTokens: 5500 });
   const raw = result ? result.text : null;
   const usedModel = result ? result.model : (process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL);
   let suggestions = [];

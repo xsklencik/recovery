@@ -73,7 +73,7 @@
         <h1>Počasie a AI plán</h1>
       </div>
       <div class="sub" style="color:var(--text-dim);font-size:0.85rem;margin-top:4px;">
-        Počasie a AI plán na 8 dní. Klik na alternatívu prispôsobí susedné dni. Klik na deň zobrazí hodinovú predpoveď.
+        Počasie a AI plán na 10 dní. Klik na alternatívu prispôsobí susedné dni. Klik na deň zobrazí hodinovú predpoveď.
       </div>
     </div>
     <button class="btn primary" id="btn-generate">🔄 Vygenerovať plán</button>
@@ -228,7 +228,7 @@ function renderPlan(plan){
   }
 
   // Vyčisti si výbery pre dni, ktoré už v aktuálnom pláne neexistujú alebo nemajú alternatívy
-  // (napr. po pregenerovaní plánu, keď sa okno 8 dní posunulo, alebo si si medzitým pridal vlastnú
+  // (napr. po pregenerovaní plánu, keď sa okno 10 dní posunulo, alebo si si medzitým pridal vlastnú
   // poznámku na daný deň).
   const validDates = new Set(daysWithAlternatives(plan).map(d => d.date));
   let choices = loadChoices();
