@@ -796,7 +796,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-14T18:15:33.824Z"
+  "syncedAt": "2026-08-14T18:30:43.509Z"
  },
  {
   "id": "2026-08-12",
@@ -817,7 +817,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-14T18:15:33.824Z"
+  "syncedAt": "2026-08-14T18:30:43.509Z"
  },
  {
   "id": "2026-08-13",
@@ -838,7 +838,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-14T18:15:33.824Z"
+  "syncedAt": "2026-08-14T18:30:43.509Z"
  },
  {
   "id": "2026-08-14",
@@ -849,16 +849,16 @@
   "avgSleepingHR": 57,
   "sleepScore": 85,
   "sleepSecs": 30600,
-  "steps": 3063,
+  "steps": 3137,
   "ctl": 49.300392,
   "atl": 65.31652,
   "weight": 59.4,
-  "comments": null,
+  "comments": "Jazda na Cadecku a potom zopar PR pokusov namiesto intervalov. dal som Via cadca za 0:38, cadecka-skradne 4:27",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-14T18:15:33.824Z"
+  "syncedAt": "2026-08-14T18:30:43.509Z"
  }
 ]
