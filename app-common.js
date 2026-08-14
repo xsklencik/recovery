@@ -991,32 +991,32 @@ function computeResults(recs, activities, hrStrainByDate){
 // výsledok pôsobil "zaseknuto" okolo jedného čísla.
 // OPRAVA 9.8.2026 v2: nahradené empirickým vyhľadávaním v histórii podľa Strain PREDCHÁDZAJÚCEHO
 // dňa (4 pásma ako strainVerdict). Menší, ale reálny problém: pozeralo sa len na JEDEN
-// predchádzajúci deň, takže "po záťaži horšie, po oddychu lepšie" pôsobilo skokovo (jeden voľný
-// deň hneď úplne "vynuloval" niekoľko tvrdých dní pred ním), a fixné hranice 8/14/18 nemuseli sedieť
-// na to, aké skóre je preňho "typické".
-// OPRAVA 13.8.2026 v3 (nahlásené Adamom - "odhadni že po záťaži zhorší HRV atď a naopak"):
-// namiesto Strain JEDNÉHO predchádzajúceho dňa sa teraz počíta KUMULATÍVNE skóre posledných
-// RECENT_LOAD_LOOKBACK_DAYS dní s exponenciálnym rozpadom (rovnaký princíp ako fatigueScoreForDate
-// vyššie, len kratšie okno/rýchlejší rozpad) - viacero tvrdých dní PO SEBE sa teda reálne SČÍTAVA
-// (horšie), a naopak viacero voľných dní PO SEBE sa reálne postupne "vynuluje" (lepšie), nie
-// skokovo po jednom dni. Pásma navyše už NIE sú fixné hranice, ale TERCILY/KVANTILY z TVOJEJ
-// VLASTNEJ histórie tohto kumulatívneho skóre - takže "vysoká záťaž" znamená vysoká PRE TEBA, nie
-// univerzálne fixné číslo. Zvyšný princíp (empirický priemer Recovery z tvojej histórie pre dané
-// pásmo, žiadne CTL/kapacita/generické konštanty) ostáva.
+// predchádzajúci deň, takže "po záťaži horšie, po oddychu lepšie" pôsobilo skokovo.
+// OPRAVA 13.8.2026 v3: nahradené kumulatívnym skóre posledných dní (rovnaký princíp ako
+// fatigueScoreForDate, kratšie okno/rýchlejší rozpad) bucketované do tercilov/kvantilov TVOJEJ
+// vlastnej histórie namiesto pevných hraníc.
+// OPRAVA 14.8.2026 v4 (nahlásené Adamom - "zaseknuté po 2 dňoch voľna na 29 %"): aj kvantilové
+// pásma majú svoj problém - kým sa kumulatívne skóre pohybuje v rámci JEDNÉHO pásma (napr.
+// "extreme"), predikcia je úplne rovnaká, aj keď skóre v tom pásme reálne postupne klesá deň čo
+// deň. Vyzeralo to "zaseknuté", hoci pod kapotou sa to hýbalo. Nahradené PLYNULOU interpoláciou:
+// namiesto zaradenia do jedného zo 4 pásiem sa nájde K najbližších historických dní PODĽA SKÓRE
+// (nie podľa dátumu) a spriemeruje sa ich Recovery, váhovane podľa toho, ako blízko majú skóre k
+// projektovanému dňu. Skóre sa teda vyhladzuje spojito - žiadne skoky na hraniciach pásiem, žiadne
+// zamrznutie na jednej hodnote. Stále 100% empirické (žiadne CTL/kapacita/generické konštanty),
+// len jemnejšie.
 const PLAN_ESTIMATED_RAW_LOAD = {
   rest: 0,          // skutočné voľno
-  indoor: 75,        // ~45-60 min. štruktúrované indoor sedenie
   intensity: 140,    // ~60-90 min. intervaly/tempo
   long: 180,         // ~2.5-4h vytrvalostná/dlhá jazda alebo beh
   note: 110,         // deň s vlastnou poznámkou BEZ AI klasifikácie (staršie uložené plány) - orientačný stredný odhad
   unknown: 60,
 };
-// Tieto konštanty ovplyvňujú len odhadovaný Strain daného dňa (Recovery ide čisto z historického
-// priemeru pre dané pásmo, viď vyššie) - ak po pár týždňoch uvidíš, že sa systematicky líšia od
-// toho, čo potom reálne nasynchronizuje sync.js, pokojne im tu priprav iné hodnoty.
+// Tieto konštanty ovplyvňujú len odhadovaný Strain daného dňa (Recovery ide čisto z historických
+// dát, viď vyššie) - ak po pár týždňoch uvidíš, že sa systematicky líšia od toho, čo potom reálne
+// nasynchronizuje sync.js, pokojne im tu priprav iné hodnoty.
 const RECENT_LOAD_LOOKBACK_DAYS = 4;
 const RECENT_LOAD_DECAY = 0.55; // rozpad na 55 % za deň - kratšie okno/rýchlejší rozpad než FATIGUE_DECAY (0.70/14 dní), lebo tu ide o krátkodobú (HRV-podobnú) odozvu, nie o CTL
-const LOAD_TIER_MIN_SAMPLES = 4; // menej ako toľko dní v histórii pre dané pásmo = nedôveryhodné, použi celkový priemer namiesto toho
+const RECOVERY_KNN_MIN = 5, RECOVERY_KNN_MAX = 15; // koľko najbližších historických dní (podľa skóre) sa spriemeruje
 function recentLoadScoreForDate(dateStr, loadByDate) {
   let score = 0;
   for (let n = 1; n <= RECENT_LOAD_LOOKBACK_DAYS; n++) {
@@ -1026,6 +1026,20 @@ function recentLoadScoreForDate(dateStr, loadByDate) {
     score += effectiveLoad * Math.pow(RECENT_LOAD_DECAY, n - 1);
   }
   return score;
+}
+// Váhovaný priemer Recovery z K historicky najbližších dní (podľa kumulatívneho skóre, nie podľa
+// dátumu) - "+1" v menovateli váhy tlmí extrémnu váhu pri dist=0 (viacero historických dní s
+// takmer identickým skóre), aby jeden taký deň nepremohol celý priemer.
+function predictRecoveryForScore(score, histPairs) {
+  if (!histPairs.length) return 55;
+  const k = clamp(Math.round(histPairs.length * 0.15), RECOVERY_KNN_MIN, Math.min(RECOVERY_KNN_MAX, histPairs.length));
+  const neighbors = histPairs
+    .map(p => ({ recovery: p.recovery, dist: Math.abs(p.score - score) }))
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, k);
+  let wSum = 0, valSum = 0;
+  neighbors.forEach(n => { const w = 1 / (n.dist + 1); wSum += w; valSum += w * n.recovery; });
+  return wSum ? valSum / wSum : mean(neighbors.map(n => n.recovery));
 }
 // Krátke slovenské skratky dní v týždni (Po/Ut/St/Št/Pi/So/Ne) pre kompaktné zobrazenie na plan.html.
 const WEEKDAY_ABBR_SK = ['Ne', 'Po', 'Ut', 'St', 'Št', 'Pi', 'So'];
@@ -1068,29 +1082,6 @@ async function projectPlanRecoveryStrain(plan, choices) {
     if (r.recovery == null) return;
     histPairs.push({ score: recentLoadScoreForDate(r.date, loadByDate), recovery: r.recovery });
   });
-  const overallAvgRecovery = histPairs.length ? mean(histPairs.map(p => p.recovery)) : 55;
-
-  // Tercily/kvantily TVOJHO VLASTNÉHO rozdelenia tohto skóre - nie univerzálne fixné hranice.
-  const sortedScores = histPairs.map(p => p.score).sort((a, b) => a - b);
-  function percentileScore(p) {
-    if (!sortedScores.length) return 0;
-    const idx = clamp(Math.round(p * (sortedScores.length - 1)), 0, sortedScores.length - 1);
-    return sortedScores[idx];
-  }
-  const q1 = percentileScore(0.33), q2 = percentileScore(0.67), q3 = percentileScore(0.90);
-  function loadTier(score) {
-    if (score <= q1) return 'low';
-    if (score <= q2) return 'mid';
-    if (score <= q3) return 'high';
-    return 'extreme';
-  }
-  const tierBuckets = { low: [], mid: [], high: [], extreme: [] };
-  histPairs.forEach(p => tierBuckets[loadTier(p.score)].push(p.recovery));
-  const tierAvgRecovery = {};
-  Object.keys(tierBuckets).forEach(tier => {
-    const vals = tierBuckets[tier];
-    tierAvgRecovery[tier] = vals.length >= LOAD_TIER_MIN_SAMPLES ? mean(vals) : overallAvgRecovery;
-  });
 
   const rows = [];
   plan.days.slice(0, 10).forEach(d => {
@@ -1123,7 +1114,7 @@ async function projectPlanRecoveryStrain(plan, choices) {
       predictedRecovery = Math.round(realRecoveryByDate[d.date]);
     } else {
       const score = recentLoadScoreForDate(d.date, loadByDate);
-      predictedRecovery = Math.round(clamp(tierAvgRecovery[loadTier(score)], 0, 100));
+      predictedRecovery = Math.round(clamp(predictRecoveryForScore(score, histPairs), 0, 100));
     }
 
     rows.push({

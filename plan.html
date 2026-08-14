@@ -60,6 +60,9 @@
   }
   .plan-edit-row input:focus{outline:2px solid var(--accent-dim);border-color:var(--accent);}
   .plan-edit-hint{font-size:0.7rem;color:var(--text-faint);margin-top:6px;}
+  #plan-qa{max-height:340px;overflow-y:auto;}
+  .plan-qa-entry{padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--line);}
+  .plan-qa-entry:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
   .plan-qa-q{font-size:0.78rem;color:var(--text-dim);font-style:italic;margin-bottom:6px;}
   .plan-qa-a{font-size:0.85rem;color:var(--text);line-height:1.55;white-space:pre-line;}
   .plan-forecast-table{width:100%;border-collapse:collapse;font-size:0.78rem;margin-top:8px;}
@@ -337,12 +340,21 @@ function renderHourlyGrid(hourly){
 document.getElementById('btn-reset-choices').addEventListener('click', resetChoices);
 
 // ---------- Otázka pre AI (bez úpravy plánu) ----------
+// OPRAVA 14.8.2026 (žiadosť Adama - "chat s AI čo sa pýtam otázky by sa mohli niekde ukladať"):
+// predtým sa zobrazila len POSLEDNÁ otázka/odpoveď (plan.qa), staršie sa stratili pri ďalšej
+// otázke. Teraz sa zobrazuje celá história (plan.qaHistory, najnovšie navrchu) - pozri
+// weather-plan.js answerQuestion() pre ukladanie.
 function renderQa(plan){
   const box = document.getElementById('plan-qa');
-  if(!plan || !plan.qa || !plan.qa.answer){ box.style.display = 'none'; box.innerHTML = ''; return; }
+  const history = (plan && Array.isArray(plan.qaHistory)) ? plan.qaHistory : (plan && plan.qa ? [plan.qa] : []);
+  if(!history.length){ box.style.display = 'none'; box.innerHTML = ''; return; }
   box.style.display = '';
-  box.innerHTML = `<div class="plan-qa-q">Ty: ${escapeHtml(plan.qa.question)}</div>` +
-    `<div class="plan-qa-a">${escapeHtml(plan.qa.answer)}</div>`;
+  box.innerHTML = history.slice().reverse().map(qa => `
+    <div class="plan-qa-entry">
+      <div class="plan-qa-q">Ty: ${escapeHtml(qa.question)}</div>
+      <div class="plan-qa-a">${escapeHtml(qa.answer)}</div>
+    </div>
+  `).join('');
 }
 
 // ---------- Súhrnná tabuľka najbližšieho týždňa (Strain/Recovery odhad, viď app-common.js) ----------
@@ -447,10 +459,11 @@ document.getElementById('btn-ask').addEventListener('click', async ()=>{
   const btn = document.getElementById('btn-ask');
   btn.disabled = true;
   btn.textContent = '⏳ Pýtam sa…';
+  const beforeLen = (CURRENT_PLAN && Array.isArray(CURRENT_PLAN.qaHistory)) ? CURRENT_PLAN.qaHistory.length : 0;
   const ok = await dispatchAndPoll(
     { question },
     'odpoveď od AI',
-    (before, after) => !!(after && after.qa && after.qa.answeredAt && (!before || !before.qa || after.qa.answeredAt !== before.qa.answeredAt))
+    (before, after) => !!(after && Array.isArray(after.qaHistory) && after.qaHistory.length > beforeLen)
   );
   if(ok) input.value = '';
   btn.disabled = false;
