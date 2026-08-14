@@ -1285,5 +1285,11 @@
     }
    ]
   }
- ]
+ ],
+ "qa": {
+  "question": "Čo by si mi dnes odporučil za tréning? Momentálne mám dnes najazdených cca 8 km. Prvých 5 km som išiel smerom na Čadcu a na konci som dal približne 5 minút tvrdší úsek, kde som sa dostal na cca 160–180 bpm – nie úplne all-out, ale dosť intenzívne.  Potom som pokračoval viac-menej v Z1–Z2 a chvíľu som bol aj na kopci, kde som asi 30 minút sedel, takže to sa do tréningu veľmi neráta.  Teraz rozmýšľam, či dať napríklad 2×15 minút v Z3, alebo radšej nejaké iné intervaly. Čo by si odporučil vzhľadom na to, čo som už dnes odjazdil?  V sobotu mám voľno a v nedeľu plánujem dlhú etapu, takže nechcem dnešným tréningom zbytočne pokaziť nedeľný výkon.",
+  "answer": "Ahoj Adam. Vzhľadom na to, že už máš v nohách úvodné kilometre a 5-minútový intenzívnejší úsek (160–180 bpm), 2× 15 minút v Z3 by bolo na dnešný deň priveľa – najmä s ohľadom na blížiacu sa nedeľnú dlhú etapu a sobotňajšie voľno. \n\nNamiesto tvrdých intervalov ti odporúčam:\n- Dnes už **nerob žiadne ďalšie špeciálne intervaly** v Z3.\n- Zvyšok dnešnej jazdy dokonči **výhradne v stabilnej Z1–Z2** (vytrvalostné točenie), aby si len jemne natiahol objem bez hromadenia únavy.\n- Celkovo to dnes skús udržať v rozumnej dĺžke, dobre sa najedz a zajtrajší voľno deň využij na stopercentnú regeneráciu pred nedeľou.",
+  "answeredAt": "2026-08-14T15:20:31.769Z",
+  "model": "gemini-3.5-flash-lite"
+ }
 }
