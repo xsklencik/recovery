@@ -985,46 +985,54 @@ function computeResults(recs, activities, hrStrainByDate){
 }
 
 // ---------- Projekcia Strain/Recovery pre naplánované dni (použité na plan.html) ----------
-// FEATURE 8.8.2026 (žiadosť Adama): "hrubý odhad" Strain/Recovery pre najbližší týždeň
-// naplánovaných dní.
-// OPRAVA 9.8.2026 v1 (nahlásené Adamom - "stále je to každý deň okolo 40 %, čo je BS"): prvý
-// pokus rekonštruoval fyziológiu cez fatigueScoreForDate-štýl exponenciálny rozpad + z-skóre cez
-// zToScore(). Problém: zToScore() aj fatigueRatioToScore() sú centrované na PEVNÚ konštantu
-// (SCORE_CENTER/FATIGUE_RATIO_CENTER = 63), ktorá NIE JE prispôsobená Adamovi - ak jeho reálny
-// fatigueRatio dlhodobo sedí okolo ~1.7 (bežné pri tréningu blízko/nad aktuálnou kapacitou), obe
-// zložky vychádzajú blízko rovnakého čísla bez ohľadu na kategóriu dňa, a výsledok pôsobí
-// "zaseknuto".
-// OPRAVA 9.8.2026 v2 (tento presun): namiesto skladania z generických konštánt teraz PRIAMO
-// hľadáme v TVOJEJ VLASTNEJ histórii odpoveď na otázku "ako si sa reálne zvykol zotaviť po dni s
-// takýmto Strain?" - žiadne CTL/kapacita/z-skóre netreba. Rovnaké 4 pásma Strain ako
-// strainVerdict() vyššie (Ľahký/Stredná/Vysoká/Extrémna záťaž) sa použijú ako "kľúč": pre každé
-// pásmo sa z tvojej histórie spočíta priemerný Recovery na NASLEDUJÚCI deň. Predikcia pre
-// plánovaný deň = priemer pre pásmo, do ktorého patrí Strain PREDCHÁDZAJÚCEHO dňa (skutočného
-// alebo, pri reťazení viacero dní dopredu, už odhadnutého). Toto sa automaticky kalibruje na tvoje
-// skutočné čísla - ak sa fakticky zotavuješ na 40 %, ukáže to pravdivo (nie je to chyba vzorca,
-// ale realita, ktorú treba riešiť tréningom/spánkom, nie kozmetikou výpočtu); ak sa zotavuješ inak
-// po rôznych typoch dní, presne TO sa teraz prejaví ako skutočný rozptyl medzi dňami.
+// FEATURE 8.8.2026 (žiadosť Adama): "hrubý odhad" Strain/Recovery pre naplánované dni.
+// OPRAVA 9.8.2026 v1: prvý pokus rekonštruoval fyziológiu cez z-skóre + zToScore()/
+// fatigueRatioToScore(), ktoré sú centrované na PEVNÚ konštantu (63) neprispôsobenú Adamovi -
+// výsledok pôsobil "zaseknuto" okolo jedného čísla.
+// OPRAVA 9.8.2026 v2: nahradené empirickým vyhľadávaním v histórii podľa Strain PREDCHÁDZAJÚCEHO
+// dňa (4 pásma ako strainVerdict). Menší, ale reálny problém: pozeralo sa len na JEDEN
+// predchádzajúci deň, takže "po záťaži horšie, po oddychu lepšie" pôsobilo skokovo (jeden voľný
+// deň hneď úplne "vynuloval" niekoľko tvrdých dní pred ním), a fixné hranice 8/14/18 nemuseli sedieť
+// na to, aké skóre je preňho "typické".
+// OPRAVA 13.8.2026 v3 (nahlásené Adamom - "odhadni že po záťaži zhorší HRV atď a naopak"):
+// namiesto Strain JEDNÉHO predchádzajúceho dňa sa teraz počíta KUMULATÍVNE skóre posledných
+// RECENT_LOAD_LOOKBACK_DAYS dní s exponenciálnym rozpadom (rovnaký princíp ako fatigueScoreForDate
+// vyššie, len kratšie okno/rýchlejší rozpad) - viacero tvrdých dní PO SEBE sa teda reálne SČÍTAVA
+// (horšie), a naopak viacero voľných dní PO SEBE sa reálne postupne "vynuluje" (lepšie), nie
+// skokovo po jednom dni. Pásma navyše už NIE sú fixné hranice, ale TERCILY/KVANTILY z TVOJEJ
+// VLASTNEJ histórie tohto kumulatívneho skóre - takže "vysoká záťaž" znamená vysoká PRE TEBA, nie
+// univerzálne fixné číslo. Zvyšný princíp (empirický priemer Recovery z tvojej histórie pre dané
+// pásmo, žiadne CTL/kapacita/generické konštanty) ostáva.
 const PLAN_ESTIMATED_RAW_LOAD = {
   rest: 0,          // skutočné voľno
   indoor: 75,        // ~45-60 min. štruktúrované indoor sedenie
   intensity: 140,    // ~60-90 min. intervaly/tempo
   long: 180,         // ~2.5-4h vytrvalostná/dlhá jazda alebo beh
-  note: 110,         // deň s vlastnou poznámkou (napr. túra) - orientačný stredný odhad, keďže typ nie je štruktúrovaný ako alternatívy
+  note: 110,         // deň s vlastnou poznámkou BEZ AI klasifikácie (staršie uložené plány) - orientačný stredný odhad
   unknown: 60,
 };
-// Tieto konštanty sú vedomý odhad (ovplyvňujú len odhadovaný Strain danéh dňa, nie Recovery -
-// Recovery teraz ide čisto z historického priemeru pre dané Strain pásmo, viď vyššie) - ak po pár
-// týždňoch uvidíš, že sa systematicky líšia od toho, čo potom reálne nasynchronizuje sync.js,
-// pokojne im tu priprav iné hodnoty.
-const STRAIN_TIER_MIN_SAMPLES = 3; // menej ako toľko dní v histórii pre dané pásmo = nedôveryhodné, použi celkový priemer namiesto toho
-// Rovnaké hranice ako strainVerdict() vyššie, nech "deň po takomto predchádzajúcom dni" znamená to
-// isté, na čo si zvyknutý z Dashboardu.
-function strainTier(strain) {
-  if (strain == null) return 'light';
-  if (strain < 8) return 'light';
-  if (strain < 14) return 'moderate';
-  if (strain < 18) return 'high';
-  return 'extreme';
+// Tieto konštanty ovplyvňujú len odhadovaný Strain daného dňa (Recovery ide čisto z historického
+// priemeru pre dané pásmo, viď vyššie) - ak po pár týždňoch uvidíš, že sa systematicky líšia od
+// toho, čo potom reálne nasynchronizuje sync.js, pokojne im tu priprav iné hodnoty.
+const RECENT_LOAD_LOOKBACK_DAYS = 4;
+const RECENT_LOAD_DECAY = 0.55; // rozpad na 55 % za deň - kratšie okno/rýchlejší rozpad než FATIGUE_DECAY (0.70/14 dní), lebo tu ide o krátkodobú (HRV-podobnú) odozvu, nie o CTL
+const LOAD_TIER_MIN_SAMPLES = 4; // menej ako toľko dní v histórii pre dané pásmo = nedôveryhodné, použi celkový priemer namiesto toho
+function recentLoadScoreForDate(dateStr, loadByDate) {
+  let score = 0;
+  for (let n = 1; n <= RECENT_LOAD_LOOKBACK_DAYS; n++) {
+    const d = dateAddDays(dateStr, -n);
+    const load = loadByDate[d] || 0;
+    const effectiveLoad = load > 0 ? Math.pow(load, FATIGUE_LOAD_EXPONENT) : 0;
+    score += effectiveLoad * Math.pow(RECENT_LOAD_DECAY, n - 1);
+  }
+  return score;
+}
+// Krátke slovenské skratky dní v týždni (Po/Ut/St/Št/Pi/So/Ne) pre kompaktné zobrazenie na plan.html.
+const WEEKDAY_ABBR_SK = ['Ne', 'Po', 'Ut', 'St', 'Št', 'Pi', 'So'];
+function weekdayAbbrSk(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  return WEEKDAY_ABBR_SK[d.getDay()] || '';
 }
 
 async function projectPlanRecoveryStrain(plan, choices) {
@@ -1039,36 +1047,64 @@ async function projectPlanRecoveryStrain(plan, choices) {
   if (!recs.length) return [];
 
   const { results } = computeResults(recs, activities, hrStrainMap);
-  const last = results[results.length - 1];
-  if (!last) return [];
+  if (!results.length) return [];
+  // Skutočné (už namerané/nasynchronizované) hodnoty - ak plánovaný deň sem spadá (typicky dnešok,
+  // ak sync.js už dnes ráno stihol pribehnúť), použi ich PRIAMO namiesto predikcie - "prečo tam je
+  // predikovaných 57 %, keď mám dnes ráno reálne 59 %" bola oprávnená pripomienka.
+  const realRecoveryByDate = {}, realStrainByDate = {};
+  results.forEach(r => {
+    if (r.recovery != null) realRecoveryByDate[r.date] = r.recovery;
+    if (r.strain != null) realStrainByDate[r.date] = r.strain;
+  });
 
-  // Priemerný Recovery na deň PO dni z daného Strain pásma, spočítané priamo z tvojej histórie.
-  const overallRecoveries = results.map(r => r.recovery).filter(v => v != null);
-  const overallAvgRecovery = overallRecoveries.length ? mean(overallRecoveries) : 55;
-  const tierBuckets = { light: [], moderate: [], high: [], extreme: [] };
-  for (let i = 1; i < results.length; i++) {
-    const prevStrain = results[i - 1].strain;
-    const curRecovery = results[i].recovery;
-    if (prevStrain == null || curRecovery == null) continue;
-    tierBuckets[strainTier(prevStrain)].push(curRecovery);
+  const loadByDate = {};
+  activities.forEach(a => { if (a && a.date) loadByDate[a.date] = (loadByDate[a.date] || 0) + (a.icu_training_load || 0); });
+
+  // Historické páry (kumulatívne skóre PRED daným dňom, skutočný Recovery TOHO dňa) - presne tá
+  // istá kauzalita, akú budeme projektovať dopredu ("koľko čerstvej záťaže mám za sebou -> ako som
+  // sa dnes zobudil zregenerovaný").
+  const histPairs = [];
+  results.forEach(r => {
+    if (r.recovery == null) return;
+    histPairs.push({ score: recentLoadScoreForDate(r.date, loadByDate), recovery: r.recovery });
+  });
+  const overallAvgRecovery = histPairs.length ? mean(histPairs.map(p => p.recovery)) : 55;
+
+  // Tercily/kvantily TVOJHO VLASTNÉHO rozdelenia tohto skóre - nie univerzálne fixné hranice.
+  const sortedScores = histPairs.map(p => p.score).sort((a, b) => a - b);
+  function percentileScore(p) {
+    if (!sortedScores.length) return 0;
+    const idx = clamp(Math.round(p * (sortedScores.length - 1)), 0, sortedScores.length - 1);
+    return sortedScores[idx];
   }
+  const q1 = percentileScore(0.33), q2 = percentileScore(0.67), q3 = percentileScore(0.90);
+  function loadTier(score) {
+    if (score <= q1) return 'low';
+    if (score <= q2) return 'mid';
+    if (score <= q3) return 'high';
+    return 'extreme';
+  }
+  const tierBuckets = { low: [], mid: [], high: [], extreme: [] };
+  histPairs.forEach(p => tierBuckets[loadTier(p.score)].push(p.recovery));
   const tierAvgRecovery = {};
   Object.keys(tierBuckets).forEach(tier => {
     const vals = tierBuckets[tier];
-    tierAvgRecovery[tier] = vals.length >= STRAIN_TIER_MIN_SAMPLES ? mean(vals) : overallAvgRecovery;
+    tierAvgRecovery[tier] = vals.length >= LOAD_TIER_MIN_SAMPLES ? mean(vals) : overallAvgRecovery;
   });
 
-  let prevTier = strainTier(last.strain); // posledný SKUTOČNÝ deň - odtiaľto sa reťazenie začína
   const rows = [];
-  plan.days.slice(0, 7).forEach(d => {
+  plan.days.slice(0, 10).forEach(d => {
     let category, activityLabel;
     if (d.ownNote) {
-      category = 'note';
-      activityLabel = '📝 ' + (d.notePlan || d.ownNote);
+      // OPRAVA 13.8.2026: predtým KAŽDÝ deň s vlastnou poznámkou dostal ten istý pevný odhad
+      // (raw=110) bez ohľadu na to, či ide o "3.5h výjazd" alebo "dnes žiadny tréning, len si
+      // užívam výlet" - AI teraz sama klasifikuje (noteIntensity), použi to keď je k dispozícii.
+      category = d.noteIntensity || 'note';
+      activityLabel = d.noteLabel || ('📝 ' + (d.notePlan || d.ownNote || '').slice(0, 40));
     } else if (d.alternatives && d.alternatives.length) {
       const choice = choices[d.date];
       const recIdx = d.alternatives.findIndex(a => a.recommended);
-      const i = (choice && choice.i < d.alternatives.length) ? choice.i : (recIdx !== -1 ? recIdx : 0);
+      const i = (choice && choice.manual && choice.i < d.alternatives.length) ? choice.i : (recIdx !== -1 ? recIdx : 0);
       const active = d.alternatives[i];
       category = active.intensity;
       activityLabel = active.label;
@@ -1077,13 +1113,28 @@ async function projectPlanRecoveryStrain(plan, choices) {
       activityLabel = 'Bez návrhu';
     }
     const estLoad = PLAN_ESTIMATED_RAW_LOAD[category] != null ? PLAN_ESTIMATED_RAW_LOAD[category] : PLAN_ESTIMATED_RAW_LOAD.unknown;
-    const predictedStrain = Math.round(rawToStrain(estLoad) * 10) / 10;
-    const predictedRecovery = Math.round(clamp(tierAvgRecovery[prevTier], 0, 100));
 
-    rows.push({ date: d.date, category, activityLabel, predictedStrain, predictedRecovery });
+    const isActual = realRecoveryByDate[d.date] != null;
+    const predictedStrain = realStrainByDate[d.date] != null
+      ? Math.round(realStrainByDate[d.date] * 10) / 10
+      : Math.round(rawToStrain(estLoad) * 10) / 10;
+    let predictedRecovery;
+    if (isActual) {
+      predictedRecovery = Math.round(realRecoveryByDate[d.date]);
+    } else {
+      const score = recentLoadScoreForDate(d.date, loadByDate);
+      predictedRecovery = Math.round(clamp(tierAvgRecovery[loadTier(score)], 0, 100));
+    }
 
-    // Dnešný (odhadovaný) Strain sa stáva "predchádzajúcim dňom" pre zajtrajšiu predikciu.
-    prevTier = strainTier(predictedStrain);
+    rows.push({
+      date: d.date, weekday: weekdayAbbrSk(d.date), category, activityLabel,
+      predictedStrain, predictedRecovery, isActual,
+    });
+
+    // Zaregistruj Load pre zajtrajšie reťazenie LEN ak tam ešte nie je skutočná hodnota (napr. ak
+    // je dnešok už nasynchronizovaný, loadByDate[dnes] už obsahuje REÁLNE dáta z activities - to
+    // necháme tak, odhad by ho len zbytočne prepísal menej presným číslom).
+    if (loadByDate[d.date] == null) loadByDate[d.date] = estLoad;
   });
   return rows;
 }

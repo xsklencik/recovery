@@ -44,7 +44,13 @@
   }
   .plan-alt:hover{border-color:var(--text-faint);}
   .plan-alt.active{border-color:var(--accent);background:var(--accent-dim);color:var(--accent);}
-  .plan-alt-auto{display:inline-block;margin-left:6px;font-size:0.7rem;color:var(--text-faint);font-weight:600;}
+  .plan-fuel-btn{
+    margin-top:8px;background:none;border:1.5px dashed var(--line);color:var(--text-dim);
+    border-radius:10px;padding:5px 10px;font-size:0.74rem;font-weight:600;cursor:pointer;
+    font-family:var(--sans);
+  }
+  .plan-fuel-btn:hover{border-color:var(--text-faint);color:var(--text);}
+  .plan-fuel-panel{margin-top:8px;padding:10px 12px;background:var(--accent-dim);border-radius:10px;font-size:0.8rem;line-height:1.55;white-space:pre-line;}
   .plan-edit-card{background:var(--surface);border-radius:16px;box-shadow:var(--shadow-card);padding:12px 14px;margin-bottom:14px;}
   .plan-edit-label{font-size:0.78rem;color:var(--text-dim);font-weight:600;margin-bottom:8px;display:block;}
   .plan-edit-row{display:flex;gap:8px;}
@@ -60,7 +66,7 @@
   .plan-forecast-table th{text-align:left;color:var(--text-faint);font-weight:600;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.03em;padding:4px 6px;border-bottom:1.5px solid var(--line);}
   .plan-forecast-table td{padding:7px 6px;border-bottom:1px solid var(--line);}
   .plan-forecast-table td:first-child{font-family:var(--mono);font-weight:600;white-space:nowrap;}
-  .plan-forecast-activity{color:var(--text-dim);}
+  .plan-forecast-activity{color:var(--text-dim);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .plan-forecast-num{font-family:var(--mono);font-weight:700;text-align:right;}
 </style>
 </head>
@@ -73,7 +79,7 @@
         <h1>Počasie a AI plán</h1>
       </div>
       <div class="sub" style="color:var(--text-dim);font-size:0.85rem;margin-top:4px;">
-        Počasie a AI plán na 10 dní. Klik na alternatívu prispôsobí susedné dni. Klik na deň zobrazí hodinovú predpoveď.
+        Počasie a AI plán na 10 dní. Klik na deň zobrazí hodinovú predpoveď.
       </div>
     </div>
     <button class="btn primary" id="btn-generate">🔄 Vygenerovať plán</button>
@@ -106,9 +112,9 @@
   <div id="plan-days"></div>
 
   <div class="plan-edit-card" id="plan-forecast-card" style="display:none;">
-    <label class="plan-edit-label">📅 Najbližší týždeň - súhrn</label>
+    <label class="plan-edit-label">📅 Najbližších 10 dní - súhrn</label>
     <div id="plan-forecast-table"></div>
-    <div class="plan-edit-hint">Hrubý odhad na základe plánovanej záťaže a toho, ako si sa regeneroval doteraz - nie skutočné meranie budúcnosti.</div>
+    <div class="plan-edit-hint">Hodnoty bez "~" sú už skutočne namerané (dnešok, ak sa dnes stihol sync). Ostatné (~) sú hrubý odhad na základe plánovanej záťaže a toho, ako si sa doteraz regeneroval - nie skutočné meranie budúcnosti.</div>
   </div>
 </div>
 
@@ -129,7 +135,7 @@ function getToken(){ return localStorage.getItem('gh_pat') || ''; }
 const PLAN_URL = 'data/weather_plan.json';
 const PLAN_WORKFLOW_FILE = 'weather-plan.yml';
 
-// ---------- Výber alternatívy na deň + kaskáda do susedných dní ----------
+// ---------- Výber alternatívy na deň ----------
 // Uložené len v localStorage prehliadača (nie do repa) - je to čisto UI preferencia "ktorú
 // alternatívu si dnes chcem pozrieť", nie zmena samotného vygenerovaného plánu.
 const CHOICE_KEY = 'plan_choices_v1';
@@ -146,37 +152,17 @@ function daysWithAlternatives(plan){
   return plan.days.filter(d => !d.ownNote && d.alternatives && d.alternatives.length);
 }
 
-// Po kliknutí na alternatívu pre `fromDate` skús doladiť NASLEDUJÚCI deň (ak ho užívateľ sám
-// ručne nevybral), aby dával tréningovo zmysel: po "intensity" dni navrhni "rest", po "rest" dni
-// navrhni "intensity" (je priestor zabrať), po "long"/"indoor" dni navrhni "rest".
-// Ide zámerne len o jeden krok dopredu - reťaziť to ďalej by rýchlo prestalo byť predvídateľné.
-function cascade(plan, choices, fromDate){
-  const seq = daysWithAlternatives(plan);
-  const idx = seq.findIndex(d => d.date === fromDate);
-  if(idx === -1) return choices;
-  const cur = choices[fromDate];
-  if(!cur) return choices;
-  const curAlt = seq[idx].alternatives[cur.i];
-  if(!curAlt) return choices;
-  const next = seq[idx+1];
-  if(!next) return choices;
-  const nextChoice = choices[next.date];
-  if(nextChoice && nextChoice.manual) return choices; // užívateľ si tento deň už vybral sám, nemeníme mu ho
-
-  const wantIntensity = curAlt.intensity === 'intensity' ? 'rest'
-    : curAlt.intensity === 'rest' ? 'intensity'
-    : 'rest';
-  let ni = next.alternatives.findIndex(a => a.intensity === wantIntensity);
-  if(ni === -1) ni = next.alternatives.findIndex(a => a.intensity === 'long');
-  if(ni === -1) ni = 0;
-  choices[next.date] = { i: ni, manual:false, auto:true };
-  return choices;
-}
-
+// OPRAVA 13.8.2026 (nahlásené Adamom - ⭐ a zvýraznené/aktívne tlačidlo boli na dvoch RÔZNYCH
+// alternatívach toho istého dňa): predtým tu bola "cascade" funkcia, ktorá po kliknutí na
+// alternatívu automaticky navrhla susedný deň (napr. "po intervaloch daj voľno") a TRVALO ju
+// uložila do localStorage. Keď potom AI (server-side, so znalosťou počasia/formy/celého obdobia)
+// pri ďalšom vygenerovaní/úprave plánu označila ako "recommended" niečo iné, táto stará
+// automaticky uložená voľba ju v prehliadači ticho prebila - vyzeralo to, akoby appka sama sebe
+// odporúčala dve rôzne veci naraz. AI teraz už toto zohľadňuje sama holisticky (pozri "recommended"
+// v weather-plan.js), takže lokálna kaskáda už nie je len zbytočná, ale aktívne škodí - odstránená.
 function pickAlternative(date, i){
-  let choices = loadChoices();
+  const choices = loadChoices();
   choices[date] = { i, manual:true };
-  choices = cascade(CURRENT_PLAN, choices, date);
   saveChoices(choices);
   renderPlan(CURRENT_PLAN);
 }
@@ -188,12 +174,14 @@ function resetChoices(){
 
 // Postaví mapu date->index aktuálne vybranej alternatívy (0 = predvolená prvá), ktorú backend
 // (weather-plan.js v edit-móde) potrebuje vedieť, keďže samotný výber žije len tu v prehliadači.
+// Honoruje LEN výslovne ručný výber (manual:true) - staré/automaticky uložené voľby z už
+// odstránenej kaskády (pozri vyššie) sa ignorujú v prospech aktuálneho AI odporúčania.
 function buildCurrentSelectionPayload(plan){
   const choices = loadChoices();
   const result = {};
   daysWithAlternatives(plan).forEach(d=>{
     const c = choices[d.date];
-    if(c && c.i < d.alternatives.length){ result[d.date] = c.i; return; }
+    if(c && c.manual && c.i < d.alternatives.length){ result[d.date] = c.i; return; }
     const recommendedI = d.alternatives.findIndex(a => a.recommended);
     result[d.date] = recommendedI !== -1 ? recommendedI : 0;
   });
@@ -229,18 +217,20 @@ function renderPlan(plan){
 
   // Vyčisti si výbery pre dni, ktoré už v aktuálnom pláne neexistujú alebo nemajú alternatívy
   // (napr. po pregenerovaní plánu, keď sa okno 10 dní posunulo, alebo si si medzitým pridal vlastnú
-  // poznámku na daný deň).
+  // poznámku na daný deň). Zároveň zahoď staré NEmanuálne (auto/kaskádové) voľby - tie už appka
+  // negeneruje (viď vyššie), toto len samo od seba vyčistí to, čo mohlo ostať uložené z predošlej
+  // verzie a inak by navždy ticho prebíjalo aktuálne AI odporúčanie.
   const validDates = new Set(daysWithAlternatives(plan).map(d => d.date));
   let choices = loadChoices();
   let choicesChanged = false;
   Object.keys(choices).forEach(date => {
-    if(!validDates.has(date)){ delete choices[date]; choicesChanged = true; }
+    if(!validDates.has(date) || !choices[date].manual){ delete choices[date]; choicesChanged = true; }
   });
   if(choicesChanged) saveChoices(choices);
   resetBtn.style.display = Object.keys(choices).length ? '' : 'none';
 
   daysBox.innerHTML = plan.days.map(d=>{
-    let body, altsHtml = '';
+    let body, altsHtml = '', fuelPlanText = null;
     if(d.ownNote){
       // OPRAVA 5.8.2026 (nahlásené Adamom): predtým sa tu vždy zobrazila len surová poznámka.
       // Teraz, ak AI pre tento deň vrátila "notePlan" (krajšie sformulovaná verzia + konkrétne
@@ -252,6 +242,7 @@ function renderPlan(plan){
       } else {
         body = `<span class="plan-day-own">Tvoj plán:</span> ${escapeHtml(d.ownNote)}`;
       }
+      fuelPlanText = d.fuelPlan || null;
     } else if(d.alternatives && d.alternatives.length){
       const choice = choices[d.date];
       // OPRAVA 8.8.2026 (nahlásené Adamom - plán vyzeral, akoby dával "veľa oddychu" viacero dní
@@ -260,12 +251,15 @@ function renderPlan(plan){
       // to, čo AI reálne odporúčala. Teraz sa ako predvolená zobrazí tá, ktorú AI označila
       // "recommended" (viď weather-plan.js) - index 0 ostáva len ako záchranný fallback pre
       // staršie uložené plány spred tejto opravy, kde toto pole ešte neexistovalo.
+      // OPRAVA 13.8.2026: honoruje len VÝSLOVNE ručný výber (choice.manual) - inak stará
+      // automaticky uložená voľba vedela ticho prebiť čerstvé AI odporúčanie (⭐ a zvýraznené
+      // tlačidlo boli na dvoch rôznych alternatívach).
       const recommendedI = d.alternatives.findIndex(a => a.recommended);
       const defaultI = recommendedI !== -1 ? recommendedI : 0;
-      const i = (choice && choice.i < d.alternatives.length) ? choice.i : defaultI;
+      const i = (choice && choice.manual && choice.i < d.alternatives.length) ? choice.i : defaultI;
       const active = d.alternatives[i];
-      body = escapeHtml(active.suggestion) +
-        (choice && choice.auto ? '<span class="plan-alt-auto">🔁 doladené podľa predošlého dňa</span>' : '');
+      body = escapeHtml(active.suggestion);
+      fuelPlanText = active.fuelPlan || null;
       altsHtml = `<div class="plan-alts">` + d.alternatives.map((a,ai)=>`
         <button class="plan-alt ${ai===i?'active':''}" data-date="${d.date}" data-i="${ai}">${a.recommended?'⭐ ':''}${escapeHtml(a.label)}</button>
       `).join('') + `</div>`;
@@ -278,22 +272,37 @@ function renderPlan(plan){
       : '';
     const doneHtml = d.alreadyDone ? `<div><span class="plan-day-done">✅ už absolvované: ${escapeHtml(d.alreadyDone)}</span></div>` : '';
     const hourlyHtml = renderHourlyGrid(d.hourly);
+    // 🍌 Výživa/pitný režim - samostatné, zbalené pole (viď weather-plan.js "fuelPlan"), aby
+    // nezaplnilo kartu vždy, len keď o to používateľ prejaví záujem kliknutím.
+    const fuelHtml = fuelPlanText
+      ? `<button class="plan-fuel-btn" data-fuel-toggle="${d.date}">🍌 Výživa a pitný režim</button>
+         <div class="plan-fuel-panel" id="fuel-panel-${d.date}" style="display:none;">${escapeHtml(fuelPlanText)}</div>`
+      : '';
     return `
       <div class="plan-day" data-date="${d.date}">
         <div class="plan-day-head" data-toggle="${d.date}">
           <span class="plan-day-emoji">${d.weatherEmoji||'❓'}</span>
-          <span class="plan-day-date">${d.date}</span>
+          <span class="plan-day-date">${weekdayAbbrSk(d.date)} ${d.date}</span>
           <span class="plan-day-weather">${d.weatherDesc||''}, ${Math.round(d.tempMin)}–${Math.round(d.tempMax)}°C${d.precipMm?', 🌧️'+d.precipMm+'mm':''}${windowHtml}</span>
           <span class="plan-day-expand">▾</span>
         </div>
         ${doneHtml}
         <div class="plan-day-body">${body}</div>
         ${altsHtml}
+        ${fuelHtml}
         ${d.status ? `<span class="plan-day-status">stav: ${escapeHtml(d.status)}</span>` : ''}
         <div class="plan-hourly">${hourlyHtml}</div>
       </div>
     `;
   }).join('');
+
+  daysBox.querySelectorAll('.plan-fuel-btn').forEach(btn=>{
+    btn.addEventListener('click', (ev)=>{
+      ev.stopPropagation();
+      const panel = document.getElementById('fuel-panel-' + btn.dataset.fuelToggle);
+      if(panel) panel.style.display = panel.style.display === 'none' ? '' : 'none';
+    });
+  });
 
   daysBox.querySelectorAll('.plan-alt').forEach(btn=>{
     btn.addEventListener('click', (ev)=>{ ev.stopPropagation(); pickAlternative(btn.dataset.date, parseInt(btn.dataset.i, 10)); });
@@ -348,10 +357,10 @@ async function renderForecastTable(plan){
       <th>Deň</th><th>Aktivita</th><th style="text-align:right;">Strain</th><th style="text-align:right;">Recovery</th>
     </tr></thead><tbody>` +
     rows.map(r => `<tr>
-      <td>${r.date.slice(5)}</td>
+      <td>${r.weekday||''} ${r.date.slice(5)}</td>
       <td class="plan-forecast-activity">${escapeHtml(r.activityLabel)}</td>
-      <td class="plan-forecast-num">${r.predictedStrain!=null ? r.predictedStrain : '—'}</td>
-      <td class="plan-forecast-num">${r.predictedRecovery!=null ? r.predictedRecovery+'%' : '—'}</td>
+      <td class="plan-forecast-num">${r.predictedStrain!=null ? (r.isActual?'':'~')+r.predictedStrain : '—'}</td>
+      <td class="plan-forecast-num">${r.predictedRecovery!=null ? (r.isActual?'':'~')+r.predictedRecovery+'%' : '—'}</td>
     </tr>`).join('') +
     `</tbody></table>`;
 }
