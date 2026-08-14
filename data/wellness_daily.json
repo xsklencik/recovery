@@ -790,13 +790,13 @@
   "ctl": 50.008244,
   "atl": 76.99434,
   "weight": null,
-  "comments": "Easy túra v Tatrách s dvojičkami",
+  "comments": "Easy túra v Tatrách s dvoji��kami",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-14T16:15:30.806Z"
+  "syncedAt": "2026-08-14T16:30:40.022Z"
  },
  {
   "id": "2026-08-12",
@@ -817,7 +817,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-14T16:15:30.806Z"
+  "syncedAt": "2026-08-14T16:30:40.022Z"
  },
  {
   "id": "2026-08-13",
@@ -838,7 +838,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-14T16:15:30.806Z"
+  "syncedAt": "2026-08-14T16:30:40.022Z"
  },
  {
   "id": "2026-08-14",
@@ -859,6 +859,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-14T16:15:30.806Z"
+  "syncedAt": "2026-08-14T16:30:40.022Z"
  }
 ]
