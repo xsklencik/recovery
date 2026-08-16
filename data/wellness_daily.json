@@ -838,7 +838,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-16T17:00:49.469Z"
+  "syncedAt": "2026-08-16T17:15:28.765Z"
  },
  {
   "id": "2026-08-14",
@@ -859,7 +859,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-16T17:00:49.469Z"
+  "syncedAt": "2026-08-16T17:15:28.765Z"
  },
  {
   "id": "2026-08-15",
@@ -880,20 +880,20 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-16T17:00:49.469Z"
+  "syncedAt": "2026-08-16T17:15:28.765Z"
  },
  {
   "id": "2026-08-16",
   "date": "2026-08-16",
   "restingHR": 59,
-  "hrv": 56.487804,
+  "hrv": 56.214287,
   "hrvSDNN": 52,
   "avgSleepingHR": 62,
   "sleepScore": 86,
   "sleepSecs": 31260,
-  "steps": 4843,
-  "ctl": 49.21335,
-  "atl": 60.16234,
+  "steps": 4873,
+  "ctl": 51.30737,
+  "atl": 72.01021,
   "weight": null,
   "comments": "Rozmýšľame s danom že dáme dlhý bike. Neozýva sa mi tak neviem čo mám ísť. Je 14:00. Od pondelka do štvrtka budem mať úplne voľno. Tak čo dať dnes? Intervaly nejaké? Pr pokusy nejaké?",
   "mood": null,
@@ -901,6 +901,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-16T17:00:49.469Z"
+  "syncedAt": "2026-08-16T17:15:28.765Z"
  }
 ]
