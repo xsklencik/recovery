@@ -838,7 +838,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-16T18:45:28.249Z"
+  "syncedAt": "2026-08-16T19:00:44.547Z"
  },
  {
   "id": "2026-08-14",
@@ -859,7 +859,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-16T18:45:28.249Z"
+  "syncedAt": "2026-08-16T19:00:44.547Z"
  },
  {
   "id": "2026-08-15",
@@ -880,7 +880,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-16T18:45:28.249Z"
+  "syncedAt": "2026-08-16T19:00:44.547Z"
  },
  {
   "id": "2026-08-16",
@@ -895,12 +895,12 @@
   "ctl": 51.30737,
   "atl": 72.01021,
   "weight": null,
-  "comments": "Rozmýšľame s danom že dáme dlhý bike. Neozýva sa mi tak neviem čo mám ísť. Je 14:00. Od pondelka do štvrtka budem mať úplne voľno. Tak čo dať dnes? Intervaly nejaké? Pr pokusy nejaké?",
+  "comments": "Rozmýšľame s danom ��e dáme dlhý bike. Neozýva sa mi tak neviem čo mám ísť. Je 14:00. Od pondelka do štvrtka budem mať úplne voľno. Tak čo dať dnes? Intervaly nejaké? Pr pokusy nejaké?",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-16T18:45:28.249Z"
+  "syncedAt": "2026-08-16T19:00:44.547Z"
  }
 ]
