@@ -45,3 +45,6 @@ Dnes tvoje biometrické ukazovatele signalizujú zvýšenú únavu po včerajše
 
 ## 2026-08-12
 Tvoje ranné HRV kleslo na 50 ms, čo je o 6,4 ms pod tvojím dlhodobým priemerom, a pokojová tepová frekvencia stúpla na 60 bpm. Napriek kvalitnému spánku v dĺžke 7,8 hodiny so skóre 87 vykazuje tvoj autonómny nervový systém zvýšenú únavu. Dôvodom je akumulovaná záťaž z včerajšej 313-minútovej túry v Tatrách spojená s viac ako 24-tisíc krokmi a pondelkovou dlhou jazdou. V tvojich dátach sa opakovane potvrdzuje vzor, kedy po dvoch objemovo náročných dňoch po sebe dochádza k poklesu HRV a zvýšeniu tepu.
+
+## 2026-08-16
+Dnes vykazuješ mierne zvýšenú únavu s HRV na úrovni 52 ms, čo je o 4,2 ms pod tvojím dlhodobým priemerom. Pokojová tepová frekvencia stúpla na 59 bpm a spánková TF na 62 bpm, avšak 8,7 hodiny spánku so skóre 86 poskytlo telu dobrý základ na regeneráciu. V biometrii sa po aktívnejších dňoch opakuje vzor mierne zvýšeného tepu a poklesu HRV. Keďže ťa od zajtra čakajú štyri dni voľna v Prahe, tvoj autonómny nervový systém bez problémov znesie dnešnú záťaž.
