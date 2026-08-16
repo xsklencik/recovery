@@ -838,7 +838,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-15T19:45:29.468Z"
+  "syncedAt": "2026-08-16T04:00:49.082Z"
  },
  {
   "id": "2026-08-14",
@@ -859,7 +859,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-15T19:45:29.468Z"
+  "syncedAt": "2026-08-16T04:00:49.082Z"
  },
  {
   "id": "2026-08-15",
@@ -880,6 +880,27 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-15T19:45:29.468Z"
+  "syncedAt": "2026-08-16T04:00:49.082Z"
+ },
+ {
+  "id": "2026-08-16",
+  "date": "2026-08-16",
+  "restingHR": null,
+  "hrv": null,
+  "hrvSDNN": null,
+  "avgSleepingHR": null,
+  "sleepScore": null,
+  "sleepSecs": null,
+  "steps": null,
+  "ctl": 49.21335,
+  "atl": 60.16234,
+  "weight": null,
+  "comments": "Rozmýšľame s danom že dáme dlhý bike",
+  "mood": null,
+  "soreness": null,
+  "fatigue": null,
+  "stress": null,
+  "source": "intervals_api",
+  "syncedAt": "2026-08-16T04:00:49.082Z"
  }
 ]
