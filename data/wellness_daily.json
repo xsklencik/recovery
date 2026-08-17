@@ -859,7 +859,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-17T06:30:40.087Z"
+  "syncedAt": "2026-08-17T06:45:31.562Z"
  },
  {
   "id": "2026-08-15",
@@ -880,7 +880,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-17T06:30:40.087Z"
+  "syncedAt": "2026-08-17T06:45:31.562Z"
  },
  {
   "id": "2026-08-16",
@@ -892,8 +892,8 @@
   "sleepScore": 86,
   "sleepSecs": 31260,
   "steps": 5830,
-  "ctl": 51.30737,
-  "atl": 72.01021,
+  "ctl": 52.883766,
+  "atl": 80.92939,
   "weight": null,
   "comments": "dal som 3 krat blazkovci pokus a na 2. bez vybavy to vyslo",
   "mood": null,
@@ -901,7 +901,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-17T06:30:40.087Z"
+  "syncedAt": "2026-08-17T06:45:31.562Z"
  },
  {
   "id": "2026-08-17",
@@ -912,9 +912,9 @@
   "avgSleepingHR": 64,
   "sleepScore": 84,
   "sleepSecs": 27120,
-  "steps": 46,
-  "ctl": 50.100193,
-  "atl": 62.424057,
+  "steps": 2118,
+  "ctl": 51.6395,
+  "atl": 70.1559,
   "weight": null,
   "comments": "Praha",
   "mood": null,
@@ -922,6 +922,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-17T06:30:40.087Z"
+  "syncedAt": "2026-08-17T06:45:31.562Z"
  }
 ]
