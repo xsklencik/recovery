@@ -1448,6 +1448,203 @@ function drawChart(svgId, data, series, opts){
   svg.addEventListener('touchend', hideTooltip);
 }
 
+// ---------- Scatter graf (x/y body + voliteľná regresná priamka + zvýraznený bod) ----------
+// Na rozdiel od drawChart() vyššie (ktorý čaká rovnomerne rozložené dáta v čase, x = index dňa)
+// tento kreslí skutočný x/y graf s ľubovoľnými hodnotami na oboch osiach - použité na power.html
+// pre "CTL vs. W/kg" predikciu, ale je všeobecný, dá sa použiť aj inde.
+// points: [{x, y, label}]. opts.lineFn(x) voliteľne dokreslí priamku/krivku cez celý x-rozsah.
+// opts.highlight: {x, y, label} - zvýraznený bod (napr. dnešná predikcia), inou farbou + krúžkom.
+function drawScatterChart(svgId, points, opts){
+  opts = opts || {};
+  const svg = document.getElementById(svgId);
+  if(!svg) return;
+  const W = svg.clientWidth || 600, H = opts.height || 200;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = '';
+
+  const allPts = (points||[]).concat(opts.highlight ? [opts.highlight] : []);
+  if(allPts.length < 1){
+    svg.innerHTML = `<text x="${W/2}" y="${H/2}" fill="${PALETTE.textFaint}" font-size="12" text-anchor="middle">Nedostatok dát</text>`;
+    return;
+  }
+  const pad = {l:44, r:14, t:14, b:24};
+  const plotW = W-pad.l-pad.r, plotH = H-pad.t-pad.b;
+
+  const xVals = allPts.map(p=>p.x), yVals = allPts.map(p=>p.y);
+  let xMin = Math.min(...xVals), xMax = Math.max(...xVals);
+  let yMin = Math.min(...yVals), yMax = Math.max(...yVals);
+  const xMargin = (xMax-xMin)*0.18 || Math.abs(xMax)*0.1 || 1;
+  const yMargin = (yMax-yMin)*0.25 || Math.abs(yMax)*0.1 || 0.2;
+  xMin -= xMargin; xMax += xMargin;
+  yMin = opts.minAtZero ? Math.max(0, yMin-yMargin) : yMin-yMargin;
+  yMax += yMargin;
+
+  const xFor = x => pad.l + ((x-xMin)/((xMax-xMin)||1))*plotW;
+  const yFor = y => pad.t + plotH - ((y-yMin)/((yMax-yMin)||1))*plotH;
+
+  // gridlines + y labels (3 vodorovné čiary)
+  const gridVals = [yMin, (yMin+yMax)/2, yMax];
+  const gridGroup = document.createElementNS('http://www.w3.org/2000/svg','g');
+  gridVals.forEach(val=>{
+    const y = yFor(val);
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',pad.l); line.setAttribute('x2',W-pad.r);
+    line.setAttribute('y1',y); line.setAttribute('y2',y);
+    line.setAttribute('stroke',PALETTE.chartGrid); line.setAttribute('stroke-width','1');
+    gridGroup.appendChild(line);
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',6); t.setAttribute('y',y+3);
+    t.setAttribute('fill',PALETTE.textFaint); t.setAttribute('font-size','9.5');
+    t.textContent = opts.yFormat ? opts.yFormat(val) : (Math.round(val*100)/100);
+    gridGroup.appendChild(t);
+  });
+  svg.appendChild(gridGroup);
+
+  // x-axis labels (min/max)
+  [xMin+xMargin*0.3, xMax-xMargin*0.3].forEach((val,i)=>{
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x', xFor(val)); t.setAttribute('y', H-6);
+    t.setAttribute('fill',PALETTE.textFaint); t.setAttribute('font-size','9');
+    t.setAttribute('text-anchor', i===0?'start':'end');
+    t.textContent = (opts.xFormat ? opts.xFormat(val) : Math.round(val)) + (i===1 && opts.xLabel ? ' ' + opts.xLabel : '');
+    svg.appendChild(t);
+  });
+
+  // regresná priamka/krivka cez celý viditeľný x-rozsah
+  if(opts.lineFn){
+    const steps = 24;
+    const pts = [];
+    for(let i=0;i<=steps;i++){
+      const x = xMin + (xMax-xMin)*(i/steps);
+      const y = clamp(opts.lineFn(x), yMin, yMax);
+      pts.push({x:xFor(x), y:yFor(y)});
+    }
+    const pathEl = document.createElementNS('http://www.w3.org/2000/svg','path');
+    pathEl.setAttribute('d', pts.map((p,idx)=>(idx===0?'M':'L')+p.x.toFixed(1)+','+p.y.toFixed(1)).join(' '));
+    pathEl.setAttribute('fill','none'); pathEl.setAttribute('stroke', opts.lineColor || PALETTE.neutral);
+    pathEl.setAttribute('stroke-width','2'); pathEl.setAttribute('stroke-dasharray','5,4');
+    svg.appendChild(pathEl);
+  }
+
+  // historické body
+  (points||[]).forEach(p=>{
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx', xFor(p.x)); c.setAttribute('cy', yFor(p.y)); c.setAttribute('r','5');
+    c.setAttribute('fill', opts.pointColor || PALETTE.data);
+    c.setAttribute('stroke', PALETTE.surface); c.setAttribute('stroke-width','1.5');
+    svg.appendChild(c);
+  });
+
+  // zvýraznený bod (napr. dnešná predikcia)
+  let hx, hy;
+  if(opts.highlight){
+    hx = xFor(opts.highlight.x); hy = yFor(opts.highlight.y);
+    const ring = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    ring.setAttribute('cx',hx); ring.setAttribute('cy',hy); ring.setAttribute('r','9');
+    ring.setAttribute('fill','none'); ring.setAttribute('stroke',PALETTE.accent);
+    ring.setAttribute('stroke-width','2'); ring.setAttribute('opacity','0.4');
+    svg.appendChild(ring);
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',hx); c.setAttribute('cy',hy); c.setAttribute('r','5.5');
+    c.setAttribute('fill', PALETTE.accent); c.setAttribute('stroke', PALETTE.surface); c.setAttribute('stroke-width','1.5');
+    svg.appendChild(c);
+  }
+
+  // ---------- Tooltip (mouse + touch), zvýrazní najbližší bod ----------
+  let tooltip = svg.parentElement.querySelector('.chart-tooltip');
+  if(!tooltip){
+    tooltip = document.createElement('div');
+    tooltip.className = 'chart-tooltip';
+    svg.parentElement.style.position = 'relative';
+    svg.parentElement.appendChild(tooltip);
+  }
+  tooltip.style.display = 'none';
+  const hitPts = (points||[]).map(p=>({...p, _hi:false})).concat(opts.highlight ? [{...opts.highlight, _hi:true}] : []);
+
+  function nearest(mx, my){
+    let best=null, bestD=Infinity;
+    hitPts.forEach(p=>{
+      const dx = xFor(p.x)-mx, dy = yFor(p.y)-my, d = dx*dx+dy*dy;
+      if(d<bestD){ bestD=d; best=p; }
+    });
+    return best;
+  }
+  function showTooltip(p){
+    const dotColor = p._hi ? PALETTE.accent : (opts.pointColor || PALETTE.data);
+    tooltip.innerHTML = `<div class="tt-date">${p.label||''}</div>`
+      + `<div class="tt-row"><span class="tt-dot" style="background:${dotColor}"></span>${opts.xLabel||'x'}: <b>${opts.xFormat?opts.xFormat(p.x):p.x}</b></div>`
+      + `<div class="tt-row"><span class="tt-dot" style="background:${dotColor}"></span>${opts.yLabel||'y'}: <b>${opts.yFormat?opts.yFormat(p.y):p.y}</b></div>`;
+    tooltip.style.display = 'block';
+    const svgRect = svg.getBoundingClientRect();
+    let left = (xFor(p.x)/W) * svgRect.width;
+    const ttWidth = 150;
+    if(left+ttWidth > svgRect.width) left = svgRect.width-ttWidth-4;
+    if(left<4) left = 4;
+    tooltip.style.left = left+'px';
+    tooltip.style.top = '4px';
+  }
+  function handlePointer(clientX, clientY){
+    const rect = svg.getBoundingClientRect();
+    const mx = (clientX-rect.left) * (W/rect.width), my = (clientY-rect.top) * (H/rect.height);
+    const p = nearest(mx, my);
+    if(p) showTooltip(p);
+  }
+  svg.addEventListener('mousemove', e => handlePointer(e.clientX, e.clientY));
+  svg.addEventListener('mouseleave', ()=>{ tooltip.style.display='none'; });
+  svg.addEventListener('touchstart', e => { handlePointer(e.touches[0].clientX, e.touches[0].clientY); }, {passive:true});
+  svg.addEventListener('touchmove', e => { handlePointer(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); }, {passive:false});
+  svg.addEventListener('touchend', ()=>{ tooltip.style.display='none'; });
+}
+
+// ---------- Váhovaná viacnásobná lineárna regresia (najmenšie štvorce) ----------
+// Rieši normálne rovnice (XᵀWX)β = XᵀWy Gaussovou elimináciou s čiastočným pivotovaním - funguje
+// pre ľubovoľný počet prediktorov, vždy s interceptom. Vráti null pri singulárnej matici (napr.
+// keď sú všetky x hodnoty rovnaké alebo je bodov menej než prediktorov+1).
+// rows: pole objektov, xKeys: napr. ['ctl','tsb'], yKey: napr. 'wPerKg', weightFn(row)->váha.
+function weightedLinearRegression(rows, xKeys, yKey, weightFn){
+  const p = xKeys.length + 1, n = rows.length;
+  if(n < p) return null;
+  const X = rows.map(r => [1, ...xKeys.map(k=>r[k])]);
+  const y = rows.map(r => r[yKey]);
+  const w = rows.map(r => weightFn ? weightFn(r) : 1);
+
+  const XtWX = Array.from({length:p}, ()=>new Array(p).fill(0));
+  const XtWy = new Array(p).fill(0);
+  for(let i=0;i<n;i++){
+    for(let a=0;a<p;a++){
+      XtWy[a] += w[i]*X[i][a]*y[i];
+      for(let b=0;b<p;b++) XtWX[a][b] += w[i]*X[i][a]*X[i][b];
+    }
+  }
+  const A = XtWX.map((row,i)=>[...row, XtWy[i]]);
+  for(let col=0; col<p; col++){
+    let piv = col;
+    for(let r=col+1;r<p;r++) if(Math.abs(A[r][col]) > Math.abs(A[piv][col])) piv = r;
+    if(Math.abs(A[piv][col]) < 1e-9) return null;
+    [A[col], A[piv]] = [A[piv], A[col]];
+    for(let r=0;r<p;r++){
+      if(r===col) continue;
+      const factor = A[r][col]/A[col][col];
+      for(let c=col;c<=p;c++) A[r][c] -= factor*A[col][c];
+    }
+  }
+  const beta = A.map((row,i)=> row[p]/row[i]);
+  return { beta, predict: xRow => beta[0] + xKeys.reduce((s,k,idx)=> s + beta[idx+1]*xRow[k], 0) };
+}
+// R² (koeficient determinácie, neváhovaný - jednoduchšie sa interpretuje ako "% rozptylu
+// vysvetleného modelom", aj keď bol samotný fit váhovaný podľa čerstvosti pokusu).
+function rSquared(rows, yKey, predictFn){
+  const yVals = rows.map(r=>r[yKey]);
+  const yMean = yVals.reduce((a,b)=>a+b,0) / yVals.length;
+  let ssRes=0, ssTot=0;
+  rows.forEach(r=>{
+    const pred = predictFn(r);
+    ssRes += (r[yKey]-pred)**2;
+    ssTot += (r[yKey]-yMean)**2;
+  });
+  return ssTot>1e-9 ? 1 - ssRes/ssTot : null;
+}
+
 // ---------- História tabuľka + modál dňa ----------
 // rows musí obsahovať aspoň {date, recovery, strain, hrv, restingHR, steps, comments}
 // dayResult sa hľadá priamo v `rows`, takže funguje nezávisle na tom, koľko dní sa práve zobrazuje.

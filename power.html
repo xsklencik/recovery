@@ -60,10 +60,18 @@
       </div>
     </div>
     <div class="power-slider-row">
-      <input type="range" id="time-slider" min="60" max="1800" step="1" value="328">
+      <div class="power-slider-track-wrap">
+        <input type="range" id="time-slider" min="60" max="1800" step="1" value="328">
+        <div class="power-slider-marks" id="slider-marks"></div>
+      </div>
       <span class="power-slider-val" id="time-slider-val">5:28</span>
     </div>
-    <div class="form-hint" style="margin-bottom:0;">Presný čas môžeš zadať aj priamo: <input type="text" id="time-text" value="5:28" style="width:70px;padding:4px 8px;font-family:var(--mono);"> (mm:ss)</div>
+    <div class="power-slider-range-labels">
+      <span id="slider-min-label">1:00</span>
+      <span class="power-slider-pr-label" id="slider-pr-label"></span>
+      <span id="slider-max-label">30:00</span>
+    </div>
+    <div class="form-hint" style="margin-bottom:0;">Presný čas môžeš zadať aj priamo: <input type="text" id="time-text" value="5:28" style="width:70px;padding:4px 8px;font-family:var(--mono);"> (mm:ss). Rozsah slajdra sa prispôsobuje vybranému segmentu (podľa tvojich uložených pokusov).</div>
 
     <div class="form-section-label bordered">Bicykel a jazdec</div>
     <div class="field-row" style="margin-bottom:14px;">
@@ -149,6 +157,10 @@
   <div class="power-result" id="prediction-card">
     <div class="loading" id="prediction-loading">Načítavam…</div>
   </div>
+  <div class="chart-card" id="prediction-chart-card" style="margin-top:12px;display:none;">
+    <div class="chart-card-title">CTL vs. W/kg — trend a dnešná predikcia</div>
+    <svg id="chart-prediction"></svg>
+  </div>
 </div>
 
 <nav class="bottom-nav">
@@ -168,10 +180,12 @@ function getToken(){ return localStorage.getItem('gh_pat') || ''; }
 const EFFORTS_URL = 'data/segment_efforts.json';
 
 // Presety - Husárik má teraz reálne dáta (2.90 km / 266 m, segment "Husárik 9% Steep" zo Stravy).
+// typicalSec = orientačný čas na segmente (kým nemáš žiadny uložený pokus) - používa sa len na
+// nastavenie rozumného počiatočného rozsahu slajdra, nie do žiadneho výpočtu výkonu.
 const SEGMENTS = {
-  valy:    { name: 'Valy',    distanceKm: 0.87, elevationM: 122 },
-  husarik: { name: 'Husárik', distanceKm: 2.90, elevationM: 266 },
-  custom:  { name: 'Vlastný segment', distanceKm: null, elevationM: null },
+  valy:    { name: 'Valy',    distanceKm: 0.87, elevationM: 122, typicalSec: 328 },
+  husarik: { name: 'Husárik', distanceKm: 2.90, elevationM: 266, typicalSec: 900 },
+  custom:  { name: 'Vlastný segment', distanceKm: null, elevationM: null, typicalSec: 600 },
 };
 // Marin Gestalt je teraz primárny bicykel - preto ako prvá/predvolená možnosť.
 const BIKES = {
@@ -227,6 +241,59 @@ const stravaPowerIn = document.getElementById('in-strava-power');
 const slider = document.getElementById('time-slider');
 const timeText = document.getElementById('time-text');
 const sliderVal = document.getElementById('time-slider-val');
+const sliderMinLabel = document.getElementById('slider-min-label');
+const sliderMaxLabel = document.getElementById('slider-max-label');
+const sliderPrLabel = document.getElementById('slider-pr-label');
+const sliderMarks = document.getElementById('slider-marks');
+
+// ---------- Rozsah slajdra podľa segmentu ----------
+// Predtým bol slajder fixne 60-1800s (1-30 min) pre VŠETKY segmenty a pri prepnutí segmentu sa
+// vôbec neprispôsobil - takže napr. na 5-minútových Valoch si ťahal po 30-minútovom rozsahu
+// (jeden "krok" prsta = niekoľko sekúnd, ťažko sa trafí presná hodnota) a po prepnutí na iný
+// segment slajder ostal na starej hodnote, hoci pre nový segment nedávala zmysel. Teraz:
+// 1) ak už máš uložené pokusy na danom segmente, rozsah aj predvolená hodnota vychádzajú z nich
+//    (najrýchlejší/najpomalší čas + rezerva, predvolene tvoj posledný pokus),
+// 2) inak sa použije orientačný typicalSec zo SEGMENTS (± rozumné rozpätie).
+// Osobný rekord (zelená značka) a posledný pokus (modrá značka) sa navyše vyznačia priamo na
+// dráhe slajdra, aby si mal vizuálnu referenciu, kam práve mieriš.
+function sliderRangeForSegment(segKey){
+  const preset = SEGMENTS[segKey];
+  const segEfforts = (ALL_EFFORTS||[]).filter(e=>e.segment===preset.name).slice().sort((a,b)=> a.date<b.date?-1:1);
+  const times = segEfforts.map(e=>e.timeSec);
+  if(times.length){
+    const lo = Math.min(...times), hi = Math.max(...times);
+    const span = Math.max(hi-lo, lo*0.15, 20);
+    return {
+      min: Math.max(15, Math.round(lo - span*0.4)),
+      max: Math.round(hi + span*0.4),
+      pr: lo,
+      last: times[times.length-1],
+      lastDate: segEfforts[segEfforts.length-1].date,
+      default: times[times.length-1],
+    };
+  }
+  const typical = preset.typicalSec || 600;
+  return { min: Math.max(15, Math.round(typical*0.55)), max: Math.round(typical*2.0), pr: null, last: null, lastDate: null, default: typical };
+}
+function applySliderRange(segKey){
+  const r = sliderRangeForSegment(segKey);
+  slider.min = r.min; slider.max = r.max;
+  const val = Math.max(r.min, Math.min(r.max, r.default));
+  slider.value = val;
+  timeText.value = fmtTime(val);
+  sliderVal.textContent = fmtTime(val);
+  sliderMinLabel.textContent = fmtTime(r.min);
+  sliderMaxLabel.textContent = fmtTime(r.max);
+  sliderPrLabel.textContent = r.pr!=null ? `🏆 PR ${fmtTime(r.pr)}` : '';
+  let marksHtml = '';
+  if(r.pr!=null){
+    marksHtml += `<div class="power-slider-mark pr" style="left:${clamp((r.pr-r.min)/(r.max-r.min)*100,0,100)}%" title="Osobný rekord ${fmtTime(r.pr)}"><span class="dot"></span></div>`;
+  }
+  if(r.last!=null && r.last!==r.pr){
+    marksHtml += `<div class="power-slider-mark last" style="left:${clamp((r.last-r.min)/(r.max-r.min)*100,0,100)}%" title="Posledný pokus ${fmtTime(r.last)} (${r.lastDate})"><span class="dot"></span></div>`;
+  }
+  sliderMarks.innerHTML = marksHtml;
+}
 
 segSel.value = 'valy';
 bikeSel.value = 'marin';
@@ -237,14 +304,23 @@ bikeKgIn.value = BIKES.marin.weightKg;
 dateIn.value = todayISO();
 
 // Všetky uložené pokusy (naprieč segmentmi) - potrebné na párovanie krátky+dlhý úsilie pre
-// poctivejší CP/W' odhad (pozri nižšie). Načíta sa raz, prekreslí compute() keď dorazí.
+// poctivejší CP/W' odhad (pozri nižšie) aj na dynamický rozsah slajdra. Musí byť deklarované
+// (aj keď zatiaľ prázdne) PRED prvým applySliderRange() nižšie - inak by sliderRangeForSegment()
+// pri prvom volaní padlo na "Cannot access 'ALL_EFFORTS' before initialization".
 let ALL_EFFORTS = [];
-loadJson(EFFORTS_URL).then(all=>{ ALL_EFFORTS = all||[]; compute(); renderHistory(ALL_EFFORTS); renderPrediction(); });
+applySliderRange(segSel.value);
+
+loadJson(EFFORTS_URL).then(all=>{
+  ALL_EFFORTS = all||[];
+  applySliderRange(segSel.value); // teraz už s históriou - preráta rozsah/predvolenú hodnotu
+  compute(); renderHistory(ALL_EFFORTS); renderPrediction();
+});
 
 segSel.addEventListener('change', ()=>{
   const s = SEGMENTS[segSel.value];
   if(s.distanceKm!=null) distIn.value = s.distanceKm;
   if(s.elevationM!=null) elevIn.value = s.elevationM;
+  applySliderRange(segSel.value);
   compute();
   renderHistory(ALL_EFFORTS);
   renderPrediction();
@@ -261,7 +337,7 @@ slider.addEventListener('input', ()=>{
 });
 timeText.addEventListener('change', ()=>{
   const t = parseTime(timeText.value);
-  if(t!=null){ slider.value = Math.max(60, Math.min(1800, t)); sliderVal.textContent = fmtTime(t); }
+  if(t!=null){ slider.value = Math.max(Number(slider.min), Math.min(Number(slider.max), t)); sliderVal.textContent = fmtTime(t); }
   compute();
 });
 [distIn, elevIn, riderIn, bikeKgIn, crrSel, dateIn, stravaPowerIn].forEach(el=>el.addEventListener('input', compute));
@@ -453,23 +529,25 @@ function renderHistory(all){
 }
 
 
-// ---------- Predikcia času podľa aktuálnej formy (CTL) ----------
-// Princíp: z uložených pokusov na danom segmente vezmeme dvojice (CTL v deň pokusu, dosiahnuté
-// W/kg), preložíme cez ne priamku (najmenšie štvorce, funguje aj len pre 2 body - vtedy je to
-// doslova spojnica dvoch bodov, žiadna štatistika, len orientačný odhad). Do priamky dosadíme
-// TVOJE DNEŠNÉ CTL a dostaneme predikované W/kg -> výkon -> a numerickým hľadaním (bisekcia)
-// nájdeme čas, pri ktorom fyzikálny model segmentu dá presne tento výkon.
-function linearFit(points){
-  const n = points.length;
-  if(n < 2) return null;
-  const sumX = points.reduce((a,p)=>a+p.x,0), sumY = points.reduce((a,p)=>a+p.y,0);
-  const sumXY = points.reduce((a,p)=>a+p.x*p.y,0), sumXX = points.reduce((a,p)=>a+p.x*p.x,0);
-  const denom = n*sumXX - sumX*sumX;
-  if(Math.abs(denom) < 1e-9) return null; // všetky CTL rovnaké - priamku nevieme určiť
-  const slope = (n*sumXY - sumX*sumY) / denom;
-  const intercept = (sumY - slope*sumX) / n;
-  return { slope, intercept };
-}
+// ---------- Predikcia času podľa aktuálnej formy (CTL + TSB) ----------
+// Princíp: z uložených pokusov na danom segmente vezmeme (CTL, TSB v deň pokusu) -> dosiahnuté
+// W/kg a preložíme cez ne regresnú rovinu (najmenšie štvorce, weightedLinearRegression()
+// v app-common.js). Do nej dosadíme DNEŠNÉ CTL/TSB a dostaneme predikované W/kg -> výkon ->
+// a numerickým hľadaním (bisekcia) čas, pri ktorom fyzikálny model segmentu dá presne tento výkon.
+//
+// Oproti pôvodnej verzii (len CTL, rovnaká váha pre každý bod):
+// 1) Pridané TSB (Forma = CTL-ATL) ako druhý prediktor - CTL samotné hovorí len o VYTRÉNOVANOSTI,
+//    nie o tom, či si mal v deň pokusu čerstvé nohy. Dvaja jazdci s rovnakým CTL, ale jeden po
+//    tvrdom týždni (TSB hlboko v mínuse) a druhý po odpočinku, pôjdu inak - a presne toto model
+//    doteraz ignoroval. Použije sa len keď máš 4+ pokusov A tvoje TSB sa v nich reálne líši
+//    (inak by 2. rozmer len pridal šum bez informácie) - inak spadne na pôvodný CTL-only fit.
+// 2) Novšie pokusy majú väčšiu váhu (exponenciálny polčas rozpadu 45 dní - rovnaký horizont, aký
+//    už používa findPairing() vyššie na CP/W' párovanie) - pokus spred pol roka pri inej výbave/
+//    forme má menšiu výpovednú hodnotu než pokus spred týždňa.
+// 3) Zobrazené R² (koľko % rozptylu tvojich časov model reálne vysvetľuje cez CTL/TSB) namiesto
+//    len počtu bodov - lepší odhad spoľahlivosti než "aspoň 4 body".
+const PREDICTION_RECENCY_HALFLIFE_DAYS = 45;
+
 function timeForTargetPower(targetPowerW, {distanceKm, elevationM, riderKg, bikeKg, crr}){
   let lo = 20, hi = 3600;
   for(let i=0;i<60;i++){
@@ -482,6 +560,7 @@ function timeForTargetPower(targetPowerW, {distanceKm, elevationM, riderKg, bike
 
 async function renderPrediction(){
   const card = document.getElementById('prediction-card');
+  const chartCard = document.getElementById('prediction-chart-card');
   const segName = SEGMENTS[segSel.value].name;
   const [efforts, wHist, wDaily] = await Promise.all([
     loadJson(EFFORTS_URL), loadJson('data/wellness_history.json'), loadJson('data/wellness_daily.json'),
@@ -489,31 +568,68 @@ async function renderPrediction(){
   const wellness = mergeById(wHist||[], wDaily||[]);
   if(!wellness.length){
     card.innerHTML = '<div class="power-note">Chýbajú wellness dáta (wellness_history.json/wellness_daily.json) - predikcia nejde spočítať.</div>';
+    chartCard.style.display = 'none';
     return;
   }
-  const ctlByDate = new Map(wellness.map(r=>[r.date, r.ctl]));
-  const segEfforts = (efforts||[]).filter(e=>e.segment===segName && ctlByDate.has(e.date));
-  const points = segEfforts.map(e=>({ x: ctlByDate.get(e.date), y: e.wPerKg, date: e.date }));
+  const wellByDate = new Map(wellness.map(r=>[r.date, r]));
+  const todayDate = todayISO();
+  const segEfforts = (efforts||[]).filter(e=>e.segment===segName && wellByDate.has(e.date));
+  const rows = segEfforts.map(e=>{
+    const w = wellByDate.get(e.date);
+    const tsb = (w.ctl!=null && w.atl!=null) ? w.ctl - w.atl : null;
+    return {
+      date: e.date, ctl: w.ctl, tsb, wPerKg: e.wPerKg,
+      daysAgo: Math.max(0, (new Date(todayDate) - new Date(e.date)) / 86400000),
+    };
+  }).filter(r=>r.ctl!=null);
 
-  if(points.length < 2){
-    card.innerHTML = `<div class="power-note">Zatiaľ ${points.length} uložený pokus s dostupným CTL pre "${segName}" - na predikciu treba aspoň 2 (ideálne 4+, inak je to len spojnica dvoch bodov, nie skutočný trend). Uklad(aj) ďalšie pokusy cez "💾 Uložiť tento pokus" vyššie.</div>`;
+  if(rows.length < 2){
+    card.innerHTML = `<div class="power-note">Zatiaľ ${rows.length} uložený pokus s dostupným CTL pre "${segName}" - na predikciu treba aspoň 2 (ideálne 4+, inak je to len spojnica dvoch bodov, nie skutočný trend). Uklad(aj) ďalšie pokusy cez "💾 Uložiť tento pokus" vyššie.</div>`;
+    chartCard.style.display = 'none';
     return;
   }
-  const fit = linearFit(points);
-  if(!fit){
-    card.innerHTML = '<div class="power-note">CTL bolo pri všetkých uložených pokusoch rovnaké - nedá sa preložiť priamka.</div>';
-    return;
-  }
+
   const sortedWellness = wellness.slice().sort((a,b)=> a.date<b.date?-1:1);
-  const todayCtl = sortedWellness[sortedWellness.length-1].ctl;
-  const predictedWPerKg = Math.max(0.5, fit.slope*todayCtl + fit.intercept);
+  const todayRec = sortedWellness[sortedWellness.length-1];
+  const todayCtl = todayRec.ctl;
+  const todayTsb = (todayRec.ctl!=null && todayRec.atl!=null) ? todayRec.ctl - todayRec.atl : null;
+  const weightFn = r => Math.pow(0.5, r.daysAgo / PREDICTION_RECENCY_HALFLIFE_DAYS);
+
+  const tsbVals = rows.map(r=>r.tsb).filter(v=>v!=null);
+  const haveTsbSignal = rows.length >= 4 && tsbVals.length === rows.length && todayTsb != null
+    && (Math.max(...tsbVals) - Math.min(...tsbVals) > 2);
+
+  let predictedWPerKg = null, r2 = null, modelLabel = '', chartLineFn = null;
+  if(haveTsbSignal){
+    const model = weightedLinearRegression(rows, ['ctl','tsb'], 'wPerKg', weightFn);
+    if(model){
+      predictedWPerKg = model.predict({ctl: todayCtl, tsb: todayTsb});
+      r2 = rSquared(rows, 'wPerKg', r=>model.predict({ctl:r.ctl, tsb:r.tsb}));
+      modelLabel = 'CTL + TSB (forma), váhované podľa čerstvosti pokusu';
+      chartLineFn = ctl => model.predict({ctl, tsb: todayTsb}); // rez rovinou pri dnešnom TSB
+    }
+  }
+  if(predictedWPerKg == null){
+    const model = weightedLinearRegression(rows, ['ctl'], 'wPerKg', weightFn);
+    if(!model){
+      card.innerHTML = '<div class="power-note">CTL bolo pri všetkých uložených pokusoch rovnaké - nedá sa preložiť priamku.</div>';
+      chartCard.style.display = 'none';
+      return;
+    }
+    predictedWPerKg = model.predict({ctl: todayCtl});
+    r2 = rows.length >= 3 ? rSquared(rows, 'wPerKg', r=>model.predict({ctl:r.ctl})) : null;
+    modelLabel = rows.length >= 3 ? 'CTL, váhované podľa čerstvosti pokusu' : 'CTL (spojnica 2 bodov, bez váženia)';
+    chartLineFn = ctl => model.predict({ctl});
+  }
+  predictedWPerKg = Math.max(0.5, predictedWPerKg);
+
   const riderKg = Number(riderIn.value), bikeKg = Number(bikeKgIn.value);
   const crr = CRR_PRESETS[crrSel.value].crr;
   const distanceKm = Number(distIn.value), elevationM = Number(elevIn.value);
   const predictedPowerW = predictedWPerKg * riderKg;
   const predictedTimeSec = timeForTargetPower(predictedPowerW, {distanceKm, elevationM, riderKg, bikeKg, crr});
 
-  const lowConfidence = points.length < 4;
+  const lowConfidence = rows.length < 4;
   card.innerHTML = `
     <div class="power-result-grid">
       <div class="power-stat">
@@ -528,15 +644,27 @@ async function renderPrediction(){
       </div>
     </div>
     <div class="power-breakdown">
-      Z ${points.length} uložených pokusov (CTL vs. W/kg): ${points.map(p=>`${p.date} CTL ${p.x.toFixed(1)} → ${p.y.toFixed(2)} W/kg`).join(' · ')}<br>
-      Dnešné CTL: ${todayCtl.toFixed(1)}
+      Model: ${modelLabel}${r2!=null ? ` · R² ${r2.toFixed(2)}` : ''}<br>
+      Z ${rows.length} uložených pokusov: ${rows.map(r=>`${r.date} CTL ${r.ctl.toFixed(1)}${r.tsb!=null?', TSB '+r.tsb.toFixed(1):''} → ${r.wPerKg.toFixed(2)} W/kg`).join(' · ')}<br>
+      Dnešné CTL: ${todayCtl.toFixed(1)}${todayTsb!=null?' · dnešné TSB: '+todayTsb.toFixed(1):''}
     </div>
     <div class="power-note">
-      ${lowConfidence ? '⚠️ Len ' + points.length + ' body - toto je doslova spojnica pár bodov, nie spoľahlivý trend. Čím viac pokusov uložíš (rôzne CTL úrovne cez leto), tým zmysluplnejšia bude táto predikcia. ' : ''}
-      Model predpokladá, že W/kg na segmente rastie/klesá lineárne s CTL - realita je hlučnejšia
-      (denná forma, taktika, počasie), takže toto ber ako orientačný trend, nie presné číslo.
+      ${lowConfidence ? '⚠️ Len ' + rows.length + ' body - orientačný odhad, nie spoľahlivý trend. Čím viac pokusov uložíš (rôzne CTL/TSB úrovne cez leto), tým zmysluplnejšia bude táto predikcia. ' : ''}
+      ${r2!=null ? `Model vysvetľuje ${Math.round(Math.max(0,r2)*100)} % rozptylu tvojich doterajších časov na tomto segmente. ` : ''}
+      Realita je hlučnejšia než akýkoľvek model (taktika, počasie, denná forma nezachytená v CTL/TSB) - ber toto ako orientačný trend, nie presné číslo.
     </div>
   `;
+
+  chartCard.style.display = '';
+  drawScatterChart('chart-prediction',
+    rows.map(r=>({ x: r.ctl, y: r.wPerKg, label: `${r.date} · CTL ${r.ctl.toFixed(1)}${r.tsb!=null?', TSB '+r.tsb.toFixed(1):''}` })),
+    {
+      lineFn: chartLineFn,
+      highlight: { x: todayCtl, y: predictedWPerKg, label: 'Dnes (predikcia)' },
+      xLabel: 'CTL', yLabel: 'W/kg',
+      xFormat: v=>v.toFixed(0), yFormat: v=>v.toFixed(2),
+    }
+  );
 }
 [riderIn, bikeKgIn, crrSel, distIn, elevIn, dateIn].forEach(el=>el.addEventListener('change', renderPrediction));
 document.getElementById('btn-save-effort').addEventListener('click', ()=> setTimeout(()=>{ renderPrediction(); }, 600));
