@@ -859,7 +859,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-16T19:45:31.783Z"
+  "syncedAt": "2026-08-17T04:00:49.953Z"
  },
  {
   "id": "2026-08-15",
@@ -880,7 +880,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-16T19:45:31.783Z"
+  "syncedAt": "2026-08-17T04:00:49.953Z"
  },
  {
   "id": "2026-08-16",
@@ -901,6 +901,27 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-16T19:45:31.783Z"
+  "syncedAt": "2026-08-17T04:00:49.953Z"
+ },
+ {
+  "id": "2026-08-17",
+  "date": "2026-08-17",
+  "restingHR": null,
+  "hrv": null,
+  "hrvSDNN": null,
+  "avgSleepingHR": null,
+  "sleepScore": null,
+  "sleepSecs": null,
+  "steps": null,
+  "ctl": 50.100193,
+  "atl": 62.424057,
+  "weight": null,
+  "comments": "Praha",
+  "mood": null,
+  "soreness": null,
+  "fatigue": null,
+  "stress": null,
+  "source": "intervals_api",
+  "syncedAt": "2026-08-17T04:00:49.953Z"
  }
 ]
