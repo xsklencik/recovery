@@ -901,7 +901,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-18T19:45:32.300Z"
+  "syncedAt": "2026-08-19T04:00:50.891Z"
  },
  {
   "id": "2026-08-17",
@@ -922,7 +922,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-18T19:45:32.300Z"
+  "syncedAt": "2026-08-19T04:00:50.891Z"
  },
  {
   "id": "2026-08-18",
@@ -933,7 +933,7 @@
   "avgSleepingHR": 61,
   "sleepScore": 82,
   "sleepSecs": 26580,
-  "steps": 6345,
+  "steps": 6472,
   "ctl": 48.427868,
   "atl": 51.913193,
   "weight": null,
@@ -943,6 +943,27 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-18T19:45:32.300Z"
+  "syncedAt": "2026-08-19T04:00:50.891Z"
+ },
+ {
+  "id": "2026-08-19",
+  "date": "2026-08-19",
+  "restingHR": null,
+  "hrv": null,
+  "hrvSDNN": null,
+  "avgSleepingHR": null,
+  "sleepScore": null,
+  "sleepSecs": null,
+  "steps": null,
+  "ctl": 47.28844,
+  "atl": 45.0024,
+  "weight": null,
+  "comments": "Stále v prahe",
+  "mood": null,
+  "soreness": null,
+  "fatigue": null,
+  "stress": null,
+  "source": "intervals_api",
+  "syncedAt": "2026-08-19T04:00:50.891Z"
  }
 ]
