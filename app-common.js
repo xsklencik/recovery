@@ -1017,13 +1017,28 @@ const PLAN_ESTIMATED_RAW_LOAD = {
 const RECENT_LOAD_LOOKBACK_DAYS = 4;
 const RECENT_LOAD_DECAY = 0.55; // rozpad na 55 % za deň - kratšie okno/rýchlejší rozpad než FATIGUE_DECAY (0.70/14 dní), lebo tu ide o krátkodobú (HRV-podobnú) odozvu, nie o CTL
 const RECOVERY_KNN_MIN = 5, RECOVERY_KNN_MAX = 15; // koľko najbližších historických dní (podľa skóre) sa spriemeruje
-function recentLoadScoreForDate(dateStr, loadByDate) {
+// OPRAVA 18.8.2026 v5 (nahlásené Adamom - "dnes mám v pláne Strain ~0, a napriek tomu mi Recovery
+// na zajtra vyjde nižšie než dnes, to je volovina"): táto funkcia predtým dostávala loadByDate
+// postavené VÝHRADNE z icu_training_load (len zaznamenané štruktúrované tréningy z Intervals.icu).
+// Lenže Strain, ktorý sa reálne ZOBRAZUJE v tabuľke, počíta computeDailyStrain() vyššie zo
+// štruktúrovaných aktivít AJ denných krokov AJ HR dát z hodiniek (pozri jej komentár) - takže deň
+// bez tréningu, ale so 14-tis. krokmi mestom (Praha) môže mať zobrazený Strain pokojne 3-7, hoci
+// icu_training_load je 0. KNN driving Recovery to predtým vôbec nevidel - "videl" len 0, zatiaľ čo
+// iný deň v okne (napr. deň pred cestou) mohol mať skutočný nezanedbateľný tréning. Výsledné skóre
+// tak vedelo byť v úplnom nesúlade s tým, čo je vypísané v stĺpci Strain vedľa - vyzeralo to
+// nekonzistentne/náhodne, presne ako to Adam popísal.
+// Teraz funkcia berie priamo strainByDate - TEN ISTÝ Strain, čo je vypísaný v tabuľke (real alebo
+// dopočítaný cez rawToStrain(estLoad) pre budúce dni bez vlastných dát) - takže "Strain ~0 dnes" a
+// "Recovery zajtra" idú z jedného spoločného zdroja pravdy a nemôžu si navzájom protirečiť.
+// (rawToStrain() je navyše už sama osebe sýtiaca nelineárna transformácia (21*(1-e^(-raw/140))),
+// preto tu už netreba znova aplikovať FATIGUE_LOAD_EXPONENT ako predtým - to by bola dvojitá
+// nelinearita bez dôvodu.)
+function recentLoadScoreForDate(dateStr, strainByDate) {
   let score = 0;
   for (let n = 1; n <= RECENT_LOAD_LOOKBACK_DAYS; n++) {
     const d = dateAddDays(dateStr, -n);
-    const load = loadByDate[d] || 0;
-    const effectiveLoad = load > 0 ? Math.pow(load, FATIGUE_LOAD_EXPONENT) : 0;
-    score += effectiveLoad * Math.pow(RECENT_LOAD_DECAY, n - 1);
+    const strain = strainByDate[d] || 0;
+    score += strain * Math.pow(RECENT_LOAD_DECAY, n - 1);
   }
   return score;
 }
@@ -1071,16 +1086,38 @@ async function projectPlanRecoveryStrain(plan, choices) {
     if (r.strain != null) realStrainByDate[r.date] = r.strain;
   });
 
-  const loadByDate = {};
-  activities.forEach(a => { if (a && a.date) loadByDate[a.date] = (loadByDate[a.date] || 0) + (a.icu_training_load || 0); });
+  // OPRAVA 18.8.2026 v5 (nahlásené Adamom - "dnes mám reálne 62 %, zajtra mi to predikuje 54 %,
+  // keď nič nemám v pláne - to je volovina"): druhá príčina, popri Strain-feature vyššie. KNN
+  // predikcia PRVÉHO budúceho dňa predtým vôbec nezohľadňovala, aké bolo tvoje SKUTOČNÉ Recovery
+  // včera/dnes - len sa spýtala "aké bolo historicky Recovery na dňoch s podobnou nedávnou
+  // záťažou", čo je čisto štatistický priemer bez ohľadu na TVOJU aktuálnu fyziológiu (spánok,
+  // choroba, cestovanie...). Pri prechode z reálne nameranej hodnoty na model tak vedel vzniknúť
+  // skok, ktorý s tvojím skutočným dneškom nemal nič spoločné.
+  // Teraz sa projekcia "ukotví" k poslednému reálne nameranému Recovery a váha tejto kotvy plynulo
+  // klesá s počtom dní od poslednej reálnej hodnoty (polčas ~2.5 dňa - podobný horizont ako
+  // RECENT_LOAD_LOOKBACK_DAYS, keďže HRV/RHR sa zvyknú vrátiť k rovnováhe v podobnom čase). Deň 1
+  // dopredu je teda takmer celý "dnešok + malá korekcia smerom ku KNN odhadu", zatiaľ čo deň 6+
+  // dopredu je už prevažne čistý KNN odhad (kotva stráca zmysel, keď je príliš stará).
+  const RECOVERY_ANCHOR_HALFLIFE_DAYS = 2.5;
+  let lastRealRecovery = null, lastRealRecoveryDate = null;
+  for (let i = results.length - 1; i >= 0; i--) {
+    if (results[i].recovery != null) { lastRealRecovery = results[i].recovery; lastRealRecoveryDate = results[i].date; break; }
+  }
 
-  // Historické páry (kumulatívne skóre PRED daným dňom, skutočný Recovery TOHO dňa) - presne tá
-  // istá kauzalita, akú budeme projektovať dopredu ("koľko čerstvej záťaže mám za sebou -> ako som
-  // sa dnes zobudil zregenerovaný").
+  // Strain história pre KNN feature (viď OPRAVA 18.8.2026 v5 pri recentLoadScoreForDate vyššie) -
+  // začína ako kópia reálnych nameraných hodnôt; počas cyklu nižšie sa priebežne dopĺňa o
+  // predikovaný Strain budúcich dní plánu, aby sa reťazilo (zajtrajšia predikcia vidí dnešný
+  // predikovaný/reálny Strain, pozajtrajšia vidí oboje, atď.) - presne tá istá kauzalita ako
+  // predtým, len s konzistentným zdrojom dát namiesto icu_training_load.
+  const strainHistByDate = { ...realStrainByDate };
+
+  // Historické páry (kumulatívne Strain skóre PRED daným dňom, skutočný Recovery TOHO dňa) - presne
+  // tá istá kauzalita, akú budeme projektovať dopredu ("koľko nedávnej záťaže mám za sebou -> ako
+  // som sa dnes zobudil zregenerovaný").
   const histPairs = [];
   results.forEach(r => {
     if (r.recovery == null) return;
-    histPairs.push({ score: recentLoadScoreForDate(r.date, loadByDate), recovery: r.recovery });
+    histPairs.push({ score: recentLoadScoreForDate(r.date, strainHistByDate), recovery: r.recovery });
   });
 
   const rows = [];
@@ -1113,8 +1150,15 @@ async function projectPlanRecoveryStrain(plan, choices) {
     if (isActual) {
       predictedRecovery = Math.round(realRecoveryByDate[d.date]);
     } else {
-      const score = recentLoadScoreForDate(d.date, loadByDate);
-      predictedRecovery = Math.round(clamp(predictRecoveryForScore(score, histPairs), 0, 100));
+      const score = recentLoadScoreForDate(d.date, strainHistByDate);
+      const knnEstimate = clamp(predictRecoveryForScore(score, histPairs), 0, 100);
+      if (lastRealRecovery != null) {
+        const daysSince = Math.max(0, (new Date(d.date) - new Date(lastRealRecoveryDate)) / 86400000);
+        const anchorWeight = Math.pow(0.5, daysSince / RECOVERY_ANCHOR_HALFLIFE_DAYS);
+        predictedRecovery = Math.round(clamp(anchorWeight * lastRealRecovery + (1 - anchorWeight) * knnEstimate, 0, 100));
+      } else {
+        predictedRecovery = Math.round(knnEstimate);
+      }
     }
 
     rows.push({
@@ -1122,10 +1166,10 @@ async function projectPlanRecoveryStrain(plan, choices) {
       predictedStrain, predictedRecovery, isActual,
     });
 
-    // Zaregistruj Load pre zajtrajšie reťazenie LEN ak tam ešte nie je skutočná hodnota (napr. ak
-    // je dnešok už nasynchronizovaný, loadByDate[dnes] už obsahuje REÁLNE dáta z activities - to
-    // necháme tak, odhad by ho len zbytočne prepísal menej presným číslom).
-    if (loadByDate[d.date] == null) loadByDate[d.date] = estLoad;
+    // Zaregistruj (predikovaný) Strain pre zajtrajšie reťazenie - predictedStrain je vyššie už
+    // vyriešený na správne číslo v OBOCH prípadoch (reálne aj odhadnuté cez rawToStrain), takže na
+    // rozdiel od pôvodného loadByDate tu netreba podmienku "len ak tam ešte nič nie je".
+    strainHistByDate[d.date] = predictedStrain;
   });
   return rows;
 }

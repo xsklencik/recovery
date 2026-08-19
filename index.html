@@ -723,12 +723,12 @@ function render(results, activities, aiSummary){
 
   // ---- Bannery: farba = odchýlka od 60-dňového baseline ----
   function devInfo(value, bl, direction){
-    if(value==null || !bl) return {color:null, sub:null};
+    if(value==null || !bl) return {color:null, sub:null, z:null, direction};
     const diff = value - bl.mean;
     const z = diff/bl.std;
     const color = baselineColor(z, direction);
     const sign = diff>=0 ? '+' : '';
-    return {color, sub: `${sign}${diff.toFixed(1)} vs priemer ${bl.mean.toFixed(1)}`};
+    return {color, sub: `${sign}${diff.toFixed(1)} vs priemer ${bl.mean.toFixed(1)}`, z, direction};
   }
   const hrvDev = devInfo(today.hrv, LATEST_BASELINE.hrv, 1);
   const rhrDev = devInfo(today.restingHR, LATEST_BASELINE.restingHR, -1);
@@ -736,16 +736,40 @@ function render(results, activities, aiSummary){
   const stepsBL = LATEST_BASELINE.steps;
   const stepsSub = (today.steps!=null && stepsBL) ?
     `${today.steps>=stepsBL.mean?'+':''}${Math.round(today.steps-stepsBL.mean).toLocaleString('sk-SK')} vs priemer ${Math.round(stepsBL.mean).toLocaleString('sk-SK')}` : null;
+  // Kroky nemajú "dobrý/zlý" smer (viac krokov nie je samo osebe lepšie ani horšie ako menej),
+  // preto direction=0 - farba slajdra ostáva neutrálna (accent), len poloha ukazuje odchýlku.
+  const stepsZ = (today.steps!=null && stepsBL) ? (today.steps-stepsBL.mean)/(stepsBL.std||1) : null;
   const tsbZone = today.tsb!=null ? formaZoneFor(today.tsb) : null;
   const fatigueZone = today.fatigueRatio!=null ? fatigueRatioZoneFor(today.fatigueRatio) : null;
+
+  // ---- Zvislý "baseline" slajder (viď žiadosť Adama + priložený screenshot z Health Monitora) ----
+  // Ukazuje, KDE sa dnešná hodnota nachádza voči tvojmu 60-dňovému priemeru - stred pilulky =
+  // priemer, hore = nad priemerom, dole = pod priemerom. Škálovanie ±2.4 SD na celú výšku (mierne
+  // orezané na 8-92%, aby bodka nikdy nezmizla úplne za okrajom aj pri extrémnejších dňoch).
+  // Farba dot/výplne = baselineColor() (dobre/zle podľa smeru pre danú metriku); pri neutrálnom
+  // smere (Kroky) sa použije accent farba bez hodnotenia dobre/zle.
+  function metricSliderHtml(z, color, goodLabel, badLabel){
+    if(z==null || isNaN(z)) return '';
+    const pct = clamp(50 + z*20, 8, 92); // % od HORE (CSS top-style pozícia bodky)
+    const fillColor = color || 'var(--accent)';
+    const status = z >= 0.6 ? goodLabel : (z <= -0.6 ? badLabel : 'V norme');
+    return `<div class="metric-slider-wrap">
+      <div class="metric-slider">
+        <div class="metric-slider-mid"></div>
+        <div class="metric-slider-fill" style="height:${(100-pct).toFixed(1)}%;background:${fillColor};"></div>
+        <div class="metric-slider-dot" style="top:${pct.toFixed(1)}%;background:${fillColor};"></div>
+      </div>
+      <div class="metric-slider-status" style="${color?'color:'+color+';':''}">${status}</div>
+    </div>`;
+  }
 
   const metricsRow = document.getElementById('metrics-row');
   metricsRow.innerHTML = '';
   const metrics = [
-    {label:'HRV', val: fmt(today.hrv,1), color:hrvDev.color, sub:hrvDev.sub},
-    {label:'Pokojová TF', val: fmt(today.restingHR,0,' bpm'), color:rhrDev.color, sub:rhrDev.sub},
-    {label:'Spánková TF', val: fmt(today.avgSleepingHR,0,' bpm'), color:sleepHrDev.color, sub:sleepHrDev.sub},
-    {label:'Kroky', val: today.steps!=null ? today.steps.toLocaleString('sk-SK') : '—', sub: stepsSub},
+    {label:'HRV', val: fmt(today.hrv,1), color:hrvDev.color, sub:hrvDev.sub, slider: metricSliderHtml(hrvDev.z, hrvDev.color, 'Vyššie', 'Nižšie')},
+    {label:'Pokojová TF', val: fmt(today.restingHR,0,' bpm'), color:rhrDev.color, sub:rhrDev.sub, slider: metricSliderHtml(rhrDev.z, rhrDev.color, 'Vyššie', 'Nižšie')},
+    {label:'Spánková TF', val: fmt(today.avgSleepingHR,0,' bpm'), color:sleepHrDev.color, sub:sleepHrDev.sub, slider: metricSliderHtml(sleepHrDev.z, sleepHrDev.color, 'Vyššie', 'Nižšie')},
+    {label:'Kroky', val: today.steps!=null ? today.steps.toLocaleString('sk-SK') : '—', sub: stepsSub, slider: metricSliderHtml(stepsZ, null, 'Viac', 'Menej')},
     {label:'Tréningová únava', val: today.fatigueRatio!=null ? Math.round(today.fatigueRatio*100)+' %' : '—', color: fatigueZone?fatigueZone.color:null, sub: fatigueZone?fatigueZone.label:null},
     {label:'CTL (Fitness)', val: fmt(today.ctl,1)},
     {label:'ATL (Únava)', val: fmt(today.atl,1)},
@@ -754,9 +778,10 @@ function render(results, activities, aiSummary){
   metrics.forEach(m=>{
     const div = document.createElement('div');
     div.className='metric';
-    div.innerHTML = `<div class="metric-label">${m.label}</div><div class="metric-val" style="${m.color?'color:'+m.color+';':''}">${m.val}</div>${m.sub?`<div class="metric-sub">${m.sub}</div>`:''}`;
+    div.innerHTML = `<div class="metric-body"><div class="metric-label">${m.label}</div><div class="metric-val" style="${m.color?'color:'+m.color+';':''}">${m.val}</div>${m.sub?`<div class="metric-sub">${m.sub}</div>`:''}</div>${m.slider||''}`;
     metricsRow.appendChild(div);
   });
+
 
   renderActivityList(activities, todayDate);
   renderFormaLegend('forma-legend');

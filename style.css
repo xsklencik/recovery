@@ -158,10 +158,21 @@ h1{font-size:1.3rem;font-weight:800;margin:0;letter-spacing:-0.02em;}
 
 /* ---------- Metrics: karty (Bevel HRV/RHR mini-card štýl) ---------- */
 .metrics-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:14px;}
-.metric{background:var(--surface);border-radius:16px;box-shadow:var(--shadow-card);padding:14px 16px;}
+.metric{background:var(--surface);border-radius:16px;box-shadow:var(--shadow-card);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.metric-body{flex:1;min-width:0;}
 .metric-label{color:var(--text-faint);font-family:var(--mono);font-size:0.64rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
 .metric-val{font-family:var(--mono);font-size:1.2rem;font-weight:700;}
 .metric-sub{font-family:var(--mono);font-size:0.62rem;color:var(--text-faint);margin-top:4px;}
+/* Zvislý "baseline" slajder (inšpirované Health Monitor kartami z hodiniek) - pilulkový track s
+   vyplnenou spodnou časťou po aktuálnu hodnotu + bodka na jej presnej pozícii. Pozícia = kde sa
+   dnešná hodnota nachádza voči 60-dňovému priemeru (stred = priemer), farba = či je to podľa
+   baselineColor() dobre/zle/neutrálne pre daný smer (viď index.html). */
+.metric-slider-wrap{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.metric-slider{position:relative;width:9px;height:52px;border-radius:5px;background:var(--surface-3);overflow:visible;}
+.metric-slider-mid{position:absolute;left:-2px;right:-2px;top:50%;height:1px;background:var(--line);}
+.metric-slider-fill{position:absolute;left:0;right:0;bottom:0;border-radius:5px;opacity:0.35;}
+.metric-slider-dot{position:absolute;left:50%;width:13px;height:13px;border-radius:50%;transform:translate(-50%,50%);border:2px solid var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.35);}
+.metric-slider-status{font-family:var(--mono);font-size:0.56rem;color:var(--text-faint);white-space:nowrap;}
 
 /* ---------- AI súhrn dňa (Gemini) ---------- */
 .ai-card{
