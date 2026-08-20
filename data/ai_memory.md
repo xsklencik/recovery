@@ -51,3 +51,6 @@ Dnes vykazuješ mierne zvýšenú únavu s HRV na úrovni 52 ms, čo je o 4,2 ms
 
 ## 2026-08-17
 Dnes vykazuješ zvýšenú únavu, keďže tvoje HRV kleslo na 46 ms, čo je o 10,1 ms pod tvojím dlhodobým priemerom. Pokojová tepová frekvencia stúpla na 63 bpm a spánková TF na 64 bpm, čo signalizuje reakciu autonómneho nervového systému napriek dostatočnému 7,5-hodinovému spánku so skóre 84. Výrazný biometrický pokles priamo reaguje na včerajšiu vysokú intenzitu pri troch pokusoch na Blažkovcov. V tvojich dátach sa opakovane potvrdzuje vzor, kedy po krátkych maximálnych úsiliach a PR pokusoch dochádza nasledujúce ráno k výraznému prepadu HRV.
+
+## 2026-08-20
+Dnes si dobre zregenerovaný so solídnym ranným HRV na úrovni 65 ms a nízkou spánkovou tepovou frekvenciou 58 bpm. Počas pobytu v Prahe tvoje biometrické ukazovatele stabilne rástli a telo úspešne oddýchlo. Dnes ťa však čaká dlhá cesta domov, preto sa vyhni akýmkoľvek tréningovým ambíciám.
