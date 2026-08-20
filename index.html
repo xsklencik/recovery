@@ -742,22 +742,34 @@ function render(results, activities, aiSummary){
   const tsbZone = today.tsb!=null ? formaZoneFor(today.tsb) : null;
   const fatigueZone = today.fatigueRatio!=null ? fatigueRatioZoneFor(today.fatigueRatio) : null;
 
-  // ---- Zvislý "baseline" slajder (viď žiadosť Adama + priložený screenshot z Health Monitora) ----
-  // Ukazuje, KDE sa dnešná hodnota nachádza voči tvojmu 60-dňovému priemeru - stred pilulky =
-  // priemer, hore = nad priemerom, dole = pod priemerom. Škálovanie ±2.4 SD na celú výšku (mierne
-  // orezané na 8-92%, aby bodka nikdy nezmizla úplne za okrajom aj pri extrémnejších dňoch).
-  // Farba dot/výplne = baselineColor() (dobre/zle podľa smeru pre danú metriku); pri neutrálnom
-  // smere (Kroky) sa použije accent farba bez hodnotenia dobre/zle.
-  function metricSliderHtml(z, color, goodLabel, badLabel){
+  // ---- Vodorovný "baseline" pás (viď žiadosť Adama + priložený screenshot z Health Monitora) ----
+  // OPRAVA 19.8.2026: pôvodná zvislá tenká pilulka vedľa textu bola natlačená do úzkeho stĺpca a
+  // nemala žiadne referenčné hodnoty - dala sa z nej vyčítať len hrubá poloha ("niekde hore"), nie
+  // KDE presne v tvojom bežnom rozsahu si. Teraz je to vodorovný pás cez celú šírku karty (pod
+  // hodnotou, nie vedľa nej), s reálnymi jednotkami na okrajoch (nie abstraktné SD) a 3 farebnými
+  // zónami na pozadí, takže je hneď vidieť "toto je moje bežné pásmo" aj bez čítania čísel.
+  // Stred pásu = tvoj 60-dňový priemer, okraje = priemer ±2.4 SD. Farba zón/bodky podľa direction:
+  //  +1 = vyššie je lepšie (HRV)   -> zelená zóna vpravo, červená vľavo
+  //  -1 = nižšie je lepšie (TF)    -> zelená zóna vľavo, červená vpravo
+  //   0 = neutrálne (Kroky)        -> žiadne hodnotenie dobre/zle, len poloha
+  function metricSliderHtml(z, color, goodLabel, badLabel, direction, bl, fmtFn){
     if(z==null || isNaN(z)) return '';
-    const pct = clamp(50 + z*20, 8, 92); // % od HORE (CSS top-style pozícia bodky)
+    const pct = clamp(50 + z*20, 4, 96); // % zľava - rovnaké škálovanie ako predtým (±2.4 SD ~ celá šírka)
     const fillColor = color || 'var(--accent)';
     const status = z >= 0.6 ? goodLabel : (z <= -0.6 ? badLabel : 'V norme');
+    const goodTint = hexToRgba(PALETTE.good, 0.20), badTint = hexToRgba(PALETTE.bad, 0.20);
+    const zoneLo = direction > 0 ? badTint : (direction < 0 ? goodTint : 'var(--surface-3)');
+    const zoneHi = direction > 0 ? goodTint : (direction < 0 ? badTint : 'var(--surface-3)');
+    const lo = bl ? fmtFn(Math.max(0, bl.mean - 2.4*bl.std)) : null;
+    const hi = bl ? fmtFn(bl.mean + 2.4*bl.std) : null;
     return `<div class="metric-slider-wrap">
-      <div class="metric-slider">
-        <div class="metric-slider-mid"></div>
-        <div class="metric-slider-fill" style="height:${(100-pct).toFixed(1)}%;background:${fillColor};"></div>
-        <div class="metric-slider-dot" style="top:${pct.toFixed(1)}%;background:${fillColor};"></div>
+      <div class="metric-slider-row">
+        ${lo!=null ? `<span class="metric-slider-endlabel lo">${lo}</span>` : ''}
+        <div class="metric-slider" style="--zone-lo:${zoneLo};--zone-mid:var(--surface-3);--zone-hi:${zoneHi};">
+          <div class="metric-slider-mid"></div>
+          <div class="metric-slider-dot" style="left:${pct.toFixed(1)}%;background:${fillColor};"></div>
+        </div>
+        ${hi!=null ? `<span class="metric-slider-endlabel hi">${hi}</span>` : ''}
       </div>
       <div class="metric-slider-status" style="${color?'color:'+color+';':''}">${status}</div>
     </div>`;
@@ -766,10 +778,14 @@ function render(results, activities, aiSummary){
   const metricsRow = document.getElementById('metrics-row');
   metricsRow.innerHTML = '';
   const metrics = [
-    {label:'HRV', val: fmt(today.hrv,1), color:hrvDev.color, sub:hrvDev.sub, slider: metricSliderHtml(hrvDev.z, hrvDev.color, 'Vyššie', 'Nižšie')},
-    {label:'Pokojová TF', val: fmt(today.restingHR,0,' bpm'), color:rhrDev.color, sub:rhrDev.sub, slider: metricSliderHtml(rhrDev.z, rhrDev.color, 'Vyššie', 'Nižšie')},
-    {label:'Spánková TF', val: fmt(today.avgSleepingHR,0,' bpm'), color:sleepHrDev.color, sub:sleepHrDev.sub, slider: metricSliderHtml(sleepHrDev.z, sleepHrDev.color, 'Vyššie', 'Nižšie')},
-    {label:'Kroky', val: today.steps!=null ? today.steps.toLocaleString('sk-SK') : '—', sub: stepsSub, slider: metricSliderHtml(stepsZ, null, 'Viac', 'Menej')},
+    {label:'HRV', val: fmt(today.hrv,1), color:hrvDev.color, sub:hrvDev.sub,
+      slider: metricSliderHtml(hrvDev.z, hrvDev.color, 'Vyššie', 'Nižšie', 1, LATEST_BASELINE.hrv, v=>v.toFixed(0))},
+    {label:'Pokojová TF', val: fmt(today.restingHR,0,' bpm'), color:rhrDev.color, sub:rhrDev.sub,
+      slider: metricSliderHtml(rhrDev.z, rhrDev.color, 'Vyššie', 'Nižšie', -1, LATEST_BASELINE.restingHR, v=>v.toFixed(0))},
+    {label:'Spánková TF', val: fmt(today.avgSleepingHR,0,' bpm'), color:sleepHrDev.color, sub:sleepHrDev.sub,
+      slider: metricSliderHtml(sleepHrDev.z, sleepHrDev.color, 'Vyššie', 'Nižšie', -1, LATEST_BASELINE.avgSleepingHR, v=>v.toFixed(0))},
+    {label:'Kroky', val: today.steps!=null ? today.steps.toLocaleString('sk-SK') : '—', sub: stepsSub,
+      slider: metricSliderHtml(stepsZ, null, 'Viac', 'Menej', 0, stepsBL, v=>Math.round(v).toLocaleString('sk-SK'))},
     {label:'Tréningová únava', val: today.fatigueRatio!=null ? Math.round(today.fatigueRatio*100)+' %' : '—', color: fatigueZone?fatigueZone.color:null, sub: fatigueZone?fatigueZone.label:null},
     {label:'CTL (Fitness)', val: fmt(today.ctl,1)},
     {label:'ATL (Únava)', val: fmt(today.atl,1)},

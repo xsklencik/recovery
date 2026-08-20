@@ -157,22 +157,31 @@ h1{font-size:1.3rem;font-weight:800;margin:0;letter-spacing:-0.02em;}
 }
 
 /* ---------- Metrics: karty (Bevel HRV/RHR mini-card štýl) ---------- */
-.metrics-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:14px;}
-.metric{background:var(--surface);border-radius:16px;box-shadow:var(--shadow-card);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.metric-body{flex:1;min-width:0;}
-.metric-label{color:var(--text-faint);font-family:var(--mono);font-size:0.64rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.metrics-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px;}
+.metric{background:var(--surface);border-radius:16px;box-shadow:var(--shadow-card);padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
+.metric-body{display:flex;flex-direction:column;gap:2px;}
+.metric-label{color:var(--text-faint);font-family:var(--mono);font-size:0.64rem;text-transform:uppercase;letter-spacing:.06em;}
 .metric-val{font-family:var(--mono);font-size:1.2rem;font-weight:700;}
-.metric-sub{font-family:var(--mono);font-size:0.62rem;color:var(--text-faint);margin-top:4px;}
-/* Zvislý "baseline" slajder (inšpirované Health Monitor kartami z hodiniek) - pilulkový track s
-   vyplnenou spodnou časťou po aktuálnu hodnotu + bodka na jej presnej pozícii. Pozícia = kde sa
-   dnešná hodnota nachádza voči 60-dňovému priemeru (stred = priemer), farba = či je to podľa
-   baselineColor() dobre/zle/neutrálne pre daný smer (viď index.html). */
-.metric-slider-wrap{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:4px;}
-.metric-slider{position:relative;width:9px;height:52px;border-radius:5px;background:var(--surface-3);overflow:visible;}
-.metric-slider-mid{position:absolute;left:-2px;right:-2px;top:50%;height:1px;background:var(--line);}
-.metric-slider-fill{position:absolute;left:0;right:0;bottom:0;border-radius:5px;opacity:0.35;}
-.metric-slider-dot{position:absolute;left:50%;width:13px;height:13px;border-radius:50%;transform:translate(-50%,50%);border:2px solid var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.35);}
-.metric-slider-status{font-family:var(--mono);font-size:0.56rem;color:var(--text-faint);white-space:nowrap;}
+.metric-sub{font-family:var(--mono);font-size:0.62rem;color:var(--text-faint);}
+/* Vodorovný "baseline" pás (inšpirované Health Monitor kartami z hodiniek) - pilulkový track s
+   3 farebnými zónami (nižšie/v norme/vyššie voči 60-dňovému priemeru) + bodka na presnej pozícii
+   dnešnej hodnoty. Číselné hodnoty na okrajoch = skutočné jednotky (nie abstraktné SD), aby bolo
+   hneď jasné "toto je môj bežný rozsah" bez prepočítavania v hlave. Stavový popisok (napr.
+   "Vyššie") je farebne zvýraznený a sedí hneď vedľa bodky, nie oddelene pod celým pásom.
+   direction: 1 = vyššie je lepšie (zelená hore), -1 = nižšie je lepšie (zelená dole), 0 = neutrálne
+   (len poloha, žiadne hodnotenie dobre/zle - napr. Kroky). */
+.metric-slider-wrap{display:flex;flex-direction:column;gap:5px;}
+.metric-slider-row{display:flex;align-items:center;gap:8px;}
+.metric-slider-endlabel{font-family:var(--mono);font-size:0.6rem;color:var(--text-faint);flex-shrink:0;min-width:2.6em;}
+.metric-slider-endlabel.hi{text-align:right;}
+.metric-slider{position:relative;flex:1;height:10px;border-radius:6px;overflow:visible;
+  background:linear-gradient(to right, var(--zone-lo, var(--surface-3)) 0%, var(--zone-lo, var(--surface-3)) 38%,
+    var(--zone-mid, var(--surface-3)) 38%, var(--zone-mid, var(--surface-3)) 62%,
+    var(--zone-hi, var(--surface-3)) 62%, var(--zone-hi, var(--surface-3)) 100%);}
+.metric-slider-mid{position:absolute;top:-3px;bottom:-3px;left:50%;width:1px;background:var(--line);}
+.metric-slider-dot{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;transform:translate(-50%,-50%);border:2px solid var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.35);}
+.metric-slider-status{font-family:var(--mono);font-size:0.66rem;font-weight:700;text-align:right;white-space:nowrap;}
+
 
 /* ---------- AI súhrn dňa (Gemini) ---------- */
 .ai-card{
