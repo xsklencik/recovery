@@ -54,3 +54,6 @@ Dnes vykazuješ zvýšenú únavu, keďže tvoje HRV kleslo na 46 ms, čo je o 1
 
 ## 2026-08-20
 Dnes si dobre zregenerovaný so solídnym ranným HRV na úrovni 65 ms a nízkou spánkovou tepovou frekvenciou 58 bpm. Počas pobytu v Prahe tvoje biometrické ukazovatele stabilne rástli a telo úspešne oddýchlo. Dnes ťa však čaká dlhá cesta domov, preto sa vyhni akýmkoľvek tréningovým ambíciám.
+
+## 2026-08-22
+Dnes si výborne zregenerovaný s nadpriemerným spánkovým skóre 89 pri 8,1 hodinách spánku. Tvoje ranné HRV 57 ms ľahko prevyšuje dlhodobý priemer a pokojová tepová frekvencia klesla na vynikajúcich 52 bpm, čo je o 5,1 bpm menej než zvyčajne. Autonómny nervový systém sa po cestovaní plne stabilizoval a spánkový tep 58 bpm potvrdzuje hlbokú regeneráciu. V dátach vidíme vzor rýchleho návratu do optimálneho pásma po dňoch s nižšou tréningovou záťažou.
