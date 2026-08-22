@@ -1,0 +1,39 @@
+name: Analyze Activity
+
+# OPRAVA 20.8.2026 (nahlásené Adamom - "AI hodnotenie pri aktivite v Kalendári nefunguje"): tento
+# workflow predtým vôbec neexistoval - calendar.html (runActivityAnalysis()) sa ho už dlho snažil
+# dispatchnúť cez GitHub API, čo vždy spadlo na 404 hneď na prvom kroku. Vzor 1:1 podľa
+# ai-summary.yml, len s activity_id inputom namiesto force.
+
+on:
+  workflow_dispatch:
+    inputs:
+      activity_id:
+        description: 'ID aktivity na Intervals.icu (napr. i176501703)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  analyze-activity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Vygeneruj AI hodnotenie aktivity
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ACTIVITY_ID: ${{ github.event.inputs.activity_id }}
+        run: node analyze-activity.js
+      - name: Commit a push výsledok
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -f data/activity_analyses.json ]; then git add data/activity_analyses.json; fi
+          if ! git diff --staged --quiet; then
+            git commit -m "AI hodnotenie aktivity ${{ github.event.inputs.activity_id }}"
+            git push
+          fi
