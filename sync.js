@@ -410,7 +410,24 @@ async function main() {
 
   const wellnessMerged = mergeById(loadJsonSafe(wellnessFile), wellnessNew, 'id')
     .sort((a, b) => (a.date < b.date ? -1 : 1));
-  const activitiesMerged = mergeById(loadJsonSafe(activitiesFile), activitiesNew, 'id')
+
+  // OPRAVA 20.8.2026 (nahlásené Adamom - "keď vymažem aktivitu z Intervals.icu, na stránke mi tam
+  // stále ostane"): mergeById() robí len upsert (pridá/aktualizuje podľa id), NIKDY nič nezmaže -
+  // takže zmazaná aktivita v activitiesNew jednoducho chýbala, ale jej stará kópia v
+  // activities_daily.json tam ostávala navždy, lebo ju nemal kto odstrániť.
+  // activitiesNew obsahuje VŠETKO, čo Intervals.icu aktuálne vracia pre okno [oldest, newest] -
+  // takže každý lokálny záznam z TOHTO OKNA, čo v activitiesNew chýba, už na Intervals.icu
+  // evidentne neexistuje (zmazaný/presunutý mimo okna) a treba ho odstrániť. Záznamy MIMO okna
+  // (staršie než `oldest`) necháme tak - o tých tento beh nemá žiadnu čerstvú informáciu, takže by
+  // bolo nesprávne ich mazať len preto, že nie sú v `activitiesNew`.
+  const incomingActivityIds = new Set(activitiesNew.map(a => a.id));
+  const existingActivities = loadJsonSafe(activitiesFile);
+  const staleActivities = existingActivities.filter(a => a.date >= oldest && !incomingActivityIds.has(a.id));
+  if (staleActivities.length) {
+    console.log(`🗑️ Odstraňujem ${staleActivities.length} aktivít, ktoré už neexistujú na Intervals.icu: ${staleActivities.map(a => `${a.id} (${a.date})`).join(', ')}`);
+  }
+  const keptExistingActivities = existingActivities.filter(a => a.date < oldest || incomingActivityIds.has(a.id));
+  const activitiesMerged = mergeById(keptExistingActivities, activitiesNew, 'id')
     .sort((a, b) => (a.date < b.date ? -1 : 1));
 
   fs.writeFileSync(wellnessFile, JSON.stringify(wellnessMerged, null, 1));
