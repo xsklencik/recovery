@@ -985,7 +985,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-23T17:45:28.277Z"
+  "syncedAt": "2026-08-23T18:00:46.945Z"
  },
  {
   "id": "2026-08-21",
@@ -1006,7 +1006,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-23T17:45:28.277Z"
+  "syncedAt": "2026-08-23T18:00:46.945Z"
  },
  {
   "id": "2026-08-22",
@@ -1027,27 +1027,27 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-23T17:45:28.277Z"
+  "syncedAt": "2026-08-23T18:00:46.945Z"
  },
  {
   "id": "2026-08-23",
   "date": "2026-08-23",
   "restingHR": 61,
   "hrv": 55.263157,
-  "hrvSDNN": null,
-  "avgSleepingHR": null,
+  "hrvSDNN": 53,
+  "avgSleepingHR": 61,
   "sleepScore": 86,
   "sleepSecs": 27660,
-  "steps": 4079,
-  "ctl": 43.68805,
-  "atl": 28.514854,
-  "weight": null,
+  "steps": 4090,
+  "ctl": 51.02888,
+  "atl": 70.04895,
+  "weight": 59.4,
   "comments": "rozmyslame s danom ze dame zazrivu co je 114km s 1500m vyskovimy. moderate tempo na kommote ukazuje 7 hodin cca. pojdeme pomaly cize bez problemov by som to mal dat nie?",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-23T17:45:28.277Z"
+  "syncedAt": "2026-08-23T18:00:46.945Z"
  }
 ]
