@@ -979,13 +979,13 @@
   "ctl": 46.175823,
   "atl": 39.011585,
   "weight": null,
-  "comments": "Cesta domov z Prahy. Pr��deme až o 21",
+  "comments": "Cesta domov z Prahy. Prídeme až o 21",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-23T06:00:48.763Z"
+  "syncedAt": "2026-08-23T06:15:30.723Z"
  },
  {
   "id": "2026-08-21",
@@ -1006,7 +1006,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-23T06:00:48.763Z"
+  "syncedAt": "2026-08-23T06:15:30.723Z"
  },
  {
   "id": "2026-08-22",
@@ -1027,7 +1027,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-23T06:00:48.763Z"
+  "syncedAt": "2026-08-23T06:15:30.723Z"
  },
  {
   "id": "2026-08-23",
@@ -1048,6 +1048,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-23T06:00:48.763Z"
+  "syncedAt": "2026-08-23T06:15:30.723Z"
  }
 ]
