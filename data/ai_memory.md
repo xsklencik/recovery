@@ -57,3 +57,6 @@ Dnes si dobre zregenerovaný so solídnym ranným HRV na úrovni 65 ms a nízkou
 
 ## 2026-08-22
 Dnes si výborne zregenerovaný s nadpriemerným spánkovým skóre 89 pri 8,1 hodinách spánku. Tvoje ranné HRV 57 ms ľahko prevyšuje dlhodobý priemer a pokojová tepová frekvencia klesla na vynikajúcich 52 bpm, čo je o 5,1 bpm menej než zvyčajne. Autonómny nervový systém sa po cestovaní plne stabilizoval a spánkový tep 58 bpm potvrdzuje hlbokú regeneráciu. V dátach vidíme vzor rýchleho návratu do optimálneho pásma po dňoch s nižšou tréningovou záťažou.
+
+## 2026-08-24
+Dnes si čiastočne zregenerovaný, avšak tvoje biometrické dáta ukazujú zmiešaný signál. HRV 63 ms je nad tvojím dlhodobým priemerom, no pokojová aj spánková tepová frekvencia 63 bpm vzrástli o niekoľko úderov nad normu. Dlhý 8.6-hodinový spánok pomohol regenerácii, ale telo spracováva obrovskú včerajšiu záťaž 312 po 472-minútovej jazde. V tvojej histórii sa po masívnych objemoch opakuje vzor zvýšeného tepu, čo signalizuje kardiovaskulárne vyčerpanie napriek vysokému HRV.
