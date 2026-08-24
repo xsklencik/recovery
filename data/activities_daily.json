@@ -963,5 +963,27 @@
   "hr_z3_secs": 1745,
   "hr_z4_secs": 55,
   "hr_z5_secs": 0
+ },
+ {
+  "id": "i179327940",
+  "date": "2026-08-24",
+  "start_date_local": "2026-08-24T14:56:16",
+  "name": "Afternoon Virtual Ride",
+  "type": "VirtualRide",
+  "comments": null,
+  "moving_time": 10740,
+  "distance": 42030,
+  "average_heartrate": 123,
+  "max_heartrate": 164,
+  "icu_training_load": 89,
+  "icu_ctl": 51.92228,
+  "icu_atl": 72.571754,
+  "icu_intensity": 54.477203,
+  "icu_rpe": null,
+  "hr_z1_secs": 9672,
+  "hr_z2_secs": 970,
+  "hr_z3_secs": 105,
+  "hr_z4_secs": 0,
+  "hr_z5_secs": 0
  }
 ]
