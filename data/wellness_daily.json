@@ -1021,13 +1021,13 @@
   "ctl": 44.740723,
   "atl": 32.893738,
   "weight": null,
-  "comments": "Oslava bude čiže voľno celý deň",
+  "comments": "Oslava bude čiže vo��no celý deň",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-25T10:30:43.272Z"
+  "syncedAt": "2026-08-25T10:45:30.261Z"
  },
  {
   "id": "2026-08-23",
@@ -1048,7 +1048,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-25T10:30:43.272Z"
+  "syncedAt": "2026-08-25T10:45:30.261Z"
  },
  {
   "id": "2026-08-24",
@@ -1069,18 +1069,18 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-25T10:30:43.272Z"
+  "syncedAt": "2026-08-25T10:45:30.261Z"
  },
  {
   "id": "2026-08-25",
   "date": "2026-08-25",
-  "restingHR": 65,
+  "restingHR": 55,
   "hrv": 45.833332,
   "hrvSDNN": null,
   "avgSleepingHR": null,
   "sleepScore": 93,
   "sleepSecs": 29100,
-  "steps": 1439,
+  "steps": 1579,
   "ctl": 50.700634,
   "atl": 62.91085,
   "weight": null,
@@ -1090,6 +1090,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-25T10:30:43.272Z"
+  "syncedAt": "2026-08-25T10:45:30.261Z"
  }
 ]
