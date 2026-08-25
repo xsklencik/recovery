@@ -1021,13 +1021,13 @@
   "ctl": 44.740723,
   "atl": 32.893738,
   "weight": null,
-  "comments": "Oslava bude čiže voľno celý deň",
+  "comments": "Oslava bude čiže voľno cel�� deň",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-25T19:15:30.747Z"
+  "syncedAt": "2026-08-25T19:30:44.814Z"
  },
  {
   "id": "2026-08-23",
@@ -1048,7 +1048,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-25T19:15:30.747Z"
+  "syncedAt": "2026-08-25T19:30:44.814Z"
  },
  {
   "id": "2026-08-24",
@@ -1069,7 +1069,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-25T19:15:30.747Z"
+  "syncedAt": "2026-08-25T19:30:44.814Z"
  },
  {
   "id": "2026-08-25",
@@ -1080,16 +1080,16 @@
   "avgSleepingHR": 66,
   "sleepScore": 93,
   "sleepSecs": 29100,
-  "steps": 6180,
+  "steps": 7107,
   "ctl": 50.700634,
   "atl": 62.91085,
   "weight": null,
-  "comments": null,
+  "comments": "Maľovanie stoličiek",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-25T19:15:30.747Z"
+  "syncedAt": "2026-08-25T19:30:44.814Z"
  }
 ]
