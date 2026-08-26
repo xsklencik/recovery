@@ -1048,7 +1048,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-26T05:00:49.554Z"
+  "syncedAt": "2026-08-26T05:15:29.709Z"
  },
  {
   "id": "2026-08-24",
@@ -1069,18 +1069,18 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-26T05:00:49.554Z"
+  "syncedAt": "2026-08-26T05:15:29.709Z"
  },
  {
   "id": "2026-08-25",
   "date": "2026-08-25",
   "restingHR": 55,
-  "hrv": 45.833332,
+  "hrv": 45.0625,
   "hrvSDNN": 45,
   "avgSleepingHR": 66,
   "sleepScore": 93,
   "sleepSecs": 29100,
-  "steps": 7107,
+  "steps": 7170,
   "ctl": 50.700634,
   "atl": 62.91085,
   "weight": null,
@@ -1090,27 +1090,27 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-26T05:00:49.554Z"
+  "syncedAt": "2026-08-26T05:15:29.709Z"
  },
  {
   "id": "2026-08-26",
   "date": "2026-08-26",
   "restingHR": null,
   "hrv": null,
-  "hrvSDNN": null,
-  "avgSleepingHR": null,
-  "sleepScore": null,
-  "sleepSecs": null,
-  "steps": null,
+  "hrvSDNN": 74,
+  "avgSleepingHR": 58,
+  "sleepScore": 87,
+  "sleepSecs": 29280,
+  "steps": 84,
   "ctl": 49.507732,
   "atl": 54.536026,
   "weight": null,
-  "comments": "Celo denný výlet na biku so siskou čo znamená Max tak 40km tiež také recovery jej tempom",
+  "comments": "Celo denný výlet na biku so siskou čo znamená Max tak 40km tiež také recovery jej tempom. No neviem asi nejdeme nič. Maľovať plot budeme",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-26T05:00:49.554Z"
+  "syncedAt": "2026-08-26T05:15:29.709Z"
  }
 ]
