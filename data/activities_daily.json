@@ -985,5 +985,28 @@
   "hr_z3_secs": 105,
   "hr_z4_secs": 0,
   "hr_z5_secs": 0
+ },
+ {
+  "id": "i180024486",
+  "date": "2026-08-26",
+  "start_date_local": "2026-08-26T12:49:12",
+  "name": "Lunch Ride",
+  "type": "Ride",
+  "comments": null,
+  "moving_time": 1299,
+  "distance": 4540,
+  "total_elevation_gain": 43.400024,
+  "average_heartrate": 115,
+  "max_heartrate": 132,
+  "icu_training_load": 9,
+  "icu_ctl": 49.71949,
+  "icu_atl": 55.734123,
+  "icu_intensity": 49.865513,
+  "icu_rpe": null,
+  "hr_z1_secs": 1305,
+  "hr_z2_secs": 0,
+  "hr_z3_secs": 0,
+  "hr_z4_secs": 0,
+  "hr_z5_secs": 0
  }
 ]

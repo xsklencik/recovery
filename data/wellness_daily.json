@@ -1048,7 +1048,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-26T12:45:29.790Z"
+  "syncedAt": "2026-08-26T13:00:54.396Z"
  },
  {
   "id": "2026-08-24",
@@ -1069,7 +1069,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-26T12:45:29.790Z"
+  "syncedAt": "2026-08-26T13:00:54.396Z"
  },
  {
   "id": "2026-08-25",
@@ -1090,7 +1090,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-26T12:45:29.790Z"
+  "syncedAt": "2026-08-26T13:00:54.396Z"
  },
  {
   "id": "2026-08-26",
@@ -1102,8 +1102,8 @@
   "sleepScore": 87,
   "sleepSecs": 29280,
   "steps": 2804,
-  "ctl": 49.507732,
-  "atl": 54.536026,
+  "ctl": 49.71949,
+  "atl": 55.734123,
   "weight": null,
   "comments": "Celo denný výlet na biku so siskou čo znamená Max tak 40km tiež také recovery jej tempom. No neviem asi nejdeme nič. Maľovať plot budeme",
   "mood": null,
@@ -1111,6 +1111,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-26T12:45:29.790Z"
+  "syncedAt": "2026-08-26T13:00:54.396Z"
  }
 ]
