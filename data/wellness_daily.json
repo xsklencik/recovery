@@ -1090,7 +1090,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-28T18:45:34.184Z"
+  "syncedAt": "2026-08-28T19:01:02.228Z"
  },
  {
   "id": "2026-08-26",
@@ -1111,7 +1111,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-28T18:45:34.184Z"
+  "syncedAt": "2026-08-28T19:01:02.228Z"
  },
  {
   "id": "2026-08-27",
@@ -1132,7 +1132,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-28T18:45:34.184Z"
+  "syncedAt": "2026-08-28T19:01:02.228Z"
  },
  {
   "id": "2026-08-28",
@@ -1144,8 +1144,8 @@
   "sleepScore": 80,
   "sleepSecs": 27000,
   "steps": 18434,
-  "ctl": 48.851,
-  "atl": 49.04563,
+  "ctl": 49.133343,
+  "atl": 50.643097,
   "weight": null,
   "comments": "Ideme na Zákopčie na vrchy kde budeme celý deň, opekať, hrať vybíjanú, bedminton",
   "mood": null,
@@ -1153,6 +1153,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-28T18:45:34.184Z"
+  "syncedAt": "2026-08-28T19:01:02.228Z"
  }
 ]
