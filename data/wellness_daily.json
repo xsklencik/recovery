@@ -1090,7 +1090,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-28T04:30:41.077Z"
+  "syncedAt": "2026-08-28T04:45:29.608Z"
  },
  {
   "id": "2026-08-26",
@@ -1111,7 +1111,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-28T04:30:41.077Z"
+  "syncedAt": "2026-08-28T04:45:29.608Z"
  },
  {
   "id": "2026-08-27",
@@ -1122,7 +1122,7 @@
   "avgSleepingHR": 55,
   "sleepScore": 85,
   "sleepSecs": 28620,
-  "steps": 6844,
+  "steps": 8185,
   "ctl": 50.02808,
   "atl": 56.577324,
   "weight": 59.4,
@@ -1132,27 +1132,27 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-28T04:30:41.077Z"
+  "syncedAt": "2026-08-28T04:45:29.608Z"
  },
  {
   "id": "2026-08-28",
   "date": "2026-08-28",
   "restingHR": null,
   "hrv": null,
-  "hrvSDNN": null,
-  "avgSleepingHR": null,
+  "hrvSDNN": 65,
+  "avgSleepingHR": 56,
   "sleepScore": null,
   "sleepSecs": null,
-  "steps": null,
+  "steps": 95,
   "ctl": 48.851,
   "atl": 49.04563,
   "weight": null,
-  "comments": null,
+  "comments": "Ideme na Zákopčie na vrchy kde budeme celý deň, opekať, hrať vybíjanú, bedminton",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-28T04:30:41.077Z"
+  "syncedAt": "2026-08-28T04:45:29.608Z"
  }
 ]
