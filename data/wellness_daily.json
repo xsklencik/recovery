@@ -1132,7 +1132,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-30T10:53:13.588Z"
+  "syncedAt": "2026-08-30T11:00:47.122Z"
  },
  {
   "id": "2026-08-28",
@@ -1153,7 +1153,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-30T10:53:13.588Z"
+  "syncedAt": "2026-08-30T11:00:47.122Z"
  },
  {
   "id": "2026-08-29",
@@ -1174,7 +1174,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-30T10:53:13.588Z"
+  "syncedAt": "2026-08-30T11:00:47.122Z"
  },
  {
   "id": "2026-08-30",
@@ -1195,6 +1195,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-30T10:53:13.588Z"
+  "syncedAt": "2026-08-30T11:00:47.122Z"
  }
 ]
