@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-08-30T10:27:13.564Z",
+ "generatedAt": "2026-08-30T10:55:46.468Z",
  "model": "gemini-3.6-flash",
  "location": "Čadca, Slovensko",
  "days": [
@@ -110,11 +110,11 @@
     }
    ],
    "alreadyDone": null,
-   "ownNote": "Možno keby vyjde počasie dáme Námestovo 130km na biku",
-   "notePlan": "Ak ti vyjde počasie, vyraz na plánovanú 130 km trasu do Námestova. Odporúčam vyraziť v najlepšom okne medzi 12:00 a 16:00, kedy je stabilné počasie bez dažďa. Drž sa prevažne v Z2 vytrvalostnom tempe, aby si sa po predošlých voľnejších dňoch príliš nezatavil, keďže pôjde o náročný 4-5 hodinový výjazd.",
-   "noteLabel": "Výjazd Námestovo 130km",
-   "noteIntensity": "long",
-   "fuelPlan": "Pred tréningom zjedz 2 hodiny vopred výdatné, ľahko stráviteľné jedlo (napr. veľká porcia kaše s medom a banánom). Počas jazdy zameraj príjem na 60-70 g sacharidov za hodinu: od 2. hodiny začni pravidelne dopĺňať energiu a striedaj pevnú stravu s gumovými žížalkami a banánom. Pitný režim: Zober si 2 veľké 950 ml fľaše a 1x 750 ml fľašu (celkovo 2650 ml). Do každej 950 ml fľaše daj ~70 g cukru a 4 g soli, do 750 ml fľaše ~55 g cukru a 3 g soli. Každých 15-20 minút sprav poriadny dúšok.",
+   "ownNote": "neviem ci podvecer bude cast na nejaku jazfu. asi pojdem na cadecku ale až večer iba tú klasiku 9km v z1. Žiadne Námestovo nejdeme ",
+   "notePlan": "Ak ti večer vyjde čas, odjazdi plánovanú 9 km vyjazdovú klasiku smerom na Čadečku v ľahkej zóne Z1. Žiadne Námestovo ani ťažké úseky nerieš, po posledných dňoch ide len o ľahké prekrvenie nôh. Počasie je stabilné a teplé, ideálne na podvečerné vykrútenie bez tlaku na čas.",
+   "noteLabel": "Ľahká Čadečka v Z1",
+   "noteIntensity": "rest",
+   "fuelPlan": null,
    "status": null,
    "alternatives": []
   },
@@ -234,27 +234,27 @@
    "alternatives": [
     {
      "id": "a",
-     "label": "Úplný regeneračný deň",
+     "label": "Úplný oddych",
      "intensity": "rest",
-     "suggestion": "Po včerajšom dlhom 130 km výjazde si dopraj absolútne voľno bez bicykla a behu. Zameraj sa na kvalitný spánok, doplň tekutiny a večer sprav krátky 15-minútový strečing a valcovanie nôh pre urýchlenie regenerácie.",
-     "recommended": true,
+     "suggestion": "Dnes si dopraj celkový regeneračný deň bez bicykla aj behu. Po predchádzajúcich dňoch a pred plánovanou dlhšou jazdou potrebuješ dočerpať sily. Venuj 15 minút ľahkému strečingu dolných končatín a valcovaniu penovým valcom. Zameraj sa na kvalitný spánok a dostatočnú hydratáciu.",
+     "recommended": false,
      "fuelPlan": null
     },
     {
      "id": "b",
-     "label": "Dlhá Z2 jazda",
+     "label": "Objemový vytrvalostný výjazd",
      "intensity": "long",
-     "suggestion": "Vytrvalostná voľná jazda v Z2 v dĺžke cca 3 hodiny smerom na Oščadnicu a okolie. Využi najlepšie okno medzi 12:00 a 16:00, kedy je najnižšia šanca mrholenia. Udržiavaj veľmi nízku tepovú frekvenciu.",
-     "recommended": false,
-     "fuelPlan": "Pred jazdou si daj ľahký rožok s medom 1 hodinu vopred. Počas jazdy zamier na 40-50 g sacharidov na hodinu, použi banán alebo gumové žížalky každých 45 minút. Pitný režim: 2x 950 ml fľaša, v každej 60 g cukru a 4 g soli, pime pravidelne."
+     "suggestion": "Zameraj sa na súvislú vytrvalosť v zóne Z2 v dĺžke 3 až 3.5 hodiny. Trasu zvoľ smerom na Milošovú a okolie s plynulým profilom bez prudkých nástupov. Najlepšie okno na výjazd je poobede medzi 12:00 a 16:00, kedy je minimálne riziko zrážok. Drž rovnomerné tempo a kontroluj si tepovú frekvenciu.",
+     "recommended": true,
+     "fuelPlan": "Pred tréningom zjedz 2 hodiny vopred ľahké jedlo (napr. ovsenú kašu s banánom). Počas tréningu zjedz od 2. hodiny každých 30 minút buď jeden banán alebo hrsť gumových žížaliek pre stabilný príjem cca 40-50 g sacharidov za hodinu. Pitný režim: Priprav si 2× 950 ml fľaše, do každej daj 70 g bieleho cukru a 4 g soli. Pij pravidelne malé dúšky každých 15 minút."
     },
     {
      "id": "c",
-     "label": "Kratšie voľné tempo",
+     "label": "Kratšie silové tempo",
      "intensity": "intensity",
-     "suggestion": "Ak máš chuť na intenzitu, skús 60-minútový tréning vonku s vybranými úsekmi: 4x4 minúty vo svižnom tempe do mierneho kopca s 3-minútovým voľným prešliapaním. Vyraz medzi 12:00 a 16:00.",
+     "suggestion": "Intenzívnejší tréning zameraný na budovanie FTP. Po 20 minútach rozjazdenia zaraď 4x8 minút v tempe na hranici Z3/Z4 s vyššou kadenciou, pričom medzi intervalmi dávaj 3 minúty voľného prešliapania. Celkový čas cca 75 minút. Choď odjazdyt v najlepšom časovom okne medzi 12:00 a 16:00.",
      "recommended": false,
-     "fuelPlan": "Pred tréningom banán 30 minút pred štartom. Počas tréningu pi vodu alebo ľahký izotonik. Pitný režim: 1x 750 ml fľaša s 50 g cukru a 3 g soli."
+     "fuelPlan": "Pred tréningom si daj 60 minút vopred biely rožok s medom. Počas tréningu od 30. minúty priebežne zobkaj gumové žížalky (spolu cca 40 g sacharidov). Pitný režim: Daj si 1× 950 ml fľašu s 60 g cukru a 4 g soli, dopĺňaj tekutiny po každom dokončenom intervale."
     }
    ]
   },
@@ -374,27 +374,27 @@
    "alternatives": [
     {
      "id": "a",
-     "label": "Regenerácia a strečing",
+     "label": "Regeneračné voľno",
      "intensity": "rest",
-     "suggestion": "Úplný oddych a pauza od tréningu. Zameraj sa na regeneráciu svalov, ľahkú prechádzku a rolovanie penovým valcom.",
-     "recommended": false,
+     "suggestion": "Po včerajšom dlhšom objeme si dopraj zaslúžené voľno. Telo si potrebuje odpočinúť, aby dokázalo spracovať záťaž. Dnes neplánuj žiadny tréning, večer si sprav len ľahké mobilizačné cvičenia na boky a chrbát a zameraj sa na kvalitnú regeneráciu.",
+     "recommended": true,
      "fuelPlan": null
     },
     {
      "id": "b",
-     "label": "Objemový výjazd Z2",
+     "label": "Dlhá Z2 jazda",
      "intensity": "long",
-     "suggestion": "Vytrvalostná jazda 3.5 hodiny v Z2 zóne v okolí Čadce (napr. cez Husárik a okolie). Počasie je priaznivé, najlepšie okno je podvečer medzi 18:00 a 22:00. Udržuj plynulé tempo bez prudkých zrýchlení.",
-     "recommended": true,
-     "fuelPlan": "Pred tréningom: 1.5 hodiny vopred ryžová kaša s ovocím. Počas tréningu: od 2. hodiny 60 g sacharidov/hod – striedaj gumové žížalky a energetickú tyčinku. Pitný režim: 2x 950 ml fľaša, v každej 70 g cukru a 4 g soli."
+     "suggestion": "Vytrvalostná jazda 3 hodiny v zóne Z2 cez Husárik a Valy. Trasa obsahuje dlhšie mierne stúpania, ktoré odjazdíš v kľudnom vytrvalostnom tempe. Využi podvečerné najlepšie okno od 18:00 do 22:00, kedy bude stabilné počasie bez hrozby dažďa.",
+     "recommended": false,
+     "fuelPlan": "Pred jazdou si daj 90 minút vopred cestoviny s ľahkou omáčkou. Počas tréningu zjedz každú hodinu 1 banán a časť gumových žížaliek (spolu 50 g sacharidov/h). Pitný režim: Použi 2× 950 ml fľaše s 70 g cukru a 5 g soli do každej, dopĺňaj pravidelne."
     },
     {
      "id": "c",
-     "label": "Voňavé voľné tempo",
+     "label": "Voľnoštýlové intervaly",
      "intensity": "intensity",
-     "suggestion": "Náročný tréning zameraný na tempo: 4x8 minút v tempe blízko FTP do stúpania, s 4-minútovým voľným prešliapaním medzi sériami. Celková dĺžka 75 minút. Vyraz v podvečernom okne 18:00-22:00.",
+     "suggestion": "Kratší náročný tréning (60 minút). Po dôkladnom zohriatí zaraď 6x1 minútu naplno do kopca s 2 minútami voľného zjazdu/prešliapania na zotavenie. Využi podvečerné okno medzi 18:00 a 22:00, kedy sú cesty suché a vietor je mierny.",
      "recommended": false,
-     "fuelPlan": "Pred tréningom ľahké sacharidové jedlo 1 hodinu vopred. Počas tréningu priebežne dopĺňaj izotonik. Pitný režim: 1x 950 ml fľaša so 70 g cukru a 4 g soli."
+     "fuelPlan": "Pred tréningom 45 minút vopred zjedz banán. Počas tréningu prijímaj najmä tekuté sacharidy z fľaše. Pitný režim: 1× 950 ml fľaša s 60 g cukru a 4 g soli."
     }
    ]
   },
@@ -514,27 +514,27 @@
    "alternatives": [
     {
      "id": "a",
-     "label": "Dnes voľno",
+     "label": "Úplný odpočinok",
      "intensity": "rest",
-     "suggestion": "Kompletný regeneračný deň pred zajtrajšou intenzitou. Dopraj si dostatok spánku a len veľmi ľahký strečing.",
-     "recommended": true,
+     "suggestion": "Dňom bez tréningu pošetria sily na zajtrajší náročnejší deň. Sústreď sa na regeneráciu, kvalitnú stravu a doplnenie glykogénu. Vhodný je večerný strečing a rolovanie nôh pre uvoľnenie svalového tonusu.",
+     "recommended": false,
      "fuelPlan": null
     },
     {
      "id": "b",
-     "label": "Dlhší vytrvalostný beh/bicykel",
+     "label": "Stredne dlhá vytrvalosť",
      "intensity": "long",
-     "suggestion": "Dlhá vytrvalostná jazda na 3 hodiny v zóne Z2. Keďže môže byť slabé mrholenie, obleč si vetrovku a vyraz v najlepšom okne 18:00-22:00.",
+     "suggestion": "Vytrvalostná jazda 2.5 hodiny v zóne Z2. Priprav sa na mierne mrholenie, preto si vezni ľahkú vestu alebo pláštenku. Tréning si naplánuj na podvečer v čase 18:00 až 22:00, kedy sú podmienky najpriaznivejšie a riziko zrážok je len 5%.",
      "recommended": false,
-     "fuelPlan": "Pred tréningom sacharidové jedlo 2h vopred. Počas tréningu 50-60 g sacharidov/h (banány, žížalky). Pitný režim: 2x 950 ml fľaša s 60 g cukru a 4 g soli."
+     "fuelPlan": "Pred tréningom 2 hodiny si daj pečivo s medom. Počas tréningu od 2. hodiny zjedz banán a hrsť gumových žížaliek (cca 45 g sacharidov/h). Pitný režim: Naplň 2× 950 ml fľaše, do každej daj 65 g cukru a 4 g soli."
     },
     {
      "id": "c",
-     "label": "Tempo intervaly",
+     "label": "Tempo bloky Z3",
      "intensity": "intensity",
-     "suggestion": "Kratší náročný tréning: 3x10 minút vo vysokom tempe v kopcovitom teréne, medzi tým 5 minút voľne. Celkovo 60-70 minút. Vyraz medzi 18:00 a 22:00.",
-     "recommended": false,
-     "fuelPlan": "Pred tréningom banán 30 min vopred. Počas tréningu popíjaj izotonik. Pitný režim: 1x 950 ml fľaša s 70 g cukru a 4 g soli."
+     "suggestion": "Kvalitný intervalový tréning v celkovej dĺžke 75 minút. Po rozjazdení odjazdí 2x20 minút tvrdý tempo blok na hranici Z3/Z4 s 5 minútami ľahkého prešliapania medzi blokmi. Vyraz v okne 18:00 - 22:00, kedy je minimálna šanca na mrholenie.",
+     "recommended": true,
+     "fuelPlan": "Pred tréningom zjedz 60 minút vopred banán a biely rožok. Počas tréningu po prvom bloku zjedz hrsť gumových žížaliek (cca 35 g sacharidov). Pitný režim: Priprav si 1× 950 ml fľašu s 70 g cukru a 4 g soli a 1× 750 ml fľašu s čistou vodou."
     }
    ]
   },
@@ -656,25 +656,25 @@
      "id": "a",
      "label": "Regeneračný deň",
      "intensity": "rest",
-     "suggestion": "Úplný oddych a pasívna regenerácia. Príprava na zajtrajšie sťahovanie/cestovanie do Bratislavy.",
-     "recommended": false,
+     "suggestion": "Dnes si daj úplné voľno pred zajtrajším presunom a cestovaním. Dopraj telu čas na zotavenie po intervaloch. Sprav si len 10-15 minútový večerný strečing a dbaj na dostatok spánku.",
+     "recommended": true,
      "fuelPlan": null
     },
     {
      "id": "b",
-     "label": "Vytrvalostný výjazd",
+     "label": "Dlhá vytrvalosť Z2",
      "intensity": "long",
-     "suggestion": "Dlhá vytrvalostná jazda 2.5 až 3 hodiny v Z2 zóne cez Valy a okolie. Využi okno medzi 12:00 a 16:00, kedy je najmenšia šanca mrholenia.",
+     "suggestion": "Objemový tréning 3 hodiny v čistej zóne Z2 na zvlnenom profile. Využi najlepšie časové okno medzi 12:00 a 16:00, kedy je najnižšia pravdepodobnosť mrholenia. Udržiavaj plynulé tempo a neprekračuj zónu 2 ani v stúpaniach.",
      "recommended": false,
-     "fuelPlan": "Pred tréningom sacharidový obed 2h vopred. Počas tréningu 50 g sacharidov/h (banán, tyčinka). Pitný režim: 2x 950 ml fľaša s 65 g cukru a 4 g soli."
+     "fuelPlan": "Pred tréningom daj 2 hodiny vopred väčšiu porciu sacharidov (ryža/ovsené vločky). Počas tréningu každých 45 minút zjedz banán alebo energetickú tyčinku (cca 50 g sacharidov/h). Pitný režim: Použi 2× 950 ml fľaše s 70 g cukru a 5 g soli."
     },
     {
      "id": "c",
-     "label": "Krátené náročné intervaly",
+     "label": "Krátke VO2max intervaly",
      "intensity": "intensity",
-     "suggestion": "Intenzívny kvalitný tréning: 6x2 minúty naplno do kopca s 2-minútovým voľným zjazdom/prešliapaním na zotavenie. Celkový čas tréningu cca 50 minút. Vyraz v najlepšom okne 12:00-16:00.",
-     "recommended": true,
-     "fuelPlan": "Pred tréningom rožok s medom 45 minút pred štartom. Počas tréningu len izotonik. Pitný režim: 1x 750 ml fľaša s 60 g cukru a 3 g soli."
+     "suggestion": "Intenzívny tréning na 60 minút. Po 15 minútach rozjazdu zaraď 5x3 minúty na úrovni VO2max (Z5) s 3 minútami medziklusu/voľného prešliapania. Vyraz v okne 12:00 až 16:00, aby si sa vyhol prípadnému dažďu.",
+     "recommended": false,
+     "fuelPlan": "Pred tréningom 45 minút vopred zjedz biely rožok s džemom. Počas tréningu dopĺňaj energiu cez gumové žížalky. Pitný režim: 1× 950 ml fľaša s 60 g cukru a 4 g soli."
     }
    ]
   },
@@ -786,8 +786,8 @@
    ],
    "alreadyDone": null,
    "ownNote": "Ideme sa ubytovať do Bratislavy čiže celý deň som mimo ",
-   "notePlan": "Keďže sa sťahuješ do Bratislavy a celý deň si mimo, naplánuj si kompletne voľný deň bez tréningu a sústreď sa na presun.",
-   "noteLabel": "Ubytovanie v BA / voľno",
+   "notePlan": "Keďže sa sťahuješ/ubytovávaš v Bratislave a si celý deň mimo, tréning vynechaj a ber tento deň ako plánované regeneračné voľno po cestovaní a vybavovačkách.",
+   "noteLabel": "Ubytovávanie v BA",
    "noteIntensity": "rest",
    "fuelPlan": null,
    "status": null,
@@ -909,27 +909,27 @@
    "alternatives": [
     {
      "id": "a",
-     "label": "Voľný deň",
+     "label": "Voľno",
      "intensity": "rest",
-     "suggestion": "Úplný oddych po presune do Bratislavy.",
+     "suggestion": "Úplný oddych a regenerácia po cestovaní.",
      "recommended": false,
      "fuelPlan": null
     },
     {
      "id": "b",
-     "label": "Dlhý Z2 výjazd v BA",
+     "label": "Dlhá Z2 v BA",
      "intensity": "long",
-     "suggestion": "Dlhá vytrvalostná jazda 3.5h v Z2 po hrádzi alebo do Malých Karpát v najlepšom okne 13:00-17:00.",
+     "suggestion": "Dlhá vytrvalostná jazda 3.5h v Z2 na novom teréne v okolí Bratislavy, najlepšie v okne 13:00-17:00 pri peknom počasí.",
      "recommended": true,
-     "fuelPlan": "Pred tréningom výdatné jedlo. Počas jazdy striedaj žížalky a banán (60g sacharidov/h). Pitný režim: 2x 950ml fľaša (70g cukru, 4g soli na fľašu)."
+     "fuelPlan": "Pred jazdou sacharidové raňajky. Počas jazdy každých 40 minút banán alebo gumové žížalky (50g sacharidov/h). Pitný režim: 2× 950ml fľaša (70g cukru + 4g soli na fľašu)."
     },
     {
      "id": "c",
-     "label": "Krátka intenzita",
+     "label": "Intenzívne tempo",
      "intensity": "intensity",
-     "suggestion": "Kratší náročný tréning 50 min s 5x1 min výbušnými intervalmi naplno.",
+     "suggestion": "Kratšie tempo 3x10min Z3 na zvlnenej trati, celkovo 75 minút.",
      "recommended": false,
-     "fuelPlan": "Pred tréningom ľahký banán. Pitný režim: 1x 750ml fľaša (60g cukru, 3g soli)."
+     "fuelPlan": "Pred tréningom ľahké pečivo. Počas tréningu gumové žížalky. Pitný režim: 1× 950ml fľaša (60g cukru + 4g soli)."
     }
    ]
   },
@@ -1049,27 +1049,27 @@
    "alternatives": [
     {
      "id": "a",
-     "label": "Regenerácia",
+     "label": "Pasívny oddych",
      "intensity": "rest",
-     "suggestion": "Úplné voľno a oddych po včerajšom dlhom výjazde.",
-     "recommended": true,
+     "suggestion": "Regeneračný deň s ľahkým večerným strečingom.",
+     "recommended": false,
      "fuelPlan": null
     },
     {
      "id": "b",
-     "label": "Dlhý vytrvalostný výjazd",
+     "label": "Stredný objem Z2",
      "intensity": "long",
-     "suggestion": "Objemová jazda 3h v zóne Z2 podvečer medzi 18:00 a 22:00.",
+     "suggestion": "Pohodová 2.5h vytrvalosť v Z2 v podvečernom okne 18:00-22:00.",
      "recommended": false,
-     "fuelPlan": "Pred jazdou sacharidy 2h vopred. Počas jazdy 50g/h sacharidov. Pitný režim: 2x 950ml fľaša (65g cukru, 4g soli)."
+     "fuelPlan": "Pred jazdou banán. Počas jazdy od 2. hodiny žížalky (40g sacharidov/h). Pitný režim: 2× 950ml fľaša (60g cukru + 4g soli)."
     },
     {
      "id": "c",
-     "label": "Tempo bloky",
+     "label": "Intervaly 4x6min",
      "intensity": "intensity",
-     "suggestion": "Intenzívny tréning: 2x15 min tempo bloky s 5 min pauzou.",
-     "recommended": false,
-     "fuelPlan": "Pred tréningom rožok s džemom. Pitný režim: 1x 950ml fľaša (70g cukru, 4g soli)."
+     "suggestion": "Náročnejší tréning 4x6min v tempe Z4 s 3min pauzami, celkovo 70 minút podvečer.",
+     "recommended": true,
+     "fuelPlan": "Pred tréningom biely rožok s medom. Počas tréningu žížalky. Pitný režim: 1× 950ml fľaša (70g cukru + 4g soli)."
     }
    ]
   },
@@ -1189,27 +1189,27 @@
    "alternatives": [
     {
      "id": "a",
-     "label": "Voľno kvôli dažďu",
+     "label": "Regenerácia v daždi",
      "intensity": "rest",
-     "suggestion": "Úplný regeneračný deň bez tréningu.",
-     "recommended": false,
+     "suggestion": "Dňom bez tréningu zreponuj sily pri silnom mrholení vonku.",
+     "recommended": true,
      "fuelPlan": null
     },
     {
      "id": "b",
-     "label": "Dlhý mokrý výjazd",
+     "label": "Mokrá dlhá jazda",
      "intensity": "long",
-     "suggestion": "Vytrvalostná jazda 2.5h v Z2 v najlepšom okne 12:00-16:00 napriek mrholeniu.",
+     "suggestion": "Vytrvalosť 2.5h v Z2 v nepremokavom oblečení medzi 12:00 a 16:00.",
      "recommended": false,
-     "fuelPlan": "Pred tréningom ryžová kaša. Počas 50g sacharidov/h (banány, žížalky). Pitný režim: 2x 950ml fľaša (60g cukru, 4g soli)."
+     "fuelPlan": "Pred jazdou ovsená kaša. Počas jazdy banán a žížalky každých 45 min. Pitný režim: 2× 950ml fľaša (60g cukru + 5g soli)."
     },
     {
      "id": "c",
-     "label": "Kratšia náročná intenzita",
+     "label": "Krátky kopcovitý akcent",
      "intensity": "intensity",
-     "suggestion": "Kratší náročný tréning 60 min: 4x6 min vo vysokom tempe v okne 12:00-16:00.",
-     "recommended": true,
-     "fuelPlan": "Pred tréningom banán 45 min vopred. Pitný režim: 1x 950ml fľaša (70g cukru, 4g soli)."
+     "suggestion": "Kratších 50 minút vrátane 5x1min výjazdov naplno.",
+     "recommended": false,
+     "fuelPlan": "Pred tréningom banán. Počas tréningu iontový nápoj. Pitný režim: 1× 950ml fľaša (60g cukru + 4g soli)."
     }
    ]
   },
@@ -1329,27 +1329,27 @@
    "alternatives": [
     {
      "id": "a",
-     "label": "Úplný oddych",
+     "label": "Voľný deň",
      "intensity": "rest",
-     "suggestion": "Skutočný regeneračný deň, relax a doplnenie síl.",
-     "recommended": true,
+     "suggestion": "Úplné voľno a oddych pre svalovú regeneráciu.",
+     "recommended": false,
      "fuelPlan": null
     },
     {
      "id": "b",
-     "label": "Vytrvalostná jazda",
+     "label": "Objemová Z2 jazda",
      "intensity": "long",
-     "suggestion": "Vytrvalostný výjazd 3h v nízkej zóne Z2 medzi 12:00 a 16:00.",
-     "recommended": false,
-     "fuelPlan": "Pred tréningom sacharidový obed. Počas jazdy 50g sacharidov/h. Pitný režim: 2x 950ml fľaša (65g cukru, 4g soli)."
+     "suggestion": "Dlhá 3h vytrvalosť v Z2, využi okno 12:00-16:00 s ľahkým mokrým asfaltom.",
+     "recommended": true,
+     "fuelPlan": "Pred jazdou cestoviny. Počas jazdy banán a žížalky (50g sacharidov/h). Pitný režim: 2× 950ml fľaša (70g cukru + 5g soli)."
     },
     {
      "id": "c",
-     "label": "Kopcové intervaly",
+     "label": "Sila v tempe",
      "intensity": "intensity",
-     "suggestion": "Intenzita 5x3 minuty naplno do kopca s voľným prešliapaním.",
+     "suggestion": "Kratších 75 minút s 2x15min Z3 tempo úsekmi.",
      "recommended": false,
-     "fuelPlan": "Pred tréningom sacharidová tyčinka. Pitný režim: 1x 750ml fľaša (60g cukru, 3g soli)."
+     "fuelPlan": "Pred tréningom pečivo s džemom. Počas tréningu žížalky. Pitný režim: 1× 950ml fľaša (60g cukru + 4g soli)."
     }
    ]
   }
