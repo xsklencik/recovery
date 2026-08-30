@@ -63,3 +63,6 @@ Dnes si čiastočne zregenerovaný, avšak tvoje biometrické dáta ukazujú zmi
 
 ## 2026-08-27
 Dnes si výborne zregenerovaný. Tvoje ranné HRV dosiahlo 73 ms, čo je o 16,2 ms nad tvojím dlhodobým priemerom, a pokojová tepová frekvencia klesla na 55 bpm. Po kvalitnom 8,0-hodinovom spánku so skóre 85 je tvoj autonómny nervový systém v optimálnej fyziologickej pripravenosti. V histórii pozorujeme opakovane vzor, kedy po poklese HRV a vysokom objeme z predchádzajúcich dní prichádza pri dvoch dňoch voľnejšieho režimu výrazný regeneračný skok nazad do nadpriemerných hodnôt.
+
+## 2026-08-30
+Dnes si pomerne dobre zregenerovaný a tvoje biometrické ukazovatele sú stabilné. Ranné HRV na úrovni 55 ms je len mierne pod dlhodobým priemerom 56.9 ms a kvalitný 8.0-hodinový spánok so skóre 86 poskytol telu vynikajúci základ na obnovu. Spánková tepová frekvencia 61 bpm bola síce o 1.2 bpm vyššia oproti dlhodobej norme, čo odzrkadľuje včerajší celodenný aktívny režim s vyšším počtom krokov, no nepredstavuje výrazný stres. Po výraznom poklese HRV z predchádzajúceho dňa (40 ms) pozorujeme opäť rýchly skok späť k tvojmu bazálnemu priemeru, čo potvrzuje tvoju schopnosť rýchlo spracovávať miernu záťaž.
