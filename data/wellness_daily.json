@@ -1132,7 +1132,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-29T19:45:32.954Z"
+  "syncedAt": "2026-08-30T04:00:49.812Z"
  },
  {
   "id": "2026-08-28",
@@ -1153,7 +1153,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-29T19:45:32.954Z"
+  "syncedAt": "2026-08-30T04:00:49.812Z"
  },
  {
   "id": "2026-08-29",
@@ -1174,6 +1174,27 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-29T19:45:32.954Z"
+  "syncedAt": "2026-08-30T04:00:49.812Z"
+ },
+ {
+  "id": "2026-08-30",
+  "date": "2026-08-30",
+  "restingHR": null,
+  "hrv": null,
+  "hrvSDNN": null,
+  "avgSleepingHR": null,
+  "sleepScore": null,
+  "sleepSecs": null,
+  "steps": null,
+  "ctl": 46.84849,
+  "atl": 38.057137,
+  "weight": null,
+  "comments": "Možno keby vyjde počasie dáme Námestovo 130km na biku",
+  "mood": null,
+  "soreness": null,
+  "fatigue": null,
+  "stress": null,
+  "source": "intervals_api",
+  "syncedAt": "2026-08-30T04:00:49.812Z"
  }
 ]
