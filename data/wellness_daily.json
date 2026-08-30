@@ -1132,7 +1132,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-30T09:45:31.804Z"
+  "syncedAt": "2026-08-30T10:00:52.126Z"
  },
  {
   "id": "2026-08-28",
@@ -1153,48 +1153,48 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-30T09:45:31.804Z"
+  "syncedAt": "2026-08-30T10:00:52.126Z"
  },
  {
   "id": "2026-08-29",
   "date": "2026-08-29",
   "restingHR": 65,
   "hrv": 46.16,
-  "hrvSDNN": null,
-  "avgSleepingHR": null,
+  "hrvSDNN": 40,
+  "avgSleepingHR": 65,
   "sleepScore": 82,
   "sleepSecs": 31440,
-  "steps": 5799,
+  "steps": 6958,
   "ctl": 48.306713,
   "atl": 45.76509,
-  "weight": null,
+  "weight": 59.4,
   "comments": null,
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-30T09:45:31.804Z"
+  "syncedAt": "2026-08-30T10:00:52.126Z"
  },
  {
   "id": "2026-08-30",
   "date": "2026-08-30",
   "restingHR": null,
   "hrv": null,
-  "hrvSDNN": null,
-  "avgSleepingHR": null,
-  "sleepScore": null,
-  "sleepSecs": null,
-  "steps": null,
+  "hrvSDNN": 55,
+  "avgSleepingHR": 61,
+  "sleepScore": 86,
+  "sleepSecs": 28620,
+  "steps": 1642,
   "ctl": 47.17014,
   "atl": 39.672745,
   "weight": null,
-  "comments": "Možno keby vyjde počasie dáme Námestovo 130km na biku",
+  "comments": "neviem ci podvecer bude cast na nejaku jazfu. asi pojdem na cadecku.",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-30T09:45:31.804Z"
+  "syncedAt": "2026-08-30T10:00:52.126Z"
  }
 ]
