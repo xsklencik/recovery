@@ -1132,7 +1132,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-30T10:45:34.330Z"
+  "syncedAt": "2026-08-30T10:53:13.588Z"
  },
  {
   "id": "2026-08-28",
@@ -1153,7 +1153,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-30T10:45:34.330Z"
+  "syncedAt": "2026-08-30T10:53:13.588Z"
  },
  {
   "id": "2026-08-29",
@@ -1174,7 +1174,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-30T10:45:34.330Z"
+  "syncedAt": "2026-08-30T10:53:13.588Z"
  },
  {
   "id": "2026-08-30",
@@ -1189,12 +1189,12 @@
   "ctl": 47.17014,
   "atl": 39.672745,
   "weight": null,
-  "comments": "neviem ci podvecer bude cast na nejaku jazfu. asi pojdem na cadecku.",
+  "comments": "neviem ci podvecer bude cast na nejaku jazfu. asi pojdem na cadecku ale až večer iba tú klasiku 9km v z1. Žiadne Námestovo nejdeme",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-30T10:45:34.330Z"
+  "syncedAt": "2026-08-30T10:53:13.588Z"
  }
 ]
