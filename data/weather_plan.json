@@ -1353,5 +1353,13 @@
     }
    ]
   }
+ ],
+ "qaHistory": [
+  {
+   "question": "Kedy dať Husárik alebo valy test? Od 14.9. mi začína semester čiže od pondelka do štvrtka alebo piatka budem môcť iba Max behať pomaly ak mi to noha dovolí.",
+   "answer": "Ahoj Adam, keďže ti od pondelka 14. 9. začína semester a cez týždeň budeš môcť len pomaly behať, **najlepší čas na Husárik alebo valy test je víkend 12. – 13. septembra**. \n\nTu sú kľúčové dôvody a odporúčania, ako to načasovať:\n\n* **Pred semestrom (12. – 13. 9.):** Je to posledný víkend, kedy si ešte doma a pred začiatkom školských povinností vieš podať maximálny výkon v plnom nasadení.\n* **Príprava v týždni pred testom:** Medzi 7. a 11. septembrom zaraď ľahší záprah (Z1/Z2 jazdy a krátke výklusy), aby bola noha aj celé telo na víkend 100 % oddýchnuté a čerstvé.\n* **Podmienka – zdravá noha:** Keďže sám spomínaš, že uvidíš, čo ti noha dovolí, test jazdi len vtedy, ak budeš úplne bez bolesti. Ak by ťa noha stále limitovala, test radšej odlož a v prvých týždňoch semestra pokračuj len v tichom, pomalom bežeckom režime.",
+   "answeredAt": "2026-08-30T10:59:02.458Z",
+   "model": "gemini-3.6-flash"
+  }
  ]
 }
