@@ -1153,7 +1153,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-31T17:45:33.019Z"
+  "syncedAt": "2026-08-31T18:00:59.500Z"
  },
  {
   "id": "2026-08-29",
@@ -1174,7 +1174,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-31T17:45:33.019Z"
+  "syncedAt": "2026-08-31T18:00:59.500Z"
  },
  {
   "id": "2026-08-30",
@@ -1195,7 +1195,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-31T17:45:33.019Z"
+  "syncedAt": "2026-08-31T18:00:59.500Z"
  },
  {
   "id": "2026-08-31",
@@ -1206,16 +1206,16 @@
   "avgSleepingHR": 58,
   "sleepScore": 85,
   "sleepSecs": 27300,
-  "steps": 84,
+  "steps": 2297,
   "ctl": 46.887394,
   "atl": 38.54585,
   "weight": null,
-  "comments": "Doobeda ideme maľovať",
+  "comments": "cely den sme maľovali",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-31T17:45:33.019Z"
+  "syncedAt": "2026-08-31T18:00:59.500Z"
  }
 ]
