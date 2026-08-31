@@ -1153,7 +1153,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-31T05:30:48.307Z"
+  "syncedAt": "2026-08-31T05:45:33.566Z"
  },
  {
   "id": "2026-08-29",
@@ -1174,7 +1174,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-31T05:30:48.307Z"
+  "syncedAt": "2026-08-31T05:45:33.566Z"
  },
  {
   "id": "2026-08-30",
@@ -1185,37 +1185,37 @@
   "avgSleepingHR": 61,
   "sleepScore": 86,
   "sleepSecs": 28620,
-  "steps": 17905,
-  "ctl": 47.17014,
-  "atl": 39.672745,
+  "steps": 19094,
+  "ctl": 48.01716,
+  "atl": 44.46514,
   "weight": null,
-  "comments": "neviem ci podvecer bude cast na nejaku jazfu. asi pojdem na cadecku ale až večer iba tú klasiku 9km v z1. Žiadne Námestovo nejdeme",
+  "comments": "Žiadne Námestovo nejdeme. Boli sme s rodinou na rozhliadni nad Čadcou.",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-31T05:30:48.307Z"
+  "syncedAt": "2026-08-31T05:45:33.566Z"
  },
  {
   "id": "2026-08-31",
   "date": "2026-08-31",
   "restingHR": null,
   "hrv": null,
-  "hrvSDNN": null,
-  "avgSleepingHR": null,
-  "sleepScore": null,
-  "sleepSecs": null,
+  "hrvSDNN": 62,
+  "avgSleepingHR": 58,
+  "sleepScore": 85,
+  "sleepSecs": 27300,
   "steps": null,
-  "ctl": 46.060307,
-  "atl": 34.391426,
+  "ctl": 46.887394,
+  "atl": 38.54585,
   "weight": null,
-  "comments": null,
+  "comments": "Doobeda ideme maľovať",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-08-31T05:30:48.307Z"
+  "syncedAt": "2026-08-31T05:45:33.566Z"
  }
 ]

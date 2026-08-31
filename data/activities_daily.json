@@ -1187,5 +1187,28 @@
   "hr_z3_secs": 0,
   "hr_z4_secs": 0,
   "hr_z5_secs": 0
+ },
+ {
+  "id": "i181563084",
+  "date": "2026-08-30",
+  "start_date_local": "2026-08-30T13:48:37",
+  "name": "Lunch Rock Climbing",
+  "type": "RockClimbing",
+  "comments": null,
+  "moving_time": 12565,
+  "distance": 8390,
+  "total_elevation_gain": 396.00012,
+  "average_heartrate": 97,
+  "max_heartrate": 130,
+  "icu_training_load": 36,
+  "icu_ctl": 48.01716,
+  "icu_atl": 44.46514,
+  "icu_intensity": 32.077713,
+  "icu_rpe": null,
+  "hr_z1_secs": 12576,
+  "hr_z2_secs": 0,
+  "hr_z3_secs": 0,
+  "hr_z4_secs": 0,
+  "hr_z5_secs": 0
  }
 ]
