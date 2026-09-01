@@ -1174,7 +1174,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-01T18:30:44.444Z"
+  "syncedAt": "2026-09-01T18:45:31.472Z"
  },
  {
   "id": "2026-08-30",
@@ -1195,7 +1195,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-01T18:30:44.444Z"
+  "syncedAt": "2026-09-01T18:45:31.472Z"
  },
  {
   "id": "2026-08-31",
@@ -1216,27 +1216,27 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-01T18:30:44.444Z"
+  "syncedAt": "2026-09-01T18:45:31.472Z"
  },
  {
   "id": "2026-09-01",
   "date": "2026-09-01",
   "restingHR": 49,
   "hrv": null,
-  "hrvSDNN": null,
-  "avgSleepingHR": null,
+  "hrvSDNN": 41,
+  "avgSleepingHR": 62,
   "sleepScore": 87,
   "sleepSecs": 27240,
   "steps": 10652,
   "ctl": 46.7832,
   "atl": 38.7312,
-  "weight": null,
-  "comments": "poobede sa ide malovat zase",
+  "weight": 59.4,
+  "comments": "Maľovali, hrali sme futbal trošku, na Čadečku a späť som išiel",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-01T18:30:44.444Z"
+  "syncedAt": "2026-09-01T18:45:31.472Z"
  }
 ]
