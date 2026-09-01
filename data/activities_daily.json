@@ -1256,5 +1256,28 @@
   "hr_z3_secs": 40,
   "hr_z4_secs": 0,
   "hr_z5_secs": 0
+ },
+ {
+  "id": "i181976742",
+  "date": "2026-09-01",
+  "start_date_local": "2026-09-01T09:45:55",
+  "name": "Morning Ride",
+  "type": "Ride",
+  "comments": null,
+  "moving_time": 1059,
+  "distance": 4580,
+  "total_elevation_gain": 39,
+  "average_heartrate": 128,
+  "max_heartrate": 160,
+  "icu_training_load": 12,
+  "icu_ctl": 46.594975,
+  "icu_atl": 37.666225,
+  "icu_intensity": 63.749275,
+  "icu_rpe": null,
+  "hr_z1_secs": 750,
+  "hr_z2_secs": 250,
+  "hr_z3_secs": 65,
+  "hr_z4_secs": 0,
+  "hr_z5_secs": 0
  }
 ]

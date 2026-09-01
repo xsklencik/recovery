@@ -1174,7 +1174,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-01T08:00:51.615Z"
+  "syncedAt": "2026-09-01T08:15:31.975Z"
  },
  {
   "id": "2026-08-30",
@@ -1195,7 +1195,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-01T08:00:51.615Z"
+  "syncedAt": "2026-09-01T08:15:31.975Z"
  },
  {
   "id": "2026-08-31",
@@ -1216,20 +1216,20 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-01T08:00:51.616Z"
+  "syncedAt": "2026-09-01T08:15:31.975Z"
  },
  {
   "id": "2026-09-01",
   "date": "2026-09-01",
-  "restingHR": null,
+  "restingHR": 49,
   "hrv": null,
   "hrvSDNN": null,
   "avgSleepingHR": null,
   "sleepScore": 87,
   "sleepSecs": 27240,
-  "steps": 2034,
-  "ctl": 46.312634,
-  "atl": 36.06876,
+  "steps": 2136,
+  "ctl": 46.594975,
+  "atl": 37.666225,
   "weight": null,
   "comments": "poobede sa ide malovat zase",
   "mood": null,
@@ -1237,6 +1237,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-01T08:00:51.616Z"
+  "syncedAt": "2026-09-01T08:15:31.975Z"
  }
 ]
