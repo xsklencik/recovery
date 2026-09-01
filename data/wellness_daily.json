@@ -1174,7 +1174,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-01T07:00:50.488Z"
+  "syncedAt": "2026-09-01T07:15:33.608Z"
  },
  {
   "id": "2026-08-30",
@@ -1195,7 +1195,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-01T07:00:50.488Z"
+  "syncedAt": "2026-09-01T07:15:33.608Z"
  },
  {
   "id": "2026-08-31",
@@ -1207,8 +1207,8 @@
   "sleepScore": 85,
   "sleepSecs": 27300,
   "steps": 2297,
-  "ctl": 46.887394,
-  "atl": 38.54585,
+  "ctl": 47.428547,
+  "atl": 41.60766,
   "weight": null,
   "comments": "cely den sme maľovali",
   "mood": null,
@@ -1216,7 +1216,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-01T07:00:50.488Z"
+  "syncedAt": "2026-09-01T07:15:33.608Z"
  },
  {
   "id": "2026-09-01",
@@ -1228,8 +1228,8 @@
   "sleepScore": null,
   "sleepSecs": null,
   "steps": null,
-  "ctl": 45.784214,
-  "atl": 33.414543,
+  "ctl": 46.312634,
+  "atl": 36.06876,
   "weight": null,
   "comments": "poobede sa ide malovat zase",
   "mood": null,
@@ -1237,6 +1237,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-01T07:00:50.488Z"
+  "syncedAt": "2026-09-01T07:15:33.608Z"
  }
 ]
