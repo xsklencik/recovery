@@ -156,6 +156,7 @@ const ACT_DAILY_URL = 'data/activities_daily.json';
 // Denný AI súhrn (Gemini) generovaný v sync.js počas GitHub Actions behu - pozri tam.
 const AI_SUMMARY_URL = 'data/ai_summary_daily.json';
 const HR_STRAIN_URL = 'data/hr_strain_daily.json';
+const HR_INTRADAY_URL = 'data/heart_rate_intraday.json';
 
 // ---------- Zápis do Intervals.icu z prehliadača ----------
 // /api/v1/ endpointy Intervals.icu podporujú CORS (na rozdiel od starších /api/ bez v1), takže
@@ -1406,7 +1407,9 @@ function drawChart(svgId, data, series, opts){
     t.setAttribute('x',x); t.setAttribute('y', H-6);
     t.setAttribute('fill',PALETTE.textFaint); t.setAttribute('font-size','9');
     t.setAttribute('text-anchor','middle');
-    t.textContent = d.date.slice(5);
+    // opts.xLabel: voliteľné prebitie formátovania (napr. graf "Tep - priebeh dňa" má v d.date
+    // čas "HH:MM" namiesto dátumu "YYYY-MM-DD", kde by .slice(5) dávalo prázdny reťazec).
+    t.textContent = opts.xLabel ? opts.xLabel(d, i) : d.date.slice(5);
     svg.appendChild(t);
   });
 

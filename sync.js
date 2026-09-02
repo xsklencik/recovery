@@ -78,6 +78,11 @@ function mergeById(existing, incoming, idField) {
 // ---------------------------------------------------------------------------
 const RAW_HR_DIR = path.join(DATA_DIR, 'heart_rate_raw');
 const HR_STRAIN_FILE = path.join(DATA_DIR, 'hr_strain_daily.json');
+// Celodenný (minútový) priebeh tepu pre NAJNOVŠÍ deň v heart_rate_raw/ - len pre dashboard graf
+// "Tep - priebeh dňa" (Adam, 31.8.2026: "len tak pre zaujímavosť", + aby videl DOKEDY sú dáta
+// aktuálne, keďže Google Apps Script pushuje nový CSV len 1×/hod). Zámerne len 1 deň (nie celá
+// história) - nech súbor ostane malý a frontend ho vie priamo vykresliť bez ďalšieho spracovania.
+const HR_INTRADAY_FILE = path.join(DATA_DIR, 'heart_rate_intraday.json');
 
 // Fyziologické konštanty - ODHADNUTÉ spätne z Adamových Karvonen zón nastavených v Intervals.icu
 // (Z1 <143 · Z2 144-157 · Z3 158-171 · Z4 172-185 · Z5 ≥186 bpm). Karvonen: HR = HRrest +
@@ -327,6 +332,22 @@ function processHeartRateCsvs(activitiesMerged) {
   Object.keys(existingObj).sort().forEach(d => { sorted[d] = existingObj[d]; });
   fs.writeFileSync(HR_STRAIN_FILE, JSON.stringify(sorted, null, 1));
   console.log(`✅ data/hr_strain_daily.json aktualizovaný (${Object.keys(sorted).length} dní spolu).`);
+
+  // Najnovší deň (podľa dát, nie podľa systémového dátumu - ak Apps Script ešte nepushol nič za
+  // dnešok, ostane zobrazený posledný deň, ktorý reálne máme, s viditeľným dátumom v JSON-e).
+  const latestDate = Array.from(byDate.keys()).sort().pop();
+  if (latestDate) {
+    const points = Array.from(byDate.get(latestDate), ([time, hr]) => ({ time, hr }))
+      .sort((a, b) => (a.time < b.time ? -1 : 1));
+    const lastPointTime = points.length ? points[points.length - 1].time : null;
+    fs.writeFileSync(HR_INTRADAY_FILE, JSON.stringify({
+      date: latestDate,
+      points,
+      lastPointTime,
+      updatedAt: new Date().toISOString(),
+    }, null, 1));
+    console.log(`💓 data/heart_rate_intraday.json aktualizovaný (${latestDate}, ${points.length} bodov, posledný záznam o ${lastPointTime}).`);
+  }
 }
 
 async function main() {

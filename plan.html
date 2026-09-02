@@ -112,6 +112,7 @@
     <button class="plan-reset" id="btn-reset-choices" style="display:none;">↺ zresetovať výber</button>
   </div>
   <div class="plan-last-edit" id="plan-last-edit" style="display:none;"></div>
+  <div class="plan-last-edit" id="plan-today-save-status" style="display:none;"></div>
   <div id="plan-days"></div>
 
   <div class="plan-edit-card" id="plan-forecast-card" style="display:none;">
@@ -163,11 +164,47 @@ function daysWithAlternatives(plan){
 // automaticky uložená voľba ju v prehliadači ticho prebila - vyzeralo to, akoby appka sama sebe
 // odporúčala dve rôzne veci naraz. AI teraz už toto zohľadňuje sama holisticky (pozri "recommended"
 // v weather-plan.js), takže lokálna kaskáda už nie je len zbytočná, ale aktívne škodí - odstránená.
-function pickAlternative(date, i){
+// OPRAVA 31.8.2026 (žiadosť Adama): výber pre DNEŠOK sa už NEUKLADÁ len ako lokálna UI
+// preferencia (viď pôvodný komentár vyššie pri CHOICE_KEY) - navyše sa zapíše aj ako skutočný
+// "komentár dňa" (rovnaký mechanizmus ako Kalendár/História, cez saveDayComment). Vďaka tomu:
+//  1) je to vidno naprieč appkou (Kalendár/História/Dashboard) - "dnes som si dal voľno" je
+//     odteraz naozaj zapísané, nie len zvýraznené tlačidlo v prehliadači,
+//  2) keď sa plán nabudúce vygeneruje/upraví, weather-plan.js to uvidí ako TVOJ VLASTNÝ PLÁN pre
+//     dnešok (presne ako poznámka napísaná ručne v Kalendári) a existujúce pravidlo v prompte
+//     ("ak si už oddýchol, uprednostni long pred ďalším rest dňom", "nedávaj recommended:true na
+//     3+ voľno dni po sebe") to zohľadní pri odporúčaní ZAJTRAJŠKA aj ďalších dní - už to teda nie
+//     je AI "hádanie naslepo", ale reálny signál, čo si dnes spravil.
+// Budúce dni ostávajú ČISTO lokálny náhľad ako doteraz (menia sa často, netreba ich commitovať pri
+// každom kliku) - do repa sa zapisuje VÝHRADNE dnešok.
+async function pickAlternative(date, i){
   const choices = loadChoices();
   choices[date] = { i, manual:true };
   saveChoices(choices);
   renderPlan(CURRENT_PLAN);
+
+  if(date !== todayISO()) return;
+  const day = CURRENT_PLAN && CURRENT_PLAN.days && CURRENT_PLAN.days.find(d=>d.date===date);
+  const alt = day && day.alternatives && day.alternatives[i];
+  if(!alt) return;
+  const statusEl = document.getElementById('plan-today-save-status');
+  statusEl.style.display = '';
+  if(!getGhToken()){
+    statusEl.style.color = 'var(--warn)';
+    statusEl.textContent = '⚠️ Bez GitHub tokenu sa dnešná voľba ("' + alt.label + '") uložila len ako lokálny náhľad, nie ako komentár dňa - AI ju pri ďalšom generovaní neuvidí. Nastav token v Kalendári/na Dashboarde.';
+    return;
+  }
+  statusEl.style.color = 'var(--text-faint)';
+  statusEl.textContent = 'Ukladám "' + alt.label + '" ako komentár dnešného dňa…';
+  try{
+    const existingNotes = await loadJson(DAY_NOTES_URL) || [];
+    const existing = existingNotes.find(n=>n.date===date);
+    const res = await saveDayComment(date, alt.label, existing ? existing.status : null);
+    statusEl.style.color = res.icuOk || !res.icuError ? 'var(--good)' : 'var(--warn)';
+    statusEl.textContent = '✅ Zapísané ako komentár dňa - AI to zohľadní pri ďalšom generovaní/úprave plánu.' + (res.icuError ? ' (⚠️ Intervals.icu: ' + res.icuError + ')' : '');
+  }catch(e){
+    statusEl.style.color = 'var(--bad)';
+    statusEl.textContent = '⚠️ Nepodarilo sa uložiť komentár dňa: ' + e.message;
+  }
 }
 
 function resetChoices(){

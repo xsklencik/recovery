@@ -121,6 +121,12 @@
       <div class="activity-list" id="activity-list"></div>
     </div>
 
+    <div class="chart-card" id="hr-today-card" style="display:none;">
+      <div class="chart-card-title">Tep — priebeh dňa</div>
+      <svg id="chart-hr-today"></svg>
+      <div class="sync-info" id="hr-today-caption"></div>
+    </div>
+
     <div class="section-head">
       <div class="section-title">HRV · pokojová TF · spánková TF</div>
       <div class="chart-tabs">
@@ -599,12 +605,37 @@ let LATEST_BASELINE = {};
 let STEPS_BASELINE_BY_DATE = new Map();
 let NOTES_BY_DATE_D = new Map(); // data/day_notes.json — zdieľané s Kalendárom/Históriou, pozri app-common.js
 
+// "Tep - priebeh dňa" - jednoduchý minútový graf najnovšieho dňa z data/heart_rate_intraday.json
+// (zapisuje sync.js, viď processHeartRateCsvs()). Len na info/zaujímavosť - ukazuje aj DOKEDY sú
+// dáta aktuálne, keďže Google Apps Script pushuje nový CSV export z telefónu len 1×/hod.
+function renderHrToday(intraday){
+  const card = document.getElementById('hr-today-card');
+  if(!intraday || !Array.isArray(intraday.points) || intraday.points.length < 2){
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = '';
+  const data = intraday.points.map(p => ({ date: (p.time||'').slice(0,5), hr: p.hr }));
+  drawChart('chart-hr-today', data, [{field:'hr', color:PALETTE.data, label:'Tep'}], {
+    minAtZero: true,
+    hideDots: true,
+    xLabel: d => d.date,
+    tooltipFormat: (field, val) => Math.round(val) + ' bpm',
+  });
+  const isToday = intraday.date === todayISO();
+  const lastT = (intraday.lastPointTime || '').slice(0,5);
+  const syncT = intraday.updatedAt ? new Date(intraday.updatedAt).toLocaleString('sk-SK') : '?';
+  document.getElementById('hr-today-caption').textContent =
+    `${isToday ? 'Dnes' : intraday.date} · dáta do ${lastT || '?'} · aktualizované ${syncT}`;
+}
+
 async function main(){
-  const [history, daily, sync, actHistory, actDaily, aiSummary, dayNotes, hrStrainByDate] = await Promise.all([
+  const [history, daily, sync, actHistory, actDaily, aiSummary, dayNotes, hrStrainByDate, hrIntraday] = await Promise.all([
     loadJson(HISTORY_URL), loadJson(DAILY_URL), loadJson(SYNC_URL),
     loadJson(ACT_HISTORY_URL), loadJson(ACT_DAILY_URL), loadJson(AI_SUMMARY_URL),
-    loadJson(DAY_NOTES_URL), loadHrStrainMap()
+    loadJson(DAY_NOTES_URL), loadHrStrainMap(), loadJson(HR_INTRADAY_URL)
   ]);
+  renderHrToday(hrIntraday);
 
   if(!history && !daily){
     document.getElementById('loading').style.display='none';
