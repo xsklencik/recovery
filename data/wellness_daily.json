@@ -1216,7 +1216,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-03T08:15:31.729Z"
+  "syncedAt": "2026-09-03T08:30:47.832Z"
  },
  {
   "id": "2026-09-01",
@@ -1237,7 +1237,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-03T08:15:31.729Z"
+  "syncedAt": "2026-09-03T08:30:47.832Z"
  },
  {
   "id": "2026-09-02",
@@ -1258,7 +1258,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-03T08:15:31.729Z"
+  "syncedAt": "2026-09-03T08:30:47.832Z"
  },
  {
   "id": "2026-09-03",
@@ -1273,12 +1273,12 @@
   "ctl": 46.675365,
   "atl": 39.491673,
   "weight": null,
-  "comments": null,
+  "comments": "Úplná regenerácia",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-03T08:15:31.729Z"
+  "syncedAt": "2026-09-03T08:30:47.832Z"
  }
 ]
