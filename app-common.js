@@ -1122,7 +1122,10 @@ async function projectPlanRecoveryStrain(plan, choices) {
   });
 
   const rows = [];
-  plan.days.slice(0, 10).forEach(d => {
+  // OPRAVA 4.9.2026 (žiadosť Adama): rovnaká vec ako v plan.html renderPlan() - ak sa plán
+  // nestihol pregenerovať a dnešok už "predbehol" prvý deň v ňom, nech sa tá stará dátumová
+  // položka do tabuľky vôbec nedostane.
+  plan.days.filter(d => d.date >= todayISO()).slice(0, 10).forEach(d => {
     let category, activityLabel;
     if (d.ownNote) {
       // OPRAVA 13.8.2026: predtým KAŽDÝ deň s vlastnou poznámkou dostal ten istý pevný odhad

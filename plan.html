@@ -235,7 +235,14 @@ function renderPlan(plan){
   const resetBtn = document.getElementById('btn-reset-choices');
   const lastEditBox = document.getElementById('plan-last-edit');
   const daysBox = document.getElementById('plan-days');
-  if(!plan || !plan.days || !plan.days.length){
+  // OPRAVA 4.9.2026 (žiadosť Adama): plán sa negeneruje každý deň nanovo (stojí to Gemini
+  // volanie), takže `plan.days` môže pokojne ešte obsahovať aj dni, ktoré už PREŠLI (napr. plán sa
+  // naposledy vygeneroval 3.9. a dnes je už 4.9.). Predtým sa taký starý deň ukázal ako keby bol
+  // stále aktuálny/prvý v zozname - teraz sa dni PRED dneškom z zobrazenia jednoducho vynechajú,
+  // bez toho, aby to vyžadovalo nové vygenerovanie. Samotný `plan.days` v pamäti/JSON-e sa nemení.
+  const today = todayISO();
+  const visibleDays = plan && plan.days ? plan.days.filter(d => d.date >= today) : [];
+  if(!plan || !visibleDays.length){
     meta.textContent = 'Zatiaľ nevygenerované. Klikni "🔄 Vygenerovať plán".';
     resetBtn.style.display = 'none';
     lastEditBox.style.display = 'none';
@@ -260,7 +267,7 @@ function renderPlan(plan){
   // poznámku na daný deň). Zároveň zahoď staré NEmanuálne (auto/kaskádové) voľby - tie už appka
   // negeneruje (viď vyššie), toto len samo od seba vyčistí to, čo mohlo ostať uložené z predošlej
   // verzie a inak by navždy ticho prebíjalo aktuálne AI odporúčanie.
-  const validDates = new Set(daysWithAlternatives(plan).map(d => d.date));
+  const validDates = new Set(daysWithAlternatives(plan).filter(d => d.date >= today).map(d => d.date));
   let choices = loadChoices();
   let choicesChanged = false;
   Object.keys(choices).forEach(date => {
@@ -269,7 +276,7 @@ function renderPlan(plan){
   if(choicesChanged) saveChoices(choices);
   resetBtn.style.display = Object.keys(choices).length ? '' : 'none';
 
-  daysBox.innerHTML = plan.days.map(d=>{
+  daysBox.innerHTML = visibleDays.map(d=>{
     let body, altsHtml = '', fuelPlanText = null;
     if(d.ownNote){
       // OPRAVA 5.8.2026 (nahlásené Adamom): predtým sa tu vždy zobrazila len surová poznámka.

@@ -34,6 +34,35 @@ const path = require('path');
 
 const DATA_DIR = path.join(__dirname, 'data');
 const PLAN_FILE = path.join(DATA_DIR, 'weather_plan.json');
+// OPRAVA 4.9.2026 (žiadosť Adama): weather_plan.json je vždy len ROLLING 10-dňové okno od
+// "dneška" (Open-Meteo tak vracia predpoveď) - pri každom novom vygenerovaní tak dni, čo už
+// prešli, jednoducho vypadnú a nenávratne sa stratia pri ďalšom prepísaní súboru. Do tohto
+// súboru sa PRED prepísaním archivuje, čo bolo pre taký deň naplánované, nech sa dá spätne v
+// Kalendári pozrieť "čo som mal robiť" aj keď sa plán medzitým dávno pregeneroval - najmä ako
+// náhrada/doplnok pre dni, kde zlyhal/chýba "aktivity súhrn" (ai-summary.js).
+const PLAN_HISTORY_FILE = path.join(DATA_DIR, 'plan_history.json');
+
+function archiveExpiredDays(newFirstDate) {
+  if (!newFirstDate) return;
+  const oldPlan = loadJsonSafe(PLAN_FILE, null);
+  if (!oldPlan || !Array.isArray(oldPlan.days) || !oldPlan.days.length) return;
+  const expired = oldPlan.days.filter(d => d.date < newFirstDate);
+  if (!expired.length) return;
+  const history = loadJsonSafe(PLAN_HISTORY_FILE, {});
+  expired.forEach(d => {
+    const recommendedAlt = Array.isArray(d.alternatives) ? d.alternatives.find(a => a.recommended) : null;
+    history[d.date] = {
+      date: d.date,
+      archivedAt: new Date().toISOString(),
+      weatherDesc: d.weatherDesc || null,
+      ownNote: d.ownNote || null,
+      plannedLabel: d.ownNote ? (d.noteLabel || 'Vlastný plán') : (recommendedAlt ? recommendedAlt.label : null),
+      plannedSuggestion: d.ownNote ? (d.notePlan || d.ownNote) : (recommendedAlt ? recommendedAlt.suggestion : null),
+    };
+  });
+  fs.writeFileSync(PLAN_HISTORY_FILE, JSON.stringify(history, null, 1));
+  console.log(`🗄️ data/plan_history.json - archivovaných ${expired.length} dní (${expired.map(d => d.date).join(', ')}).`);
+}
 const LAT = 49.4386, LON = 18.7898; // Čadca, Slovensko
 const DEFAULT_GEMINI_MODEL = 'gemini-3.6-flash';
 // PRÍČINA starého "Bez návrhu" bugu: ak primárny model vráti chybu (404 po vyradení, 429 po
@@ -500,7 +529,15 @@ function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate, ac
     'dôvod odporúčať viacdňové voľno - zváž aspoň kratšiu/miernejšiu vonkajšiu alternatívu ' +
     '(indoor momentálne nie je k dispozícii, viď vyššie). Ak z kontextu (nedávna záťaž, ' +
     '"Posledných X dní") vyplýva, že si už oddýchol, uprednostni skôr "long" možnosť pred ďalším ' +
-    'odporúčaným "rest" dňom, aj keď vonku prší.\n' +
+    'odporúčaným "rest" dňom, aj keď vonku prší. SYMETRICKY (toto konkrétne nahlásil Adam ako ' +
+    'chýbajúce): ak bolo NEDÁVNO niekoľko namáhavých dní za sebou (opakované "intensity", alebo ' +
+    '"long"/vysoký objem bez skutočného voľna medzi nimi) - podľa "Posledných X dní" aj podľa ' +
+    'okolitých dní v TOMTO pláne - NEODPORÚČAJ (t.j. "recommended":true nedávaj na) ďalší "long" ' +
+    'ani "intensity", aj keby počasie/okno vyzeralo lákavo - v tej chvíli dáva väčšmi zmysel ' +
+    '"rest"/pasívna regenerácia a tá by mala byť "recommended":true, presne rovnako ako pri ' +
+    'sérii "rest" dní vyššie sa uprednostňuje "long". Viacero dní vysokého objemu za sebou bez ' +
+    'skutočného voľna je kumulatívna záťaž, aj keď každý jednotlivý deň bol technicky "len" nižšia ' +
+    'zóna.\n' +
     'Odpovedz IBA validným JSON poľom (žiadny markdown, žiadne ```). Každý prvok má "date" a BUĎ ' +
     '"alternatives" (presne 3 položky v poradí rest/long/intensity, pre typ A dni) ALEBO ' +
     '"notePlan"+"noteLabel"+"noteIntensity" (pre typ B dni) - nikdy oboje naraz. Presný tvar:\n' +
@@ -740,6 +777,7 @@ async function generateNewPlan() {
       };
     }),
   };
+  archiveExpiredDays(todayForHistory);
   fs.writeFileSync(PLAN_FILE, JSON.stringify(output, null, 1));
   console.log('✅ Plán podľa počasia uložený do data/weather_plan.json.');
 }

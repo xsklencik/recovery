@@ -256,14 +256,19 @@ const MONTH_NAMES = ['Január','Február','Marec','Apríl','Máj','Jún','Júl',
 
 let WELLNESS_BY_DATE = new Map();
 let AI_SUMMARY_BY_DATE = new Map();
+let PLAN_HISTORY_BY_DATE = new Map();
 
 async function loadData(){
-  const [actHist, actDaily, notes, analyses, wHist, wDaily, aiHistory] = await Promise.all([
+  const [actHist, actDaily, notes, analyses, wHist, wDaily, aiHistory, planHistory] = await Promise.all([
     loadJson('data/activities_history.json'), loadJson('data/activities_daily.json'), loadJson(NOTES_URL),
     loadJson('data/activity_analyses.json'),
     loadJson('data/wellness_history.json'), loadJson('data/wellness_daily.json'),
-    loadJson(AI_SUMMARY_HISTORY_URL),
+    loadJson(AI_SUMMARY_HISTORY_URL), loadJson('data/plan_history.json'),
   ]);
+  // plan_history.json je jeden objekt kľúčovaný dátumom (viď archiveExpiredDays() vo
+  // weather-plan.js) - záznam sa tam objaví pre KAŽDÝ deň, ktorý raz vypadol z rolling
+  // 10-dňového okna plánu, bez ohľadu na to, či pre ten deň funguje/existuje AI súhrn.
+  PLAN_HISTORY_BY_DATE = new Map(Object.entries(planHistory || {}));
   // ai_summary_history.json je jeden objekt kľúčovaný dátumom ({"2026-07-28": {...}, ...}) -
   // načíta sa NARAZ (jeden fetch), takže výber dňa v Kalendári nevyvoláva žiadne ďalšie
   // (prípadne 404) požiadavky za behu - len vyhľadanie v už stiahnutej mape.
@@ -349,29 +354,49 @@ let selectedDayStatus = null;
 // AI súhrn dňa (Gemini) pre KONKRÉTNY vybraný deň - číta sa z už načítanej AI_SUMMARY_BY_DATE
 // mapy (žiadny fetch tu, takže žiadne 404 pri prepínaní dní). Pre dni bez vygenerovaného súhrnu
 // (mimo rozsahu histórie, alebo deň v budúcnosti) sa karta jednoducho skryje.
+// OPRAVA 4.9.2026 (žiadosť Adama - "aktivity súhrn stále nefunguje"): keď pre daný deň chýba AI
+// súhrn, karta sa už nekryje naprázdno - namiesto toho skúsi PLAN_HISTORY_BY_DATE (čo bolo pre
+// ten deň naplánované, archivované vo weather-plan.js keď deň vypadol z rolling okna). Nie je to
+// plnohodnotný "ako to dopadlo" súhrn s porovnaním voči realite, ale aspoň je vidno, čo malo byť.
 function renderDayAiSummary(dateStr){
   const card = document.getElementById('day-modal-ai-card');
   const text = document.getElementById('day-modal-ai-text');
   const planToggle = document.getElementById('day-modal-ai-plan-toggle');
   const planText = document.getElementById('day-modal-ai-plan-text');
   const entry = AI_SUMMARY_BY_DATE.get(dateStr);
-  if(!entry || !entry.summary){
-    card.style.display = 'none';
-    planToggle.style.display = 'none';
-    planText.style.display = 'none';
+  if(entry && entry.summary){
+    card.style.display = 'block';
+    text.textContent = entry.summary;
+    if(entry.plan){
+      planToggle.style.display = 'inline';
+      planToggle.textContent = 'Podrobný plán ↓';
+      planText.style.display = 'none';
+      planText.textContent = entry.plan;
+    } else {
+      planToggle.style.display = 'none';
+      planText.style.display = 'none';
+    }
     return;
   }
-  card.style.display = 'block';
-  text.textContent = entry.summary;
-  if(entry.plan){
-    planToggle.style.display = 'inline';
-    planToggle.textContent = 'Podrobný plán ↓';
-    planText.style.display = 'none';
-    planText.textContent = entry.plan;
-  } else {
-    planToggle.style.display = 'none';
-    planText.style.display = 'none';
+  const planned = PLAN_HISTORY_BY_DATE.get(dateStr);
+  if(planned && (planned.plannedLabel || planned.plannedSuggestion)){
+    card.style.display = 'block';
+    text.textContent = '📋 Naplánované: ' + (planned.plannedLabel || '(bez názvu)') +
+      (planned.ownNote ? ' (vlastná poznámka: "' + planned.ownNote + '")' : '');
+    if(planned.plannedSuggestion){
+      planToggle.style.display = 'inline';
+      planToggle.textContent = 'Detail plánu ↓';
+      planText.style.display = 'none';
+      planText.textContent = planned.plannedSuggestion;
+    } else {
+      planToggle.style.display = 'none';
+      planText.style.display = 'none';
+    }
+    return;
   }
+  card.style.display = 'none';
+  planToggle.style.display = 'none';
+  planText.style.display = 'none';
 }
 document.getElementById('day-modal-ai-plan-toggle').addEventListener('click', ()=>{
   const planText = document.getElementById('day-modal-ai-plan-text');
