@@ -609,27 +609,47 @@ let NOTES_BY_DATE_D = new Map(); // data/day_notes.json — zdieľané s Kalend�
 // (zapisuje sync.js, viď processHeartRateCsvs()). Len na info/zaujímavosť - ukazuje aj DOKEDY sú
 // dáta aktuálne, keďže Google Apps Script pushuje nový CSV export z telefónu len 1×/hod.
 function renderHrToday(intraday){
-  const card = document.getElementById('hr-today-card');
-  if(!intraday || !Array.isArray(intraday.points) || intraday.points.length < 2){
-    card.style.display = 'none';
-    return;
+  // OPRAVA 2.9.2026: táto funkcia sa volá HNEĎ na začiatku main(), pred nastavením "Posledná
+  // synchronizácia…" (sync-info) aj pred fallbackom na chybovú hlášku. Ak by čokoľvek v nej
+  // vyhodilo chybu (chýbajúci element v DOM kvôli nekompletnému/starému nasadeniu súboru,
+  // nečakaný tvar dát...), main() by sa zastavil TU a "načítavam…" by ostalo visieť navždy -
+  // presne toto Adam nahlásil 2.9.2026. Celá funkcia je preto zabalená v try/catch a v prípade
+  // problému kartu len potichu skryje namiesto toho, aby zhodila zvyšok dashboardu.
+  try{
+    const card = document.getElementById('hr-today-card');
+    if(!card) return; // starý/nekompletne nasadený index.html - element ešte neexistuje
+    if(!intraday || !Array.isArray(intraday.points) || intraday.points.length < 2){
+      card.style.display = 'none';
+      return;
+    }
+    card.style.display = '';
+    const data = intraday.points.map(p => ({ date: (p.time||'').slice(0,5), hr: p.hr }));
+    drawChart('chart-hr-today', data, [{field:'hr', color:PALETTE.data, label:'Tep'}], {
+      minAtZero: true,
+      hideDots: true,
+      xLabel: d => d.date,
+      tooltipFormat: (field, val) => Math.round(val) + ' bpm',
+    });
+    const isToday = intraday.date === todayISO();
+    const lastT = (intraday.lastPointTime || '').slice(0,5);
+    const syncT = intraday.updatedAt ? new Date(intraday.updatedAt).toLocaleString('sk-SK') : '?';
+    const caption = document.getElementById('hr-today-caption');
+    if(caption){
+      caption.textContent = `${isToday ? 'Dnes' : intraday.date} · dáta do ${lastT || '?'} · aktualizované ${syncT}`;
+    }
+  }catch(e){
+    console.warn('renderHrToday zlyhalo, karta sa skrýva (nemá to zhodiť zvyšok dashboardu):', e);
+    const card = document.getElementById('hr-today-card');
+    if(card) card.style.display = 'none';
   }
-  card.style.display = '';
-  const data = intraday.points.map(p => ({ date: (p.time||'').slice(0,5), hr: p.hr }));
-  drawChart('chart-hr-today', data, [{field:'hr', color:PALETTE.data, label:'Tep'}], {
-    minAtZero: true,
-    hideDots: true,
-    xLabel: d => d.date,
-    tooltipFormat: (field, val) => Math.round(val) + ' bpm',
-  });
-  const isToday = intraday.date === todayISO();
-  const lastT = (intraday.lastPointTime || '').slice(0,5);
-  const syncT = intraday.updatedAt ? new Date(intraday.updatedAt).toLocaleString('sk-SK') : '?';
-  document.getElementById('hr-today-caption').textContent =
-    `${isToday ? 'Dnes' : intraday.date} · dáta do ${lastT || '?'} · aktualizované ${syncT}`;
 }
 
 async function main(){
+ // OPRAVA 2.9.2026: celé telo main() je teraz v try/catch. Predtým chyba KDEKOĽVEK v main() (nová
+ // karta s tepom, budúca zmena...) nechala "načítavam…" v hlavičke navždy visieť, lebo nič za ňou
+ // sa už nespustilo. Teraz sa loading stav VŽDY nejako uzavrie - buď normálne, alebo viditeľnou
+ // chybovou hláškou (namiesto tichého zamrznutia bez akejkoľvek indikácie, čo sa deje).
+ try{
   const [history, daily, sync, actHistory, actDaily, aiSummary, dayNotes, hrStrainByDate, hrIntraday] = await Promise.all([
     loadJson(HISTORY_URL), loadJson(DAILY_URL), loadJson(SYNC_URL),
     loadJson(ACT_HISTORY_URL), loadJson(ACT_DAILY_URL), loadJson(AI_SUMMARY_URL),
@@ -665,6 +685,15 @@ async function main(){
   LATEST_BASELINE = latestBaseline;
   STEPS_BASELINE_BY_DATE = stepsBaselineByDate;
   render(results, activities, aiSummary);
+ }catch(e){
+   console.error('main() zlyhalo:', e);
+   const syncInfo = document.getElementById('sync-info');
+   if(syncInfo) syncInfo.textContent = '⚠️ Chyba načítania (' + e.message + ')';
+   const loadingEl = document.getElementById('loading');
+   if(loadingEl) loadingEl.style.display = 'none';
+   const errEl = document.getElementById('err');
+   if(errEl) errEl.textContent = 'Nastala chyba pri načítaní dashboardu: ' + e.message + ' (detaily v konzole prehliadača).';
+ }
 }
 
 // AI súhrn dňa (Gemini, generovaný v sync.js) - textContent (nie innerHTML), takže nepotrebuje

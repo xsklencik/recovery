@@ -105,12 +105,19 @@ function bestWindowInRange(dayHours, startHour, endHour) {
 
 // Vráti { start, end, avgRainProb, outsidePreferred } - posledné pole true, ak sa muselo siahnuť
 // mimo preferovaného poobedného rozsahu (frontend/prompt to môže dať najavo, napr. iným textom).
-function bestWindowForDay(hourlyTimes, hourlyProb, date) {
+// OPRAVA 2.9.2026 (nahlásené Adamom): okno sa doteraz vyberalo VÝHRADNE podľa najnižšej šance
+// dažďa v rozsahu 12:00-21:00, úplne bez ohľadu na to, či je vtedy ešte svetlo - v septembri tak
+// vedelo vyjsť napr. "18:00-22:00" ako "najlepšie okno bez dažďa", hoci slnko zapadá už okolo
+// 19:30 a posledná hodina či dve z toho boli reálne poza tmou. `sunsetHour` (desatinné číslo,
+// napr. 19.53 pre 19:32) sa teraz odčíta z Open-Meteo `daily.sunset` a hodiny PO zotmení sa do
+// kandidátov na okno vôbec nezarátajú - okno tak už fyzicky nemôže siahať do tmy.
+function bestWindowForDay(hourlyTimes, hourlyProb, date, sunsetHour) {
   const dayHours = [];
   for (let i = 0; i < hourlyTimes.length; i++) {
     if (hourlyTimes[i].slice(0, 10) === date) {
       const hour = parseInt(hourlyTimes[i].slice(11, 13), 10);
-      if (hour >= TRAINING_DAY_START_HOUR && hour <= TRAINING_DAY_END_HOUR && hourlyProb[i] != null) {
+      const isDaylight = sunsetHour == null || hour < sunsetHour;
+      if (hour >= TRAINING_DAY_START_HOUR && hour <= TRAINING_DAY_END_HOUR && hourlyProb[i] != null && isDaylight) {
         dayHours.push({ hour, prob: hourlyProb[i] });
       }
     }
@@ -168,7 +175,7 @@ function hourlyBreakdownForDay(hourlyTimes, hourlyProb, hourlyTemp, date) {
 // `precipitation_probability` má stabilný názov naprieč verziami, tá fallback nepotrebuje.
 async function fetchWeatherWithParams(dailyParams) {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
-    `&daily=${dailyParams}&hourly=precipitation_probability,temperature_2m&timezone=Europe/Bratislava&forecast_days=10`;
+    `&daily=${dailyParams},sunrise,sunset&hourly=precipitation_probability,temperature_2m&timezone=Europe/Bratislava&forecast_days=10`;
   const res = await fetch(url);
   if (!res.ok) {
     const txt = await res.text().catch(() => '');
@@ -193,16 +200,27 @@ async function fetchWeather() {
   const hourlyTemp = h.temperature_2m || [];
   const weatherCodeArr = d.weather_code || d.weathercode || [];
   const windArr = d.wind_speed_10m_max || d.windspeed_10m_max || [];
-  return d.time.map((date, i) => ({
-    date,
-    tempMax: d.temperature_2m_max[i],
-    tempMin: d.temperature_2m_min[i],
-    precipMm: d.precipitation_sum[i],
-    windMaxKmh: windArr[i],
-    weatherCode: weatherCodeArr[i],
-    bestWindow: bestWindowForDay(hourlyTimes, hourlyProb, date),
-    hourly: hourlyBreakdownForDay(hourlyTimes, hourlyProb, hourlyTemp, date),
-  }));
+  const sunsetArr = d.sunset || [];
+  return d.time.map((date, i) => {
+    // sunsetArr[i] je ISO lokálny čas napr. "2026-09-02T19:32" (vďaka timezone=Europe/Bratislava
+    // v requeste) - desatinná hodina (19.533) sa použije na orezanie okna, "HH:MM" na zobrazenie/prompt.
+    let sunsetHour = null, sunsetTxt = null;
+    if (sunsetArr[i]) {
+      const m = sunsetArr[i].match(/T(\d{2}):(\d{2})/);
+      if (m) { sunsetHour = parseInt(m[1], 10) + parseInt(m[2], 10) / 60; sunsetTxt = `${m[1]}:${m[2]}`; }
+    }
+    return {
+      date,
+      tempMax: d.temperature_2m_max[i],
+      tempMin: d.temperature_2m_min[i],
+      precipMm: d.precipitation_sum[i],
+      windMaxKmh: windArr[i],
+      weatherCode: weatherCodeArr[i],
+      sunset: sunsetTxt,
+      bestWindow: bestWindowForDay(hourlyTimes, hourlyProb, date, sunsetHour),
+      hourly: hourlyBreakdownForDay(hourlyTimes, hourlyProb, hourlyTemp, date),
+    };
+  });
 }
 
 // POZOR (rovnaký koreň problému ako v ai-summary.js/sync.js, zistené 30.7.2026): Gemini 3.x
@@ -327,14 +345,15 @@ function normalizeAlternatives(alts) {
     });
 }
 
-function weatherLineFor(date, weatherDesc, tempMin, tempMax, precipMm, windMaxKmh, planLabel, statusTxt, bestWindow, doneActivitiesTxt) {
+function weatherLineFor(date, weatherDesc, tempMin, tempMax, precipMm, windMaxKmh, planLabel, statusTxt, bestWindow, doneActivitiesTxt, sunsetTxt) {
   const windowTxt = bestWindow
     ? ` [najlepšie okno: ${bestWindow.start}-${bestWindow.end}, šanca dažďa ${bestWindow.avgRainProb}%` +
       `${bestWindow.outsidePreferred ? ', mimo zvyčajného poobedného času' : ''}]`
     : '';
+  const sunsetLineTxt = sunsetTxt ? ` [zotmenie ~${sunsetTxt}]` : '';
   const doneTxt = doneActivitiesTxt ? ` [UŽ ABSOLVOVANÉ DNES: ${doneActivitiesTxt}]` : '';
   return `- ${date}: ${weatherDesc}, ${Math.round(tempMin)}-${Math.round(tempMax)}°C, zrážky ${precipMm}mm, ` +
-    `vietor do ${Math.round(windMaxKmh)}km/h [${planLabel}]${statusTxt}${windowTxt}${doneTxt}`;
+    `vietor do ${Math.round(windMaxKmh)}km/h [${planLabel}]${statusTxt}${windowTxt}${sunsetLineTxt}${doneTxt}`;
 }
 
 // Krátky ľudsky čitateľný súhrn už zaznamenaných aktivít pre daný deň (napr. "30min Ride (Z2,
@@ -370,7 +389,13 @@ function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate, ac
     '1) intensity="rest" - SKUTOČNÉ voľno/úplný regeneračný deň (žiadny tréning, prípadne len ' +
     'veľmi ľahký pohyb/strečing) - nie "ľahká jazda", ale reálne voľno,\n' +
     '2) intensity="long" - vytrvalostná/DLHŠIA jazda alebo beh v nižšej zóne, citeľne väčší objem ' +
-    'než bežný deň - toto má byť skutočný OPAK alternatívy "rest", nie jej mierne obmenená verzia,\n' +
+    'než bežný deň - toto má byť skutočný OPAK alternatívy "rest", nie jej mierne obmenená verzia. ' +
+    'DĹŽKU/OBJEM aj TRASU/PROFIL odvoď z reálneho kontextu nižšie (CTL/ATL, koľko a čo bolo ' +
+    'najbližšie predtým/potom, deň v týždni) - NIE je to vždy rovnaké číslo hodín ani rovnaký ' +
+    'plochý Z2 výjazd: pri nižšom CTL/po dlhšej prestávke navrhni kratšie, pri dobrej forme a bez ' +
+    'blízkeho náročného dňa dlhšie, občas zvlnenejší profil alebo iný smer/cieľ namiesto vždy ' +
+    'rovnakého plochého okruhu. Adam si sťažoval, že mu "long" vychádza stále rovnako (~2.5-3h Z2 ' +
+    'dokola) - vyhni sa tomu, nech to naozaj odzrkadľuje aktuálnu situáciu, nie šablónu,\n' +
     '3) intensity="intensity" - intervaly/tempo, kratšie trvanie ale náročné. INDOOR TRÉNING ' +
     '(trenažér/rolky/posilňovňa) Adam momentálne nemá k dispozícii - NENAVRHUJ ho vôbec, ani ako ' +
     'súčasť inej alternatívy.\n' +
@@ -402,8 +427,12 @@ function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate, ac
     'prešliapanie medzi", "6x1min naplno, 2min voľno", "2x20min tvrdý tempo blok"), pri "long" ' +
     'orientačnú dĺžku/zónu a kde/kadiaľ (napr. cez Husárik/Valy, ak sa to hodí), pri "rest" čo ' +
     'konkrétne pre regeneráciu (strečing, valcovanie, spánok). PRE ZVYŠNÉ DNI (za týmto dátumom) ' +
-    'napíš "suggestion"/"notePlan" NAOPAK VEĽMI STRUČNE - JEDNA veta, len podstata (napr. ' +
-    '"Intervaly - 4x6min tempo" alebo "Dlhá Z2, cca 2.5h"), bez rozpisovania - tieto dni sa aj tak ' +
+    'napíš "suggestion"/"notePlan" NAOPAK VEĽMI STRUČNE - JEDNA veta, len podstata, ALE stále ' +
+    'konkrétna a odvodená od kontextu toho dňa (nie generická šablóna) - napr. pri "intensity" ' +
+    'uveď aspoň hrubú štruktúru (počet/dĺžku intervalov), pri "long" konkrétnu dĺžku/zónu, ktorá ' +
+    'sedí s formou a okolitými dňami toho dňa (POZOR: rôzne dni majú mať rôzne čísla/formuláciu ' +
+    'podľa toho, čo je v ten deň naozaj v pláne - NIKDY nekopíruj rovnaké "cca X h Z2" naprieč ' +
+    'viacerými dňami len preto, že to je najjednoduchšie), bez rozpisovania - tieto dni sa aj tak ' +
     'často prepíšu, keď sa k nim priblížiš, netreba do nich investovať toľko textu ako do ' +
     `najbližších ${NEAR_DAYS}.\n\n` +
     'VÝŽIVA/PITNÝ REŽIM ("fuelPlan"): pri KAŽDEJ alternatíve typu A aj pri type B (vtedy vedľa ' +
@@ -495,7 +524,7 @@ function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate, ac
     const planLabel = (note && note.note && note.note.trim()) ? `MÁ VLASTNÝ PLÁN: "${note.note.trim()}"` : 'BEZ VLASTNÉHO PLÁNU';
     const statusTxt = status && status !== 'active' ? ' [stav: ' + status + ']' : '';
     const doneTxt = doneActivitiesSummary(activitiesByDate ? activitiesByDate[w.date] : null);
-    lines.push(weatherLineFor(w.date, desc, w.tempMin, w.tempMax, w.precipMm, w.windMaxKmh, planLabel, statusTxt, w.bestWindow, doneTxt));
+    lines.push(weatherLineFor(w.date, desc, w.tempMin, w.tempMax, w.precipMm, w.windMaxKmh, planLabel, statusTxt, w.bestWindow, doneTxt, w.sunset));
   });
   lines.push('');
   if (wellnessRecent.length) {
@@ -550,7 +579,7 @@ function buildEditPrompt(existingPlan, currentSelection, instruction) {
       lines.push(`- ${d.date}: ${d.weatherDesc}, ${Math.round(d.tempMin)}-${Math.round(d.tempMax)}°C [BEZ AI NÁVRHU]`);
       return;
     }
-    lines.push(weatherLineFor(d.date, d.weatherDesc, d.tempMin, d.tempMax, d.precipMm, d.windMaxKmh, 'BEZ VLASTNÉHO PLÁNU', '', d.bestWindow));
+    lines.push(weatherLineFor(d.date, d.weatherDesc, d.tempMin, d.tempMax, d.precipMm, d.windMaxKmh, 'BEZ VLASTNÉHO PLÁNU', '', d.bestWindow, null, d.sunset));
     const recIdx = d.alternatives.findIndex(a => a.recommended);
     const selIdx = (currentSelection[d.date] != null && currentSelection[d.date] < d.alternatives.length)
       ? currentSelection[d.date] : (recIdx !== -1 ? recIdx : 0);
@@ -664,6 +693,7 @@ async function generateNewPlan() {
         tempMin: w.tempMin,
         precipMm: w.precipMm,
         windMaxKmh: w.windMaxKmh,
+        sunset: w.sunset || null,
         bestWindow: w.bestWindow || null,
         hourly: w.hourly || [],
         alreadyDone: doneActivitiesSummary(activitiesByDate ? activitiesByDate[w.date] : null) || null,
