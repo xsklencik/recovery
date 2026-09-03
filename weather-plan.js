@@ -423,13 +423,22 @@ function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate, ac
     'obsahu poznámky, nie automaticky "long" pre každý deň s vlastným plánom.\n\n' +
     `PODROBNOSŤ TEXTU PODĽA VZDIALENOSTI: pre prvých ${NEAR_DAYS} dní (do ${nearCutoff || 'konca zoznamu'} vrátane) - ` +
     'tie si pôjde reálne robiť čoskoro - napíš "suggestion"/"notePlan" PODROBNE (3-5 viet): pri ' +
-    '"intensity" KONKRÉTNU štruktúru intervalov (napr. "4x8min tempo blízko FTP, 3min voľné ' +
-    'prešliapanie medzi", "6x1min naplno, 2min voľno", "2x20min tvrdý tempo blok"), pri "long" ' +
-    'orientačnú dĺžku/zónu a kde/kadiaľ (napr. cez Husárik/Valy, ak sa to hodí), pri "rest" čo ' +
-    'konkrétne pre regeneráciu (strečing, valcovanie, spánok). PRE ZVYŠNÉ DNI (za týmto dátumom) ' +
+    '"intensity" KONKRÉTNU štruktúru intervalov - VYBER podľa kontextu (forma, čo bolo nedávno, ' +
+    'ročné obdobie/fáza) z celého spektra, NIE stále to isté: VO2max repáky (napr. "5x3min na ' +
+    'hrane, 3min voľno"), prahové/sweet-spot bloky ("3x12min tesne pod prahom"), over-under ' +
+    '("6x4min: 2min mierne nad prahom / 2min mierne pod"), krátke sprinty/neuromuskulárne ' +
+    '("10x20s naplno, 3min voľno"), kopcovité repáky (ak sa hodí terén), fartlek/pyramída atď. - ' +
+    'toto je len ukážka ŠÍRKY možností, nie šablóna na kopírovanie; pri "long" orientačnú dĺžku/ ' +
+    'zónu a kde/kadiaľ (napr. cez Husárik/Valy, ak sa to hodí), pri "rest" čo konkrétne pre ' +
+    'regeneráciu (strečing, valcovanie, spánok). NAPRIEČ VŠETKÝMI BLÍZKYMI DŇAMI SA ' +
+    'ŠTRUKTÚRA "intensity" AJ "long" MUSÍ LÍŠIŤ deň od dňa (iný typ intervalu, iná dĺžka/zóna) - ' +
+    'Adam sa sťažoval, že dostáva stále tú istú vytrvalostnú jazdu a žiadne iné nápady na ' +
+    'intervaly, takže nad opakovaním rovnakej štruktúry si daj obzvlášť pozor. PRE ZVYŠNÉ DNI (za ' +
+    'týmto dátumom) ' +
     'napíš "suggestion"/"notePlan" NAOPAK VEĽMI STRUČNE - JEDNA veta, len podstata, ALE stále ' +
     'konkrétna a odvodená od kontextu toho dňa (nie generická šablóna) - napr. pri "intensity" ' +
-    'uveď aspoň hrubú štruktúru (počet/dĺžku intervalov), pri "long" konkrétnu dĺžku/zónu, ktorá ' +
+    'uveď aspoň hrubú štruktúru (počet/dĺžku intervalov, typ - VO2max/prah/sprint/kopce...), pri ' +
+    '"long" konkrétnu dĺžku/zónu, ktorá ' +
     'sedí s formou a okolitými dňami toho dňa (POZOR: rôzne dni majú mať rôzne čísla/formuláciu ' +
     'podľa toho, čo je v ten deň naozaj v pláne - NIKDY nekopíruj rovnaké "cca X h Z2" naprieč ' +
     'viacerými dňami len preto, že to je najjednoduchšie), bez rozpisovania - tieto dni sa aj tak ' +
