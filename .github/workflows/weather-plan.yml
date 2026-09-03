@@ -39,6 +39,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if [ -f data/weather_plan.json ]; then git add data/weather_plan.json; fi
+          if [ -f data/plan_history.json ]; then git add data/plan_history.json; fi
           if ! git diff --staged --quiet; then
             git commit -m "Weather plan $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             git push
