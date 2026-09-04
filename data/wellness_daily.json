@@ -1237,7 +1237,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-04T04:30:47.511Z"
+  "syncedAt": "2026-09-04T04:45:30.384Z"
  },
  {
   "id": "2026-09-02",
@@ -1258,7 +1258,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-04T04:30:47.511Z"
+  "syncedAt": "2026-09-04T04:45:30.384Z"
  },
  {
   "id": "2026-09-03",
@@ -1279,7 +1279,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-04T04:30:47.511Z"
+  "syncedAt": "2026-09-04T04:45:30.384Z"
  },
  {
   "id": "2026-09-04",
@@ -1294,12 +1294,12 @@
   "ctl": 46.702934,
   "atl": 39.889088,
   "weight": null,
-  "comments": "Ideme sa ubytovať do Bratislavy čiže cel�� deň som mimo, večer prídem domov neskoro.",
+  "comments": "Ideme sa ubytovať do Bratislavy čiže celý deň som mimo, večer prídem domov neskoro.",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-04T04:30:47.511Z"
+  "syncedAt": "2026-09-04T04:45:30.384Z"
  }
 ]
