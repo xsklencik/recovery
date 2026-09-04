@@ -156,6 +156,53 @@ function daysWithAlternatives(plan){
   return plan.days.filter(d => !d.ownNote && d.alternatives && d.alternatives.length);
 }
 
+// OPRAVA 4.9.2026 (žiadosť Adama): hviezdička (⭐ = odporúčané) sa doteraz vždy čítala priamo z
+// PÔVODNEJ AI odpovede (d.alternatives[i].recommended) - takže keď si ručne zmenil deň 1 a 2 na
+// dve po sebe idúce náročné voľby (napr. VO2max + kopce), hviezdička na dni 3 ostala tam, kde ju
+// AI dala pri generovaní (napr. "tempo"), namiesto toho, aby zohľadnila, že podľa TVOJICH
+// SKUTOČNÝCH volieb by teraz dávalo väčší zmysel "rest". Táto funkcia to prepočíta OKAMŽITE,
+// lokálne, bez nového volania AI - prejde dni v poradí, a pre dni BEZ ručného výberu preváži
+// pôvodné AI odporúčanie rovnakým pravidlom, aké má AI v prompte (weather-plan.js): po 2+ po sebe
+// idúcich náročných dňoch (long/intensity) presuň hviezdičku na "rest", po 3+ po sebe idúcich
+// "rest" dňoch ju presuň na "long". Dni s ručným výberom (choice.manual) sú vždy "pravda" - ich
+// vlastná voľba sa aj STARUJE (⭐ ide na to, čo si si sám vybral), nech nikdy nenastane stav z
+// 13.8.2026, keď hviezdička a zvýraznené tlačidlo ukazovali na dve rôzne alternatívy naraz.
+// Toto je čisto VIZUÁLNY prepočet nad už stiahnutým plánom - nič sa nezapisuje na disk/do repa.
+function computeEffectiveRecommended(days, choices){
+  const result = {};
+  let hardStreak = 0, restStreak = 0;
+  days.forEach(d => {
+    if(d.ownNote){
+      // Dni s vlastným plánom nemajú alternatívy na hviezdičkovanie, ale rátajú sa do streaku
+      // rovnako, ako to už robí AI holisticky (viď noteIntensity vo weather-plan.js).
+      if(d.noteIntensity === 'long' || d.noteIntensity === 'intensity'){ hardStreak++; restStreak = 0; }
+      else if(d.noteIntensity === 'rest'){ restStreak++; hardStreak = 0; }
+      return;
+    }
+    if(!d.alternatives || !d.alternatives.length) return;
+    const choice = choices[d.date];
+    const aiRecommendedI = d.alternatives.findIndex(a => a.recommended);
+    let idx = aiRecommendedI !== -1 ? aiRecommendedI : 0;
+    if(choice && choice.manual && choice.i < d.alternatives.length){
+      idx = choice.i;
+    } else {
+      const restIdx = d.alternatives.findIndex(a => a.intensity === 'rest');
+      const longIdx = d.alternatives.findIndex(a => a.intensity === 'long');
+      if(hardStreak >= 2 && restIdx !== -1 && d.alternatives[idx].intensity !== 'rest'){
+        idx = restIdx;
+      } else if(restStreak >= 3 && longIdx !== -1 && d.alternatives[idx].intensity === 'rest'){
+        idx = longIdx;
+      }
+    }
+    result[d.date] = idx;
+    const effIntensity = d.alternatives[idx].intensity;
+    if(effIntensity === 'long' || effIntensity === 'intensity'){ hardStreak++; restStreak = 0; }
+    else if(effIntensity === 'rest'){ restStreak++; hardStreak = 0; }
+    else { hardStreak = 0; restStreak = 0; }
+  });
+  return result;
+}
+
 // OPRAVA 13.8.2026 (nahlásené Adamom - ⭐ a zvýraznené/aktívne tlačidlo boli na dvoch RÔZNYCH
 // alternatívach toho istého dňa): predtým tu bola "cascade" funkcia, ktorá po kliknutí na
 // alternatívu automaticky navrhla susedný deň (napr. "po intervaloch daj voľno") a TRVALO ju
@@ -275,6 +322,7 @@ function renderPlan(plan){
   });
   if(choicesChanged) saveChoices(choices);
   resetBtn.style.display = Object.keys(choices).length ? '' : 'none';
+  const effectiveRecommended = computeEffectiveRecommended(visibleDays, choices);
 
   daysBox.innerHTML = visibleDays.map(d=>{
     let body, altsHtml = '', fuelPlanText = null;
@@ -291,24 +339,18 @@ function renderPlan(plan){
       }
       fuelPlanText = d.fuelPlan || null;
     } else if(d.alternatives && d.alternatives.length){
-      const choice = choices[d.date];
-      // OPRAVA 8.8.2026 (nahlásené Adamom - plán vyzeral, akoby dával "veľa oddychu" viacero dní
-      // po sebe): predtým sa tu bez výberu VŽDY zobrazila alternatíva na indexe 0, čo je odteraz
-      // vždy "rest" - takže kým užívateľ na nič neklikol, každý deň ukazoval Voľno bez ohľadu na
-      // to, čo AI reálne odporúčala. Teraz sa ako predvolená zobrazí tá, ktorú AI označila
-      // "recommended" (viď weather-plan.js) - index 0 ostáva len ako záchranný fallback pre
-      // staršie uložené plány spred tejto opravy, kde toto pole ešte neexistovalo.
-      // OPRAVA 13.8.2026: honoruje len VÝSLOVNE ručný výber (choice.manual) - inak stará
-      // automaticky uložená voľba vedela ticho prebiť čerstvé AI odporúčanie (⭐ a zvýraznené
-      // tlačidlo boli na dvoch rôznych alternatívach).
-      const recommendedI = d.alternatives.findIndex(a => a.recommended);
-      const defaultI = recommendedI !== -1 ? recommendedI : 0;
-      const i = (choice && choice.manual && choice.i < d.alternatives.length) ? choice.i : defaultI;
+      // OPRAVA 4.9.2026: "i" (aktívne/predvolené tlačidlo) aj hviezdička ⭐ teraz OBOJE vychádzajú
+      // z effectiveRecommended (viď computeEffectiveRecommended vyššie) namiesto priamo z
+      // d.alternatives[x].recommended - tie dve už nikdy nemôžu ukazovať na dve rôzne alternatívy
+      // (presne to bol bug z 13.8.2026), a navyše sa hviezdička teraz vie posunúť aj bez nového
+      // vygenerovania, podľa toho, čo si si sám skutočne vybral na predchádzajúce dni.
+      const i = (effectiveRecommended[d.date] != null) ? effectiveRecommended[d.date]
+        : (d.alternatives.findIndex(a => a.recommended) !== -1 ? d.alternatives.findIndex(a => a.recommended) : 0);
       const active = d.alternatives[i];
       body = escapeHtml(active.suggestion);
       fuelPlanText = active.fuelPlan || null;
       altsHtml = `<div class="plan-alts">` + d.alternatives.map((a,ai)=>`
-        <button class="plan-alt ${ai===i?'active':''}" data-date="${d.date}" data-i="${ai}">${a.recommended?'⭐ ':''}${escapeHtml(a.label)}</button>
+        <button class="plan-alt ${ai===i?'active':''}" data-date="${d.date}" data-i="${ai}">${ai===i?'⭐ ':''}${escapeHtml(a.label)}</button>
       `).join('') + `</div>`;
     } else {
       body = '<span style="color:var(--text-faint);">Bez návrhu.</span>';
