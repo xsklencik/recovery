@@ -1237,7 +1237,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-04T07:00:49.545Z"
+  "syncedAt": "2026-09-04T07:15:34.015Z"
  },
  {
   "id": "2026-09-02",
@@ -1258,7 +1258,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-04T07:00:49.545Z"
+  "syncedAt": "2026-09-04T07:15:34.015Z"
  },
  {
   "id": "2026-09-03",
@@ -1269,7 +1269,7 @@
   "avgSleepingHR": 57,
   "sleepScore": 84,
   "sleepSecs": 29640,
-  "steps": 12711,
+  "steps": 12786,
   "ctl": 47.82825,
   "atl": 46.014656,
   "weight": null,
@@ -1279,18 +1279,18 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-04T07:00:49.545Z"
+  "syncedAt": "2026-09-04T07:15:34.015Z"
  },
  {
   "id": "2026-09-04",
   "date": "2026-09-04",
-  "restingHR": null,
+  "restingHR": 59,
   "hrv": null,
   "hrvSDNN": null,
   "avgSleepingHR": null,
   "sleepScore": 83,
   "sleepSecs": 26700,
-  "steps": null,
+  "steps": 72,
   "ctl": 46.702934,
   "atl": 39.889088,
   "weight": null,
@@ -1300,6 +1300,6 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-04T07:00:49.545Z"
+  "syncedAt": "2026-09-04T07:15:34.015Z"
  }
 ]
