@@ -1258,7 +1258,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-05T18:30:43.305Z"
+  "syncedAt": "2026-09-05T18:45:30.886Z"
  },
  {
   "id": "2026-09-03",
@@ -1279,7 +1279,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-05T18:30:43.305Z"
+  "syncedAt": "2026-09-05T18:45:30.886Z"
  },
  {
   "id": "2026-09-04",
@@ -1300,7 +1300,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-05T18:30:43.305Z"
+  "syncedAt": "2026-09-05T18:45:30.886Z"
  },
  {
   "id": "2026-09-05",
@@ -1315,12 +1315,12 @@
   "ctl": 45.60409,
   "atl": 34.578968,
   "weight": 58.8,
-  "comments": null,
+  "comments": "tepoval som a upratoval",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-05T18:30:43.305Z"
+  "syncedAt": "2026-09-05T18:45:30.886Z"
  }
 ]
