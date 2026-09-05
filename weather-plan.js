@@ -64,13 +64,22 @@ function archiveExpiredDays(newFirstDate) {
   console.log(`🗄️ data/plan_history.json - archivovaných ${expired.length} dní (${expired.map(d => d.date).join(', ')}).`);
 }
 const LAT = 49.4386, LON = 18.7898; // Čadca, Slovensko
-const DEFAULT_GEMINI_MODEL = 'gemini-3.6-flash';
+// OPRAVA 4.9.2026 (žiadosť Adama - "vylepši ten model toho plánu"): Gemini 3.8 Flash vyšlo
+// 2.9.2026 (GA, model ID gemini-3.8-flash) - podľa zverejnených Google benchmarkov je pred
+// 3.7 Flash na všetkom, čo publikovali (napr. DeepSWE 73.7 % vs 65.3 %), a AKTUÁLNE (do
+// 31.12.2026, potom zdvojnásobenie) stojí MENEJ za token než predtým používané 3.6 Flash
+// ($0.75/$3.75 oproti $1.50/$7.50 za 1M tokenov) - teda zlepšenie kvality bez zvýšenia ceny za
+// token (spotreba tokenov môže byť o niečo vyššia, model si podľa Google zámerne "viac rozmýšľa"
+// na zložitých úlohách, ale thinkingLevel je nižšie nastavený na 'medium' - vyváženie kvality a
+// spotreby, 'high' by šlo skúsiť neskôr, ak by 'medium' nestačilo).
+// Záložný reťazec aktualizovaný na súčasné modely namiesto starnúcich 3.1/3.5 verzií.
+const DEFAULT_GEMINI_MODEL = 'gemini-3.8-flash';
 // PRÍČINA starého "Bez návrhu" bugu: ak primárny model vráti chybu (404 po vyradení, 429 po
 // vyčerpaní free-tier kvóty, alebo dočasná nedostupnosť - typické pár dní po vydaní nového
 // modelu), skript sa doteraz potichu vzdal a všetky dni bez vlastnej poznámky ostali navždy bez
 // návrhu. Rovnaký princíp ako pri fetchWeatherWithParams nižšie: namiesto tvrdého vzdania sa
 // skús postupne aj tieto zálohy, kým jedna neodpovie.
-const FALLBACK_GEMINI_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.1-flash'];
+const FALLBACK_GEMINI_MODELS = ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash-lite'];
 
 function loadJsonSafe(file, fallback) {
   if (!fs.existsSync(file)) return fallback;
@@ -258,14 +267,16 @@ async function fetchWeather() {
 // než ai-summary.js (10 dní × 3 alternatívy), takže aj pri maxOutputTokens 2600 sa dalo ľahko stať,
 // že model minul rozpočet na neviditeľné rozmýšľanie a viditeľný JSON sa orezal uprostred -
 // JSON.parse zlyhal, suggestions=[] a ÚPLNE VŠETKY dni skončili ako "Bez návrhu". Riešenie:
-// 1) thinkingConfig.thinkingLevel='low' (Gemini 3.x - NIE thinkingBudget, to je len pre 2.5 sériu
-//    a na 3.x model by vrátilo 400 Bad Request), 2) vyšší maxOutputTokens ako rezerva, 3) kontrola
+// 1) thinkingConfig.thinkingLevel='medium' (Gemini 3.x - NIE thinkingBudget, to je len pre 2.5
+//    sériu a na 3.x model by vrátilo 400 Bad Request; OPRAVA 4.9.2026 - 'low'→'medium' na žiadosť
+//    Adama pre kvalitnejšie zdôvodnené odporúčania, maxOutputTokens zodpovedajúco zvýšené nižšie
+//    pri oboch veľkých volaniach), 2) vyšší maxOutputTokens ako rezerva, 3) kontrola
 //    finishReason - ak model odpoveď orezal (MAX_TOKENS), NEPOUŽIJE sa jeho (nevalidný) text, ale
 //    hodí sa chyba, aby to callGemini() nižšie skúsilo s ďalším záložným modelom namiesto toho,
 //    aby sa jeden orezaný pokus vydával za konečný výsledok pre všetky dni naraz.
 function thinkingConfigFor(model) {
   if (/^gemini-2\.5/.test(model)) return { thinkingBudget: 0 };
-  return { thinkingLevel: 'low' };
+  return { thinkingLevel: 'medium' };
 }
 
 async function callGeminiOnce(model, key, prompt, opts) {
@@ -456,10 +467,21 @@ function buildPlanPrompt(weatherDays, wellnessRecent, dayNotes, statusByDate, ac
     'ročné obdobie/fáza) z celého spektra, NIE stále to isté: VO2max repáky (napr. "5x3min na ' +
     'hrane, 3min voľno"), prahové/sweet-spot bloky ("3x12min tesne pod prahom"), over-under ' +
     '("6x4min: 2min mierne nad prahom / 2min mierne pod"), krátke sprinty/neuromuskulárne ' +
-    '("10x20s naplno, 3min voľno"), kopcovité repáky (ak sa hodí terén), fartlek/pyramída atď. - ' +
+    '"10x20s naplno, 3min voľno"), kopcovité repáky (ak sa hodí terén), fartlek/pyramída atď. - ' +
     'toto je len ukážka ŠÍRKY možností, nie šablóna na kopírovanie; pri "long" orientačnú dĺžku/ ' +
-    'zónu a kde/kadiaľ (napr. cez Husárik/Valy, ak sa to hodí), pri "rest" čo konkrétne pre ' +
-    'regeneráciu (strečing, valcovanie, spánok). NAPRIEČ VŠETKÝMI BLÍZKYMI DŇAMI SA ' +
+    'zónu a kde/kadiaľ, pri "rest" čo konkrétne pre ' +
+    'regeneráciu (strečing, valcovanie, spánok). ' +
+    'POROVNÁVACIE SEGMENTY (nahlásené Adamom 4.9.2026 - predtým sa toto pochopilo zle): Adam má ' +
+    'dva segmenty, na ktorých si chce merať/zlepšovať výkon, keď sa prirodzene hodia do trasy - ' +
+    '"Valy" (v oblasti Čierneho) a "Husárik" (slepá cesta - dá sa tam ísť LEN TAM A SPÄŤ, nie ' +
+    'preto ísť ďalej cez neho niekam inam). Sú to DVE ÚPLNE SAMOSTATNÉ, geograficky vzdialené ' +
+    'miesta - NIKDY ich nedávaj do jednej vety ako keby tvorili jednu súvislú trasu (napr. ' +
+    '"kopcovitá trasa cez Husárik a Valy" NEDÁVA ZMYSEL a Adama to nahnevalo, presne toto sa už ' +
+    'raz stalo). Ak sa v texte pre "long"/"intensity" hodí navrhnúť jeden z nich (nie nutne oba ' +
+    'naraz, skôr príležitostne, keď to zapadá do dĺžky/zóny dňa), spomeň VÝSLOVNE len ten jeden a ' +
+    'nechaj ostatnú časť trasy/výberu otvorenú/všeobecnú namiesto vymýšľania ďalších konkrétnych ' +
+    'miestnych názvov, ktoré nepoznáš. ' +
+    'NAPRIEČ VŠETKÝMI BLÍZKYMI DŇAMI SA ' +
     'ŠTRUKTÚRA "intensity" AJ "long" MUSÍ LÍŠIŤ deň od dňa (iný typ intervalu, iná dĺžka/zóna) - ' +
     'Adam sa sťažoval, že dostáva stále tú istú vytrvalostnú jazdu a žiadne iné nápady na ' +
     'intervaly, takže nad opakovaním rovnakej štruktúry si daj obzvlášť pozor. PRE ZVYŠNÉ DNI (za ' +
@@ -701,13 +723,14 @@ async function generateNewPlan() {
 
   const prompt = buildPlanPrompt(weatherDays, wellnessMerged, dayNotes, statusByDate, activitiesByDate, recentPastDays);
   console.log('Generujem plán (Gemini)...');
-  // maxOutputTokens 7000 (bolo 5500, 4096, predtým 2600) + thinkingConfig v callGeminiOnce() -
+  // maxOutputTokens 10000 (bolo 7000, 5500, 4096, predtým 2600) + thinkingConfig v callGeminiOnce() -
   // skutočná príčina "Bez návrhu pre všetky dni" bola, že neviditeľné "thinking" tokeny (počítajú
   // sa do maxOutputTokens, ale nie sú vidno vo výstupe) zjedli veľkú časť rozpočtu na tomto veľkom
   // JSON-e, odpoveď sa orezala uprostred a nedala sa naparsovať. Po rozšírení z 8 na 10 dní
-  // (9.8.2026) a pridaní samostatného podrobnejšieho "fuelPlan" poľa (13.8.2026) opäť zvýšené s
-  // rezervou - JSON je teraz citeľne väčší než pri pôvodných 2600.
-  const result = await callGemini(prompt, { json: true, maxOutputTokens: 7000 });
+  // (9.8.2026), pridaní samostatného podrobnejšieho "fuelPlan" poľa (13.8.2026) a zvýšení
+  // thinkingLevel z 'low' na 'medium' (4.9.2026, žiadosť Adama - viac "premýšľania" spotrebuje aj
+  // viac neviditeľných tokenov) opäť zvýšené s rezervou.
+  const result = await callGemini(prompt, { json: true, maxOutputTokens: 10000 });
   const raw = result ? result.text : null;
   const usedModel = result ? result.model : (process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL);
   let suggestions = [];
@@ -799,7 +822,9 @@ async function editExistingPlan(instruction) {
 
   const prompt = buildEditPrompt(existing, currentSelection, instruction);
   console.log(`Upravujem existujúci plán podľa pokynu: "${instruction}" (Gemini)...`);
-  const result = await callGemini(prompt, { json: true, maxOutputTokens: 6000 });
+  // maxOutputTokens 8500 (bolo 6000) - rovnaká rezerva ako pri hlavnom generovaní vyššie, kvôli
+  // vyššiemu thinkingLevel ('medium' namiesto 'low', 4.9.2026).
+  const result = await callGemini(prompt, { json: true, maxOutputTokens: 8500 });
   const raw = result ? result.text : null;
   const usedModel = result ? result.model : (process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL);
 
@@ -850,7 +875,10 @@ function buildAskPrompt(existingPlan, recentPastDays, qaHistory, question) {
     'Ak sa otázka týka pitného režimu/sacharidov, ber do úvahy: Adam má 3 fľaše s celkovou ' +
     'kapacitou 2650 ml (2× 950 ml + 1× 750 ml) a robí si vlastný izotonický nápoj - do každej ' +
     'fľaše zvyčajne 60-80 g bieleho cukru a 3-6 g soli; odporúčania priprav v rámci/blízko tohto ' +
-    'zvyčajného rozsahu, nevymýšľaj úplne inú receptúru.\n\n' +
+    'zvyčajného rozsahu, nevymýšľaj úplne inú receptúru. Ak sa otázka týka trás/segmentov: Adam má ' +
+    'dva porovnávacie segmenty, na ktorých chce podávať čo najlepší výkon - "Valy" (v oblasti ' +
+    'Čierneho) a "Husárik" (slepá cesta, len tam a späť) - sú to dve úplne samostatné, ' +
+    'geograficky vzdialené miesta, nikdy ich nekombinuj do jednej trasy.\n\n' +
     `OTÁZKA: "${question}"\n`
   );
   lines.push('');

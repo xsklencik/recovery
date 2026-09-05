@@ -214,16 +214,20 @@ function buildAiPrompt(wellnessMerged, activitiesMerged, pastSummaries, globalSt
 // než by človek čakal - `gemini-2.5-flash` bol vyradený a vracal 404 mesiace pred pôvodne
 // oznámeným dátumom vypnutia. Ak uvidíš v logu "404", zisti aktuálny názov na
 // aistudio.google.com/models a nastav ho ako GitHub secret/variable GEMINI_MODEL - kód sa
-// nemusí meniť. Aktuálny default (gemini-3.6-flash, PLNÝ Flash nie Lite - výkonnejší, stále
-// free tier k 26.7.2026) - ak by robil problémy, over/skús gemini-3.5-flash ako zálohu.
-const DEFAULT_GEMINI_MODEL = 'gemini-3.6-flash';
+// nemusí meniť.
+// OPRAVA 4.9.2026 (žiadosť Adama - "aj súhrn daj lepšie"): rovnaká zmena ako vo weather-plan.js -
+// Gemini 3.8 Flash (vyšlo 2.9.2026, GA) je podľa Google benchmarkov nad 3.7 Flash na všetkom
+// zverejnenom, a AJ NA FREE TIERI je dostupný (rovnako ako predtým 3.6 Flash) - takže žiadny
+// dodatočný poplatok, len prípadne o niečo skôr vyčerpaný denný free limit pri veľmi vysokom počte
+// behov (pre tento skript, ktorý beží pár ráz denne, zanedbateľné).
+const DEFAULT_GEMINI_MODEL = 'gemini-3.8-flash';
 // OPRAVA 5.8.2026 (nahlásené Adamom - AI súhrn padal na "503", kým weather-plan.js fungoval
 // spoľahlivo): weather-plan.js má už od začiatku záložné modely pre presne tento prípad (404 po
 // vyradení, 429 po vyčerpaní kvóty, 503 = model dočasne preťažený/nedostupný - bežné hlavne pár
 // dní po vydaní nového modelu, keď je naň nával). Tento skript predtým žiadny fallback nemal -
 // jediné zlyhanie primárneho modelu = žiadny AI súhrn. Teraz skúša presne rovnaký zoznam záloh v
 // rovnakom poradí ako weather-plan.js.
-const FALLBACK_GEMINI_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.1-flash'];
+const FALLBACK_GEMINI_MODELS = ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash-lite'];
 
 // POZOR (zistené 28.7.2026, opravené 29.7.2026) - "flash" modely v Gemini API majú defaultne
 // zapnuté interné "thinking" (reasoning) tokeny, ktoré sa POČÍTAJU do maxOutputTokens, ale nie sú
@@ -232,16 +236,18 @@ const FALLBACK_GEMINI_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'ge
 // výsledok bol orezaný uprostred JSON-u, spadol do catch-vetvy nižšie (kratky = raw text) a
 // vyzeral ako "len 2 vety, navyše po anglicky" (útržok, nie plnohodnotná odpoveď v slovenčine).
 // PRVÁ OPRAVA BOLA CHYBNÁ: poslala `thinkingConfig.thinkingBudget` - to je parameter len pre
-// Gemini 2.5 sériu. Náš model (gemini-3.6-flash, Gemini 3.x séria) používa iný parameter,
-// `thinkingConfig.thinkingLevel` ("low"/"high") - poslanie thinkingBudget na 3.x model Gemini API
-// odmietne s **400 Bad Request** (presne to, čo sa začalo diať po nasadení prvej opravy).
-// Gemini 3 Flash/Flash-Lite navyše thinking úplne vypnúť nevedia - "low" je najnižšia úroveň.
+// Gemini 2.5 sériu. Náš model (Gemini 3.x séria) používa iný parameter,
+// `thinkingConfig.thinkingLevel` ("low"/"medium"/"high") - poslanie thinkingBudget na 3.x model
+// Gemini API odmietne s **400 Bad Request** (presne to, čo sa začalo diať po nasadení prvej opravy).
 // Nižšie preto vyberáme správne pole podľa rodiny modelu, aby fungoval aj prípadný GEMINI_MODEL
 // override na staršiu 2.5 sériu. Kontrola finishReason nižšie ostáva ako poistka pre orezané
 // odpovede (MAX_TOKENS) bez ohľadu na to, ktorý thinking parameter sa použil.
+// OPRAVA 4.9.2026 (žiadosť Adama): 'low' → 'medium' - lepšie odôvodnené/kvalitnejšie súhrny za
+// cenu o niečo vyššej spotreby tokenov na beh. maxOutputTokens nižšie má dostatočnú rezervu a na
+// free tieri sa to prejaví len na rýchlejšom čerpaní denného limitu, nie na poplatku.
 function thinkingConfigFor(model) {
   if (/^gemini-2\.5/.test(model)) return { thinkingBudget: 0 };
-  return { thinkingLevel: 'low' };
+  return { thinkingLevel: 'medium' };
 }
 
 async function callGeminiOnce(model, key, prompt, opts) {
