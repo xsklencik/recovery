@@ -1279,7 +1279,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-06T12:30:38.256Z"
+  "syncedAt": "2026-09-06T12:45:31.318Z"
  },
  {
   "id": "2026-09-04",
@@ -1300,7 +1300,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-06T12:30:38.256Z"
+  "syncedAt": "2026-09-06T12:45:31.318Z"
  },
  {
   "id": "2026-09-05",
@@ -1321,7 +1321,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-06T12:30:38.256Z"
+  "syncedAt": "2026-09-06T12:45:31.318Z"
  },
  {
   "id": "2026-09-06",
@@ -1332,16 +1332,16 @@
   "avgSleepingHR": 61,
   "sleepScore": 81,
   "sleepSecs": 27360,
-  "steps": 2297,
+  "steps": 2918,
   "ctl": 44.531105,
   "atl": 29.975742,
   "weight": null,
-  "comments": "Zvlnený vytrvalostný okruh",
+  "comments": "Zvlnen�� vytrvalostný okruh",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-06T12:30:38.256Z"
+  "syncedAt": "2026-09-06T12:45:31.318Z"
  }
 ]
