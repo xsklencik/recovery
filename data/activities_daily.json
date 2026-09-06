@@ -1394,5 +1394,28 @@
   "hr_z3_secs": 125,
   "hr_z4_secs": 0,
   "hr_z5_secs": 0
+ },
+ {
+  "id": "i183948776",
+  "date": "2026-09-06",
+  "start_date_local": "2026-09-06T15:31:06",
+  "name": "2x 10' Sweetspot + zajazdenie bŕzd prvých 20'",
+  "type": "Ride",
+  "comments": null,
+  "moving_time": 3854,
+  "distance": 14950,
+  "total_elevation_gain": 430.19992,
+  "average_heartrate": 144,
+  "max_heartrate": 184,
+  "icu_training_load": 61,
+  "icu_ctl": 45.96633,
+  "icu_atl": 38.09619,
+  "icu_intensity": 75.43602,
+  "icu_rpe": null,
+  "hr_z1_secs": 1540,
+  "hr_z2_secs": 935,
+  "hr_z3_secs": 1220,
+  "hr_z4_secs": 135,
+  "hr_z5_secs": 30
  }
 ]
