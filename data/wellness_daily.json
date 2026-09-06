@@ -1279,7 +1279,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-06T11:15:31.766Z"
+  "syncedAt": "2026-09-06T11:30:40.273Z"
  },
  {
   "id": "2026-09-04",
@@ -1300,7 +1300,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-06T11:15:31.766Z"
+  "syncedAt": "2026-09-06T11:30:40.273Z"
  },
  {
   "id": "2026-09-05",
@@ -1321,7 +1321,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-06T11:15:31.766Z"
+  "syncedAt": "2026-09-06T11:30:40.273Z"
  },
  {
   "id": "2026-09-06",
@@ -1336,12 +1336,12 @@
   "ctl": 44.531105,
   "atl": 29.975742,
   "weight": null,
-  "comments": "Zvlnen�� vytrvalostný okruh",
+  "comments": "Zvlnený vytrvalostný okruh",
   "mood": null,
   "soreness": null,
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-06T11:15:31.766Z"
+  "syncedAt": "2026-09-06T11:30:40.273Z"
  }
 ]
