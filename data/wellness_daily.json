@@ -1300,7 +1300,7 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-06T19:45:32.017Z"
+  "syncedAt": "2026-09-07T04:00:47.278Z"
  },
  {
   "id": "2026-09-05",
@@ -1321,18 +1321,18 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-06T19:45:32.017Z"
+  "syncedAt": "2026-09-07T04:00:47.278Z"
  },
  {
   "id": "2026-09-06",
   "date": "2026-09-06",
   "restingHR": 57,
-  "hrv": 62.22222,
+  "hrv": 60.34694,
   "hrvSDNN": 58,
   "avgSleepingHR": 61,
   "sleepScore": 81,
   "sleepSecs": 27360,
-  "steps": 4736,
+  "steps": 4769,
   "ctl": 45.96633,
   "atl": 38.09619,
   "weight": null,
@@ -1342,6 +1342,27 @@
   "fatigue": null,
   "stress": null,
   "source": "intervals_api",
-  "syncedAt": "2026-09-06T19:45:32.017Z"
+  "syncedAt": "2026-09-07T04:00:47.278Z"
+ },
+ {
+  "id": "2026-09-07",
+  "date": "2026-09-07",
+  "restingHR": null,
+  "hrv": null,
+  "hrvSDNN": null,
+  "avgSleepingHR": null,
+  "sleepScore": null,
+  "sleepSecs": null,
+  "steps": null,
+  "ctl": 44.884823,
+  "atl": 33.024746,
+  "weight": null,
+  "comments": "S chalanmi tak 50km kopcovitých",
+  "mood": null,
+  "soreness": null,
+  "fatigue": null,
+  "stress": null,
+  "source": "intervals_api",
+  "syncedAt": "2026-09-07T04:00:47.278Z"
  }
 ]
